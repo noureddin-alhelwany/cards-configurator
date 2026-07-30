@@ -1,0 +1,50 @@
+.state-message {
+  width: min(720px, 100%);
+  padding: 28px;
+  border-radius: 24px;
+  border: 1px solid rgba(33, 26, 21, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 18px 44px rgba(72, 48, 28, 0.12);
+}
+
+.state-message__kicker {
+  margin: 0 0 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: var(--color-accent-strong);
+}
+
+.state-message__title {
+  margin: 0;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  line-height: 1.05;
+  color: var(--color-text-primary);
+}
+
+.state-message__description {
+  margin: 14px 0 0;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+.state-message__action {
+  margin-top: 18px;
+}
+
+.state-message--error {
+  background: rgba(255, 244, 241, 0.96);
+  border-color: rgba(138, 59, 36, 0.24);
+}
+
+.state-message--error .state-message__kicker {
+  color: #8a3b24;
+}
+
+.state-message--empty {
+  background: rgba(255, 251, 245, 0.96);
+}
+
+.state-message--loading {
+  background: rgba(255, 255, 255, 0.76);
+}

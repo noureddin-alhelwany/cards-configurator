@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import DesignRenderer from '../design/DesignRenderer';
 import type { ProofFixture } from '../design/types';
 import './OrderProductionPage.css';
+import StateMessage from '../ui/StateMessage';
 
 async function loadOrderFixture(orderId: string): Promise<ProofFixture> {
   const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}/fixture`);
@@ -69,10 +70,7 @@ export default function OrderProductionPage({ orderId }: { orderId: string }) {
   if (error) {
     return (
       <main className="order-render-shell order-render-shell--error">
-        <section className="order-render-message">
-          <h1>Order render unavailable</h1>
-          <p>{error}</p>
-        </section>
+        <StateMessage tone="error" kicker="Order render" title="Produktion nicht verfügbar" description={error} />
       </main>
     );
   }
@@ -80,10 +78,12 @@ export default function OrderProductionPage({ orderId }: { orderId: string }) {
   if (!fixture) {
     return (
       <main className="order-render-shell">
-        <section className="order-render-message">
-          <p className="order-render-kicker">Loading order fixture</p>
-          <h1>DesignRenderer</h1>
-        </section>
+        <StateMessage
+          tone="loading"
+          kicker="Loading order fixture"
+          title="DesignRenderer"
+          description="Die Produktionsdaten werden geladen."
+        />
       </main>
     );
   }

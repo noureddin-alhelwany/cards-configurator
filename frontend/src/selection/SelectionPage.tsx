@@ -31,6 +31,7 @@ import {
   validationDisplayPath,
 } from './selectionUi';
 import './SelectionPage.css';
+import StateMessage from '../ui/StateMessage';
 
 type HealthState = 'loading' | 'ok' | 'offline';
 
@@ -1002,11 +1003,12 @@ export default function SelectionPage() {
   if (state.error) {
     return (
       <main className="selection-shell selection-shell--error">
-        <section className="selection-panel">
-          <p className="selection-kicker">Internal bootstrap</p>
-          <h1>Cards Configurator</h1>
-          <p className="selection-error">{state.error}</p>
-        </section>
+        <StateMessage
+          tone="error"
+          kicker="Internal bootstrap"
+          title="Cards Configurator"
+          description={state.error}
+        />
       </main>
     );
   }
@@ -1014,10 +1016,12 @@ export default function SelectionPage() {
   if (!bundle) {
     return (
       <main className="selection-shell">
-        <section className="selection-panel">
-          <p className="selection-kicker">Loading registries</p>
-          <h1>Cards Configurator</h1>
-        </section>
+        <StateMessage
+          tone="loading"
+          kicker="Loading registries"
+          title="Cards Configurator"
+          description="Die Konfigurationen werden geladen."
+        />
       </main>
     );
   }
@@ -1103,19 +1107,28 @@ export default function SelectionPage() {
                   <h2>1. Auswahl</h2>
                   <p>{bundle.use_cases.filter((useCase) => useCase.active).length} aktive Auswahlmöglichkeiten</p>
                 </div>
-                <div className="use-case-grid">
-                  {bundle.use_cases
-                    .filter((useCase) => useCase.active)
-                    .map((useCase) => (
-                      <UseCaseCard
-                        key={useCase.id}
-                        useCase={useCase}
-                        selected={useCase.id === selectedUseCaseId}
-                        onSelect={handleUseCaseSelect}
-                        disabled={isApproved}
-                      />
-                    ))}
-                </div>
+                {bundle.use_cases.some((useCase) => useCase.active) ? (
+                  <div className="use-case-grid">
+                    {bundle.use_cases
+                      .filter((useCase) => useCase.active)
+                      .map((useCase) => (
+                        <UseCaseCard
+                          key={useCase.id}
+                          useCase={useCase}
+                          selected={useCase.id === selectedUseCaseId}
+                          onSelect={handleUseCaseSelect}
+                          disabled={isApproved}
+                        />
+                      ))}
+                  </div>
+                ) : (
+                  <StateMessage
+                    tone="empty"
+                    kicker="Auswahl"
+                    title="Keine aktiven Anwendungsfälle"
+                    description="Aktiviere mindestens einen Use Case in den Registries, damit der Konfigurator nutzbar ist."
+                  />
+                )}
                 <div className="wizard-step-nav">
                   <button type="button" className="wizard-step-nav__button" disabled>
                     Zurück
@@ -1216,9 +1229,14 @@ export default function SelectionPage() {
                         onSelect={handleTemplateSelect}
                         disabled={isApproved}
                       />
-                    ))
+                      ))
                   ) : (
-                    <p className="template-grid__empty">Für diese Auswahl sind aktuell keine Templates aktiv.</p>
+                    <StateMessage
+                      tone="empty"
+                      kicker="Design"
+                      title="Keine passenden Templates"
+                      description="Wähle einen anderen Use Case oder ein anderes Produkt, damit wieder Vorlagen erscheinen."
+                    />
                   )}
                 </div>
                 <div className="wizard-step-nav">

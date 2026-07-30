@@ -7,7 +7,7 @@ a work-item move.
 
 - Todo: 2
 - In progress: 0
-- Done: 41
+- Done: 46
 - Blocked: 0
 
 ## Work items
@@ -36,6 +36,11 @@ a work-item move.
 | UI-15 | story | should | done | UI-13 | Validierung nutzerfreundlich darstellen |
 | UI-16 | story | must | done | UI-15 | Automatische Qualitätsprüfung darstellen |
 | UI-17 | story | must | done | UI-16 | Prüfen-und-Freigeben-Schritt erstellen |
+| UI-18 | story | must | done | US-23 | Erfolgsansicht nach Auftragserstellung erstellen |
+| UI-19 | story | must | done | UI-18 | Lade-, Leer-, Fehler- und Nicht-verfügbar-Zustände umsetzen |
+| UI-20 | story | must | done | UI-19 | Responsive und Accessibility-Grundlage schaffen |
+| UI-21 | story | must | done | UI-20 | Komponentenarchitektur definieren |
+| UI-22 | story | must | done | UI-21 | Design-Token-Grundlage vorbereiten |
 | US-09 | story | must | done | TECH-01, US-06 | Logo hochladen |
 | US-10 | story | must | done | TECH-01, US-06 | Bild hochladen |
 | US-11 | story | should | done | US-10 | Bild automatisch optimieren |

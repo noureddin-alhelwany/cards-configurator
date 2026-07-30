@@ -1001,9 +1001,15 @@ test('approves a draft and locks editing afterward', async () => {
             approved_at: '2026-07-30T12:05:00.000Z',
             created_at: '2026-07-30T12:06:00.000Z',
             preview_path: '/tmp/order-1/preview.png',
-            use_case_snapshot: {},
-            product_snapshot: {},
-            template_snapshot: {},
+            use_case_snapshot: {
+              name: 'Google Reviews',
+            },
+            product_snapshot: {
+              name: 'A6 Card',
+            },
+            template_snapshot: {
+              name: 'Google Reviews Classic',
+            },
             layout_snapshot: {
               variant_id: 'logo-focused',
               element_adjustments: {},
@@ -1040,9 +1046,15 @@ test('approves a draft and locks editing afterward', async () => {
             approved_at: '2026-07-30T12:05:00.000Z',
             created_at: '2026-07-30T12:06:00.000Z',
             preview_path: '/tmp/order-1/preview.png',
-            use_case_snapshot: {},
-            product_snapshot: {},
-            template_snapshot: {},
+            use_case_snapshot: {
+              name: 'Google Reviews',
+            },
+            product_snapshot: {
+              name: 'A6 Card',
+            },
+            template_snapshot: {
+              name: 'Google Reviews Classic',
+            },
             layout_snapshot: {
               variant_id: 'logo-focused',
               element_adjustments: {},
@@ -1112,4 +1124,9 @@ test('approves a draft and locks editing afterward', async () => {
     expect(screen.getByRole('heading', { name: 'ORD-20260730-ABC123' })).toBeInTheDocument();
   });
   expect(screen.getByText('Auftrag erstellt')).toBeInTheDocument();
+  expect(screen.getByText('Dein Auftrag ist gespeichert und bereit für die Produktion.')).toBeInTheDocument();
+  expect(screen.getByText('A6 Card')).toBeInTheDocument();
+  expect(screen.getByText('Google Reviews')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Zur Produktionsansicht' })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Auftrag erneut öffnen' })).toBeInTheDocument();
 });

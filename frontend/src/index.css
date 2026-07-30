@@ -4,6 +4,30 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --font-ui: 'Proof Sans', 'Avenir Next', 'Segoe UI', sans-serif;
+  --color-text-primary: #211a15;
+  --color-text-secondary: #4f4034;
+  --color-accent: #8f5a2a;
+  --color-accent-strong: #5c3a1b;
+  --color-surface: #ffffff;
+  --color-surface-soft: rgba(255, 255, 255, 0.82);
+  --color-surface-muted: rgba(255, 251, 245, 0.96);
+  --color-page-gradient-start: #fbf7f0;
+  --color-page-gradient-middle: #f2ebe2;
+  --color-page-gradient-end: #e9e1d4;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-1: 12px;
+  --radius-2: 18px;
+  --radius-3: 24px;
+  --radius-4: 28px;
+  --shadow-surface: 0 16px 30px rgba(72, 48, 28, 0.08);
+  --shadow-elevated: 0 24px 70px rgba(72, 48, 28, 0.12);
 }
 
 @font-face {
@@ -27,5 +51,7 @@ body,
 
 body {
   min-height: 100vh;
-  font-family: 'Proof Sans', 'Avenir Next', 'Segoe UI', sans-serif;
+  font-family: var(--font-ui);
+  background: var(--color-page-gradient-start);
+  color: var(--color-text-primary);
 }

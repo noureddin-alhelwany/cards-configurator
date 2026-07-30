@@ -3,16 +3,16 @@
   height: 100%;
   display: grid;
   place-items: center;
-  background: #ffffff;
+  background: var(--color-surface);
 }
 
 .order-render-shell--error {
   place-items: start;
-  padding: 32px;
+  padding: var(--space-8);
   background:
     radial-gradient(circle at top, rgba(201, 170, 116, 0.18), transparent 28%),
     linear-gradient(135deg, #f6efe7 0%, #ece2d7 56%, #e3d6c4 100%);
-  color: #211a15;
+  color: var(--color-text-primary);
 }
 
 .order-render-message {
@@ -28,5 +28,11 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   font-size: 0.72rem;
-  color: #8f5a2a;
+  color: var(--color-accent);
+}
+
+@media (max-width: 640px) {
+  .order-render-shell--error {
+    padding: var(--space-5);
+  }
 }
