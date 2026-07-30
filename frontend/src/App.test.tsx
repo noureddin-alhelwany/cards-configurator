@@ -561,8 +561,8 @@ test('renders the registry selection flow and filters matching products', async 
           } = {
             id: assetId,
             preview_data_url: 'data:image/png;base64,' + btoa('preview'),
-            width_px: kind === 'logo' ? 300 : 2000,
-            height_px: kind === 'logo' ? 150 : 1000,
+            width_px: kind === 'logo' ? 300 : 600,
+            height_px: kind === 'logo' ? 150 : 300,
             mime_type: 'image/png',
             kind,
             sha256: 'test',
@@ -686,14 +686,27 @@ test('renders the registry selection flow and filters matching products', async 
   await waitFor(() => {
     expect(screen.getByText(/Bildqualität: ausreichend/)).toBeInTheDocument();
   });
+  const heroScale = screen.getByLabelText('heroImage skalierung');
+  expect(heroScale).toHaveAttribute('min', '0.8');
+  expect(heroScale).toHaveAttribute('max', '1.3');
   const heroImages = screen.getAllByRole('img', { name: 'Review hero image' });
   expect(heroImages).toHaveLength(2);
+  expect(screen.getAllByText(/Bildqualität: grenzwertig/)).toHaveLength(1);
   const heroOffsetY = screen.getByLabelText('heroImage verschiebung y');
   fireEvent.change(heroOffsetY, { target: { value: '-0.2' } });
   await waitFor(() => {
     expect(heroImages[0]).toHaveStyle(
       'transform: translate(0mm, -0.8mm) scale(1);',
     );
+  });
+  fireEvent.change(heroScale, { target: { value: '1.3' } });
+  await waitFor(() => {
+    expect(heroImages[0]).toHaveStyle(
+      'transform: translate(0mm, -0.8mm) scale(1.3);',
+    );
+  });
+  await waitFor(() => {
+    expect(screen.getAllByText(/Bildqualität: grenzwertig/)).toHaveLength(2);
   });
 
   fireEvent.click(screen.getByRole('tab', { name: 'Text im Fokus' }));

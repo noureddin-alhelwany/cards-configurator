@@ -5,9 +5,9 @@ a work-item move.
 
 ## Summary
 
-- Todo: 7
+- Todo: 6
 - In progress: 0
-- Done: 24
+- Done: 25
 - Blocked: 0
 
 ## Work items
@@ -30,7 +30,7 @@ a work-item move.
 | US-10 | story | must | done | TECH-01, US-06 | Bild hochladen |
 | US-11 | story | should | done | US-10 | Bild automatisch optimieren |
 | US-12 | story | must | done | US-10, US-16 | Bild verschieben |
-| US-13 | story | must | todo | US-10, US-16, US-20 | Bild zoomen |
+| US-13 | story | must | done | US-10, US-16, US-20 | Bild zoomen |
 | US-14 | story | must | done | US-09, US-16 | Logo anpassen |
 | US-15 | story | should | todo | US-12, US-13, US-14 | Design zurücksetzen |
 | US-16 | story | must | done | TECH-03, US-04 | Live-Vorschau anzeigen |
