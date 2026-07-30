@@ -46,6 +46,11 @@
   color: #4f4034;
 }
 
+.selection-lede--compact {
+  margin-top: 12px;
+  font-size: 0.98rem;
+}
+
 .selection-summary {
   display: inline-flex;
   margin: 18px 0 0;
@@ -57,8 +62,75 @@
   font-weight: 700;
 }
 
+.wizard-trail {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.wizard-trail__step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(33, 26, 21, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.wizard-trail__step--active {
+  border-color: rgba(143, 90, 42, 0.56);
+  background: rgba(255, 251, 245, 0.96);
+  box-shadow: 0 14px 30px rgba(72, 48, 28, 0.08);
+}
+
+.wizard-trail__step--complete {
+  border-color: rgba(79, 122, 43, 0.24);
+}
+
+.wizard-trail__index {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(143, 90, 42, 0.14);
+  color: #5c3a1b;
+  font-weight: 700;
+  flex: none;
+}
+
+.wizard-trail__step--active .wizard-trail__index {
+  background: rgba(143, 90, 42, 0.22);
+}
+
+.wizard-trail__step--complete .wizard-trail__index {
+  background: rgba(79, 122, 43, 0.18);
+  color: #3d6121;
+}
+
+.wizard-trail__body strong {
+  display: block;
+  color: #211a15;
+}
+
+.wizard-trail__body p {
+  margin: 4px 0 0;
+  color: #6c5848;
+  font-size: 0.92rem;
+}
+
 .selection-section {
   margin-top: 32px;
+}
+
+.selection-section--wizard {
+  scroll-margin-top: 24px;
+}
+
+.selection-section--locked {
+  opacity: 0.86;
 }
 
 .selection-section__heading {

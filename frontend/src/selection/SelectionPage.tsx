@@ -46,11 +46,45 @@ type QualityReport = {
   blocking: boolean;
 };
 
+type WizardStep = {
+  id: 'use-case' | 'product' | 'template' | 'configure' | 'approval';
+  title: string;
+  description: string;
+};
+
 const DEFAULT_ELEMENT_ADJUSTMENT: ElementAdjustment = {
   offset_x: 0,
   offset_y: 0,
   scale: 1,
 };
+
+const WIZARD_STEPS: WizardStep[] = [
+  {
+    id: 'use-case',
+    title: 'Anwendungsfall',
+    description: 'Zuerst den Einsatzbereich wählen.',
+  },
+  {
+    id: 'product',
+    title: 'Produkt',
+    description: 'Dann das passende Format auswählen.',
+  },
+  {
+    id: 'template',
+    title: 'Template',
+    description: 'Eine Vorlage für Produkt und Use Case wählen.',
+  },
+  {
+    id: 'configure',
+    title: 'Konfiguration',
+    description: 'Texte, Medien und Vorschau anpassen.',
+  },
+  {
+    id: 'approval',
+    title: 'Freigabe',
+    description: 'Design freigeben und Auftrag erstellen.',
+  },
+];
 
 function templateKey(template: TemplateDefinition) {
   return `${template.id}@${template.version}`;
@@ -848,6 +882,9 @@ export default function SelectionPage() {
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [orderSubmitting, setOrderSubmitting] = useState(false);
+  const wizardStepIndex =
+    !selectedUseCaseId ? 0 : !selectedProductId ? 1 : !selectedTemplateKey ? 2 : !state.draft?.approved_at ? 3 : 4;
+  const wizardStep = WIZARD_STEPS[wizardStepIndex];
 
   useEffect(() => {
     if (state.draft?.approved_at && state.draft.approval_checklist) {
@@ -1169,6 +1206,16 @@ export default function SelectionPage() {
 
   const validationIssues = qualityReport?.issues ?? [];
   const blockingIssues = validationIssues.filter((issue) => issue.blocking);
+  const wizardHint =
+    wizardStepIndex === 0
+      ? 'Wähle zuerst einen Anwendungsfall, damit die passenden Produkte erscheinen.'
+      : wizardStepIndex === 1
+        ? 'Jetzt das Produkt wählen. Danach erscheinen nur passende Templates.'
+        : wizardStepIndex === 2
+          ? 'Ein Template auswählen, dann die Inhalte konfigurieren.'
+          : wizardStepIndex === 3
+            ? 'Konfiguration prüfen und anschließend die Freigabe abschließen.'
+            : 'Freigabe abgeschlossen. Du kannst jetzt den Auftrag erstellen.';
 
   return (
     <main className="selection-shell">
@@ -1180,9 +1227,25 @@ export default function SelectionPage() {
             <p className="selection-lede">
               Wähle einen Anwendungsfall, damit nur passende Produkte und Templates angezeigt werden.
             </p>
+            <div className="wizard-trail" aria-label="Konfigurationsschritte">
+              {WIZARD_STEPS.map((step, index) => (
+                <div
+                  key={step.id}
+                  className={`wizard-trail__step${index === wizardStepIndex ? ' wizard-trail__step--active' : ''}${index < wizardStepIndex ? ' wizard-trail__step--complete' : ''}`}
+                >
+                  <span className="wizard-trail__index">{index + 1}</span>
+                  <div className="wizard-trail__body">
+                    <strong>{step.title}</strong>
+                    <p>{step.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
             <p className="selection-summary" aria-live="polite">
-              Auswahl: {selectedUseCase?.name ?? 'kein Use case'} / {selectedProduct?.name ?? 'kein Produkt'} /
-              {selectedTemplate?.name ?? selectedTemplate?.id ?? 'kein Template'}
+              Schritt {wizardStepIndex + 1} von {WIZARD_STEPS.length}: {wizardStep.title}
+            </p>
+            <p className="selection-lede selection-lede--compact" aria-live="polite">
+              {wizardHint}
             </p>
           </div>
           <dl className="status-card">
@@ -1205,9 +1268,9 @@ export default function SelectionPage() {
           </dl>
         </div>
 
-        <section className="selection-section">
+        <section className="selection-section selection-section--wizard">
           <div className="selection-section__heading">
-            <h2>Anwendungsfälle</h2>
+            <h2>1. Anwendungsfälle</h2>
             <p>{bundle.use_cases.filter((useCase) => useCase.active).length} aktive Auswahlmöglichkeiten</p>
           </div>
           <div className="use-case-grid">
@@ -1226,9 +1289,9 @@ export default function SelectionPage() {
         </section>
 
         <div className="selection-columns">
-          <section className="selection-section">
+          <section className={`selection-section selection-section--wizard${wizardStepIndex >= 1 ? '' : ' selection-section--locked'}`}>
             <div className="selection-section__heading">
-              <h2>Passende Produkte</h2>
+              <h2>2. Passende Produkte</h2>
               <p>{matchingProducts.length} Einträge</p>
             </div>
             <div className="product-grid">
@@ -1275,9 +1338,9 @@ export default function SelectionPage() {
             ) : null}
           </section>
 
-          <section className="selection-section">
+          <section className={`selection-section selection-section--wizard${wizardStepIndex >= 2 ? '' : ' selection-section--locked'}`}>
             <div className="selection-section__heading">
-              <h2>Passende Templates</h2>
+              <h2>3. Passende Templates</h2>
               <p>{matchingTemplates.length} Einträge</p>
             </div>
             <div className="template-grid">
@@ -1299,7 +1362,7 @@ export default function SelectionPage() {
 
             {selectedTemplate && selectedProduct && selectedUseCase ? (
               <article className="template-detail">
-                <p className="template-detail__eyebrow">Selected template</p>
+                <p className="template-detail__eyebrow">4. Konfiguration</p>
                 <h3>
                   {selectedTemplate.name ?? selectedTemplate.id} <span>@{selectedTemplate.version}</span>
                 </h3>
@@ -1435,9 +1498,9 @@ export default function SelectionPage() {
           </section>
         </div>
 
-        <section className="selection-section">
+        <section className={`selection-section selection-section--wizard${wizardStepIndex >= 3 ? '' : ' selection-section--locked'}`}>
           <div className="selection-section__heading">
-            <h2>Aufträge</h2>
+            <h2>5. Freigabe und Aufträge</h2>
             <p>{orders.length} gespeicherte Aufträge</p>
           </div>
           <div className="order-grid">
