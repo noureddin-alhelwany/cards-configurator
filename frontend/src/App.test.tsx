@@ -658,7 +658,7 @@ test('renders the registry selection flow and filters matching products', async 
     expect(screen.getAllByTestId('proof-canvas')).toHaveLength(1);
   });
   await waitFor(() => {
-    expect(screen.getByText(/QR-Ziel ist zu klein für dieses Produkt/)).toBeInTheDocument();
+    expect(screen.getAllByText(/QR-Ziel ist zu klein für dieses Produkt/)).toHaveLength(2);
   });
   expect(within(livePreview as HTMLElement).getByText('Studio One')).toBeInTheDocument();
 
@@ -1064,6 +1064,17 @@ test('approves a draft and locks editing afterward', async () => {
           }),
         };
       }
+      if (url.startsWith('/api/qr')) {
+        const parsed = new URL(url, 'http://localhost');
+        const value = parsed.searchParams.get('value') ?? '';
+        return {
+          ok: true,
+          json: async () => ({
+            value,
+            data_url: `data:image/svg+xml;base64,${btoa(`<svg>${value}</svg>`)}`,
+          }),
+        };
+      }
       return {
         ok: false,
         json: async () => ({}),
@@ -1085,27 +1096,20 @@ test('approves a draft and locks editing afterward', async () => {
   await waitFor(() => {
     expect(screen.getByRole('button', { name: 'Design freigeben' })).toBeInTheDocument();
   });
-  fireEvent.click(screen.getByLabelText('Texte geprüft'));
-  fireEvent.click(screen.getByLabelText('URL geprüft'));
-  fireEvent.click(screen.getByLabelText('Bildausschnitt geprüft'));
-  fireEvent.click(screen.getByLabelText('Vorschau freigegeben'));
+  fireEvent.click(screen.getByLabelText('Ich habe die Vorschau geprüft'));
   expect(screen.getByRole('button', { name: 'Design freigeben' })).toBeEnabled();
   fireEvent.click(screen.getByRole('button', { name: 'Design freigeben' }));
 
   await waitFor(() => {
-    expect(screen.getByRole('button', { name: 'Freigegeben' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Auftrag erstellen' })).toBeInTheDocument();
   });
   expect(screen.getByText(/Freigegeben am/)).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Neue Konfiguration starten' })).toBeEnabled();
-  fireEvent.click(screen.getByRole('button', { name: 'Neue Konfiguration starten' }));
-
   await waitFor(() => {
-    expect(screen.getByRole('button', { name: 'Konfiguration zurücksetzen' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Auftrag erstellen' })).toBeEnabled();
   });
-  expect(screen.getByRole('button', { name: 'Weiter' })).toBeEnabled();
-  fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
-
+  fireEvent.click(screen.getByRole('button', { name: 'Auftrag erstellen' }));
   await waitFor(() => {
-    expect(screen.getByRole('heading', { name: '2. Design' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'ORD-20260730-ABC123' })).toBeInTheDocument();
   });
+  expect(screen.getByText('Auftrag erstellt')).toBeInTheDocument();
 });

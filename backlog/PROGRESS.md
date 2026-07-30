@@ -7,7 +7,7 @@ a work-item move.
 
 - Todo: 2
 - In progress: 0
-- Done: 36
+- Done: 41
 - Blocked: 0
 
 ## Work items
@@ -31,6 +31,11 @@ a work-item move.
 | UI-10 | story | should | done | UI-09 | Textvorschläge integrieren |
 | UI-11 | story | should | done | UI-09 | Logo- und Bildupload erstellen |
 | UI-12 | story | should | done | UI-11, US-16 | Einfaches Zuschneiden und Positionieren vorbereiten |
+| UI-13 | story | should | done | UI-12 | Live-Vorschau als eigenständige Komponente erstellen |
+| UI-14 | story | should | done | UI-13 | Layoutvarianten einfach auswählbar machen |
+| UI-15 | story | should | done | UI-13 | Validierung nutzerfreundlich darstellen |
+| UI-16 | story | must | done | UI-15 | Automatische Qualitätsprüfung darstellen |
+| UI-17 | story | must | done | UI-16 | Prüfen-und-Freigeben-Schritt erstellen |
 | US-09 | story | must | done | TECH-01, US-06 | Logo hochladen |
 | US-10 | story | must | done | TECH-01, US-06 | Bild hochladen |
 | US-11 | story | should | done | US-10 | Bild automatisch optimieren |

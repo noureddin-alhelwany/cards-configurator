@@ -8,7 +8,7 @@ import type {
 } from '../registries/types';
 import type { DraftState, TemplateSelectionRequest } from '../drafts/types';
 import type { ElementAdjustment, ValidationIssue } from '../design/types';
-import type { OrderDetail, OrderSummary } from '../orders/types';
+import type { OrderDetail } from '../orders/types';
 import {
   assetElementForField,
   clamp,
@@ -19,6 +19,8 @@ import {
   activeVariant,
   demoTextForRole,
   fieldRole,
+  fieldLabel,
+  friendlyValidationMessage,
   templateKey,
   TemplateCard,
   TemplateFieldsList,
@@ -211,14 +213,6 @@ async function resetDraft(): Promise<DraftState> {
     throw new Error(detail || `Failed to reset draft: ${response.status}`);
   }
   return (await response.json()) as DraftState;
-}
-
-async function loadOrders(): Promise<OrderSummary[]> {
-  const response = await fetch('/api/orders');
-  if (!response.ok) {
-    throw new Error(`Failed to load orders: ${response.status}`);
-  }
-  return (await response.json()) as OrderSummary[];
 }
 
 async function createOrder(): Promise<OrderDetail> {
@@ -504,8 +498,6 @@ export default function SelectionPage() {
   const [pendingProductId, setPendingProductId] = useState<string | null>(null);
   const [expandedAssetFieldId, setExpandedAssetFieldId] = useState<string | null>(null);
   const [previewExpanded, setPreviewExpanded] = useState(false);
-  const [orders, setOrders] = useState<OrderSummary[]>([]);
-  const [ordersError, setOrdersError] = useState<string | null>(null);
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const pendingProduct = useMemo(
     () => bundle?.products.find((product) => product.id === pendingProductId) ?? null,
@@ -718,27 +710,6 @@ export default function SelectionPage() {
       active = false;
     };
   }, [selectedTemplateKey, layoutValues, selectedVariantId]);
-
-  useEffect(() => {
-    let active = true;
-
-    loadOrders()
-      .then((response) => {
-        if (active) {
-          setOrders(response);
-          setOrdersError(null);
-        }
-      })
-      .catch((exception: unknown) => {
-        if (active) {
-          setOrdersError(exception instanceof Error ? exception.message : 'Aufträge konnten nicht geladen werden');
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
 
   function handleUseCaseSelect(useCaseId: string) {
     setSelectedUseCaseId(useCaseId);
@@ -1004,17 +975,27 @@ export default function SelectionPage() {
       return;
     }
     setOrderSubmitting(true);
-    setOrdersError(null);
     try {
       const order = await createOrder();
-      setOrders((current) => [order, ...current.filter((entry) => entry.id !== order.id)]);
       window.history.pushState({}, '', `/render/orders/${order.id}`);
       window.dispatchEvent(new PopStateEvent('popstate'));
     } catch (exception: unknown) {
-      setOrdersError(exception instanceof Error ? exception.message : 'Auftrag konnte nicht erstellt werden');
+      setApprovalError(exception instanceof Error ? exception.message : 'Auftrag konnte nicht erstellt werden');
     } finally {
       setOrderSubmitting(false);
     }
+  }
+
+  function issueLabel(issue: ValidationIssue) {
+    if (!selectedTemplate) {
+      return 'Prüfung';
+    }
+    const fieldId = validationDisplayPath(issue);
+    const field = selectedTemplate.fields.find((entry) => entry.id === fieldId);
+    if (!field) {
+      return issue.code === 'qr_too_small' ? 'QR-Ziel' : 'Prüfung';
+    }
+    return fieldLabel(fieldRole(field, selectedTemplate.fields.indexOf(field)));
   }
 
   if (state.error) {
@@ -1324,7 +1305,7 @@ export default function SelectionPage() {
               <section className="selection-section selection-section--wizard selection-step-panel">
                 <div className="selection-section__heading">
                   <h2>{showProductStep ? '5. Prüfen' : '4. Prüfen'}</h2>
-                  <p>{orders.length} gespeicherte Aufträge</p>
+                  <p>{isApproved ? 'Freigabe abgeschlossen' : 'Freigabe und Auftragserstellung'}</p>
                 </div>
                 <article className="template-detail">
                   <p className="template-detail__eyebrow">Freigabe</p>
@@ -1338,10 +1319,10 @@ export default function SelectionPage() {
                     <button
                       type="button"
                       className="template-field__reset"
-                      disabled={isApproved || blockingIssues.length > 0 || approvalSubmitting || !approvalReady}
-                      onClick={handleApprovalSubmit}
+                      disabled={blockingIssues.length > 0 || (!isApproved && (!approvalReady || approvalSubmitting)) || (isApproved && orderSubmitting)}
+                      onClick={isApproved ? handleOrderCreate : handleApprovalSubmit}
                     >
-                      {isApproved ? 'Freigegeben' : approvalSubmitting ? 'Freigabe läuft...' : 'Design freigeben'}
+                      {isApproved ? (orderSubmitting ? 'Auftrag wird erstellt...' : 'Auftrag erstellen') : approvalSubmitting ? 'Freigabe läuft...' : 'Design freigeben'}
                     </button>
                   </div>
                   {isApproved ? (
@@ -1353,111 +1334,31 @@ export default function SelectionPage() {
                     Produkt {selectedTemplate.product_id}, {selectedTemplate.use_case_ids.length} Use Cases, {selectedTemplate.fields.length} Felder
                   </p>
                   <div className="template-approval">
-                    <p className="template-detail__group-title">Freigabe-Checkliste</p>
+                    <p className="template-detail__group-title">Prüfung bestätigt</p>
                     <div className="template-approval__list">
                       <label className="template-approval__item">
                         <input
                           type="checkbox"
-                          checked={approvalChecklist.texts_checked}
-                          disabled={isApproved}
-                          onChange={(event) => setApprovalChecklist((current) => ({ ...current, texts_checked: event.target.checked }))}
-                        />
-                        <span>Texte geprüft</span>
-                      </label>
-                      <label className="template-approval__item">
-                        <input
-                          type="checkbox"
-                          checked={approvalChecklist.url_checked}
-                          disabled={isApproved}
-                          onChange={(event) => setApprovalChecklist((current) => ({ ...current, url_checked: event.target.checked }))}
-                        />
-                        <span>URL geprüft</span>
-                      </label>
-                      <label className="template-approval__item">
-                        <input
-                          type="checkbox"
-                          checked={approvalChecklist.image_crop_checked}
+                          checked={approvalReady}
                           disabled={isApproved}
                           onChange={(event) =>
-                            setApprovalChecklist((current) => ({ ...current, image_crop_checked: event.target.checked }))
+                            setApprovalChecklist({
+                              texts_checked: event.target.checked,
+                              url_checked: event.target.checked,
+                              image_crop_checked: event.target.checked,
+                              preview_released: event.target.checked,
+                            })
                           }
                         />
-                        <span>Bildausschnitt geprüft</span>
-                      </label>
-                      <label className="template-approval__item">
-                        <input
-                          type="checkbox"
-                          checked={approvalChecklist.preview_released}
-                          disabled={isApproved}
-                          onChange={(event) =>
-                            setApprovalChecklist((current) => ({ ...current, preview_released: event.target.checked }))
-                          }
-                        />
-                        <span>Vorschau freigegeben</span>
+                        <span>Ich habe die Vorschau geprüft</span>
                       </label>
                     </div>
                   </div>
-                  <p className="template-detail__hint">Der finale Zustand wird jetzt geprüft und kann anschließend als Auftrag gespeichert werden.</p>
+                  <p className="template-detail__hint">Der finale Zustand wird jetzt geprüft. Nach der Freigabe kann der Auftrag erstellt werden.</p>
                 </article>
-                <div className="order-grid">
-                  {orders.length > 0 ? (
-                    orders.map((order) => (
-                      <button
-                        key={order.id}
-                        type="button"
-                        className="selection-order-card"
-                        onClick={() => {
-                          window.history.pushState({}, '', `/render/orders/${order.id}`);
-                          window.dispatchEvent(new PopStateEvent('popstate'));
-                        }}
-                      >
-                        <span className="selection-order-card__badge">{order.order_number}</span>
-                        <div className="selection-order-card__preview">
-                          {order.preview_path ? (
-                            <img
-                              src={`/api/orders/${encodeURIComponent(order.id)}/preview`}
-                              alt={`Vorschau für ${order.order_number}`}
-                              loading="lazy"
-                            />
-                          ) : (
-                            <span className="selection-order-card__preview-empty">Keine Vorschau</span>
-                          )}
-                        </div>
-                        <div className="selection-order-card__content">
-                          <h3>{order.display_name ?? 'Kein Firmenname hinterlegt'}</h3>
-                          <p className="selection-order-card__summary">
-                            {order.product_id} · {order.template_id}@{order.template_version}
-                          </p>
-                          <dl className="selection-order-card__meta">
-                            <div>
-                              <dt>Datum</dt>
-                              <dd>{new Date(order.created_at).toLocaleDateString('de-DE')}</dd>
-                            </div>
-                            <div>
-                              <dt>Template</dt>
-                              <dd>
-                                {order.template_id}@{order.template_version}
-                              </dd>
-                            </div>
-                          </dl>
-                        </div>
-                      </button>
-                    ))
-                  ) : (
-                    <p className="order-grid__empty">Noch keine Aufträge erstellt.</p>
-                  )}
-                </div>
                 <div className="wizard-step-nav">
                   <button type="button" className="wizard-step-nav__button" onClick={goToPreviousWizardStep}>
                     Zur Inhalte
-                  </button>
-                  <button
-                    type="button"
-                    className="wizard-step-nav__button wizard-step-nav__button--primary"
-                    disabled={!isApproved}
-                    onClick={handleOrderCreate}
-                  >
-                    {orderSubmitting ? 'Auftrag wird erstellt...' : 'Auftrag erstellen'}
                   </button>
                 </div>
               </section>
@@ -1498,7 +1399,6 @@ export default function SelectionPage() {
                 {qualityError ? <p className="template-field__error">{qualityError}</p> : null}
                 {approvalError ? <p className="template-field__error">{approvalError}</p> : null}
                 {resetError ? <p className="template-field__error">{resetError}</p> : null}
-                {ordersError ? <p className="template-field__error">{ordersError}</p> : null}
                 {showBlockingSummary ? (
                   <p className="selection-feedback__summary">
                     {visibleBlockingIssues.length} Probleme verhindern den Abschluss. Prüfe die markierten Felder.
@@ -1511,7 +1411,7 @@ export default function SelectionPage() {
                       {visibleValidationIssues.map((issue) => (
                         <li key={`${issue.path}-${issue.code}`} className={`template-quality__item template-quality__item--${issue.severity}`}>
                           <strong>{issue.severity === 'warning' ? 'Hinweis' : 'Fehler'}</strong>
-                          <span>{issue.message}</span>
+                          <span>{friendlyValidationMessage(issue, issueLabel(issue))}</span>
                         </li>
                       ))}
                     </ul>
