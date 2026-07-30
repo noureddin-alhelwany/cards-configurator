@@ -33,6 +33,13 @@
       "max_lines": null
     },
     {
+      "id": "heroImage",
+      "type": "image",
+      "required": false,
+      "max_length": null,
+      "max_lines": null
+    },
+    {
       "id": "qrTarget",
       "type": "url",
       "required": true,
@@ -85,6 +92,48 @@
       "color": "#4a3d31",
       "line_height": 1.22,
       "align": "left"
+    },
+    {
+      "kind": "image",
+      "id": "proof-hero-image",
+      "box_mm": {
+        "x_mm": 54,
+        "y_mm": 14,
+        "width_mm": 42,
+        "height_mm": 44
+      },
+      "z_index": 1,
+      "asset_key": "heroImage",
+      "alt": "Review hero image",
+      "fit": "cover",
+      "movement_mm": {
+        "x_mm": 0,
+        "y_mm": 0,
+        "width_mm": 4,
+        "height_mm": 4
+      },
+      "enhancement": "contrast"
+    },
+    {
+      "kind": "image",
+      "id": "proof-logo",
+      "box_mm": {
+        "x_mm": 14,
+        "y_mm": 74,
+        "width_mm": 28,
+        "height_mm": 28
+      },
+      "z_index": 2,
+      "asset_key": "logo",
+      "alt": "Studio logo",
+      "fit": "contain",
+      "enhancement": "none",
+      "movement_mm": {
+        "x_mm": 0,
+        "y_mm": 0,
+        "width_mm": 6,
+        "height_mm": 4
+      }
     }
   ],
   "variants": [

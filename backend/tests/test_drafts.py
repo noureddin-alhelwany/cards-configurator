@@ -38,6 +38,9 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
             json={
                 'variant_id': 'text-focused',
                 'text_values': {'businessName': 'Studio One'},
+                'element_adjustments': {
+                    'proof-logo': {'offset_x': 0.25, 'offset_y': -0.1, 'scale': 1.1},
+                },
             },
         )
         assert layout_response.status_code == 200
@@ -45,6 +48,8 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
         assert layout_payload['variant_id'] == 'text-focused'
         assert layout_payload['layout_state']['variant_id'] == 'text-focused'
         assert layout_payload['layout_state']['text_values']['businessName'] == 'Studio One'
+        assert layout_payload['layout_state']['element_adjustments']['proof-logo']['offset_x'] == 0.25
+        assert layout_payload['layout_state']['element_adjustments']['proof-logo']['scale'] == 1.1
 
         refreshed = client.get('/api/drafts/current')
         assert refreshed.status_code == 200
@@ -53,6 +58,7 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
         assert refreshed_payload['template_version'] == '1.0.0'
         assert refreshed_payload['variant_id'] == 'text-focused'
         assert refreshed_payload['layout_state']['text_values']['businessName'] == 'Studio One'
+        assert refreshed_payload['layout_state']['element_adjustments']['proof-logo']['offset_y'] == -0.1
 
 
 def test_url_values_are_normalized_and_qr_preview_is_generated(tmp_path: Path, monkeypatch) -> None:

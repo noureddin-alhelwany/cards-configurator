@@ -58,6 +58,12 @@ function renderImageElement(
 ) {
   const adjustment = adjustmentFor(layoutState, element.id);
   const movement = element.movement_mm ?? { x_mm: 0, y_mm: 0, width_mm: 0, height_mm: 0 };
+  const filter =
+    element.enhancement === 'contrast'
+      ? 'contrast(1.06) saturate(1.01)'
+      : element.enhancement === 'sharpen'
+        ? 'contrast(1.03) saturate(1.02)'
+        : undefined;
   return (
     <img
       key={element.id}
@@ -66,6 +72,7 @@ function renderImageElement(
         ...mmBoxStyle(element.box_mm),
         zIndex: element.z_index,
         objectFit: element.fit,
+        filter,
         transform: `translate(${adjustment.offset_x * movement.width_mm}mm, ${adjustment.offset_y * movement.height_mm}mm) scale(${adjustment.scale})`,
         transformOrigin: 'center center',
       }}

@@ -22,6 +22,8 @@ def build_proof_fixture(bundle: RegistryBundle, proof_assets_dir: Path) -> Proof
 
     logo_path = proof_assets_dir / "logo.png"
     logo_bytes = logo_path.read_bytes()
+    hero_image_path = proof_assets_dir / "google_reviews_preview.png"
+    hero_image_bytes = hero_image_path.read_bytes()
     qr = segno.make(use_case.description, error="m")
     qr_buffer = BytesIO()
     qr.save(qr_buffer, kind="svg")
@@ -39,6 +41,7 @@ def build_proof_fixture(bundle: RegistryBundle, proof_assets_dir: Path) -> Proof
         ),
         assets={
             "logo": _data_url("image/png", logo_bytes),
+            "heroImage": _data_url("image/png", hero_image_bytes),
             "qr": _data_url("image/svg+xml", qr_bytes),
         },
     )

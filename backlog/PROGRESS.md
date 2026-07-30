@@ -5,9 +5,9 @@ a work-item move.
 
 ## Summary
 
-- Todo: 18
+- Todo: 12
 - In progress: 0
-- Done: 13
+- Done: 18
 - Blocked: 0
 
 ## Work items
@@ -26,12 +26,12 @@ a work-item move.
 | US-06 | story | must | done | US-04 | Template-Felder anzeigen |
 | US-07 | story | must | done | US-06 | Text eingeben |
 | US-08 | story | must | done | US-06 | URL eingeben |
-| US-09 | story | must | todo | TECH-01, US-06 | Logo hochladen |
-| US-10 | story | must | todo | TECH-01, US-06 | Bild hochladen |
-| US-11 | story | should | todo | US-10 | Bild automatisch optimieren |
-| US-12 | story | must | todo | US-10, US-16 | Bild verschieben |
+| US-09 | story | must | done | TECH-01, US-06 | Logo hochladen |
+| US-10 | story | must | done | TECH-01, US-06 | Bild hochladen |
+| US-11 | story | should | done | US-10 | Bild automatisch optimieren |
+| US-12 | story | must | done | US-10, US-16 | Bild verschieben |
 | US-13 | story | must | todo | US-10, US-16, US-20 | Bild zoomen |
-| US-14 | story | must | todo | US-09, US-16 | Logo anpassen |
+| US-14 | story | must | done | US-09, US-16 | Logo anpassen |
 | US-15 | story | should | todo | US-12, US-13, US-14 | Design zurücksetzen |
 | US-16 | story | must | done | TECH-03, US-04 | Live-Vorschau anzeigen |
 | US-17 | story | should | todo | US-16, TECH-04 | Produkt-Mockup anzeigen |

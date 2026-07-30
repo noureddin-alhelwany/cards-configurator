@@ -155,6 +155,8 @@ def update_layout_state(session: Session, bundle: RegistryBundle, request: Layou
             layout_state.text_values = _normalize_layout_text_values(template, layout_state.text_values)
     if request.asset_values is not None:
         layout_state.asset_values.update(request.asset_values)
+    if request.element_adjustments is not None:
+        layout_state.element_adjustments.update(request.element_adjustments)
 
     payload["layout_state"] = layout_state.model_dump()
     draft.payload = payload

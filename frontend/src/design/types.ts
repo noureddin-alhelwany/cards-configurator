@@ -48,6 +48,7 @@ export type ImageElementDefinition = {
   alt: string;
   fit: 'contain' | 'cover';
   movement_mm: BoxMm | null;
+  enhancement: 'none' | 'contrast' | 'sharpen';
 };
 
 export type QrElementDefinition = {

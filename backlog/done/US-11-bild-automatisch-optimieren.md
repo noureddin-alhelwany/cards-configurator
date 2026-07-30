@@ -3,13 +3,13 @@
     type: user-story
     title: "Bild automatisch optimieren"
     epic: "4 — Uploads und Assets"
-    status: todo
+    status: done
     priority: should
     depends_on: [US-10]
     verification: backend
     context_docs: [docs/TEMPLATE_AND_RENDERING.md, docs/QUALITY_STRATEGY.md]
     started_at:
-    completed_at:
+    completed_at: 2026-07-30
     ---
 
     # US-11 — Bild automatisch optimieren
@@ -41,9 +41,7 @@
 
     ## Result
 
-    _Fill only when work starts or completes._
-
-    - Changed:
-    - Decisions:
-    - Verification:
-    - Remaining risks:
+    - Changed: Image-Assets werden in interne PNG-Derivate überführt, Vorschauen werden begrenzt skaliert, Originale bleiben unverändert erhalten und das Renderer-Modell unterstützt template-seitige Bildanpassung.
+    - Decisions: Pillow reicht für den MVP; OpenCV bleibt außen vor. Die moderate Bildkorrektur läuft als optionale Renderer-Eigenschaft und verändert das Original nicht.
+    - Verification: `backend/.venv/bin/pytest backend/tests/test_drafts.py backend/tests/test_assets.py backend/tests/test_rendering_proof.py -q`, `make lint`, `make typecheck`, `make test`, `make build`.
+    - Remaining risks: Feinere templatespezifische Filterprofile können später ergänzt werden, ohne das Asset-Speichermodell zu ändern.

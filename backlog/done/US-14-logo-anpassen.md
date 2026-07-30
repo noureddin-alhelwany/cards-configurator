@@ -3,13 +3,13 @@
     type: user-story
     title: "Logo anpassen"
     epic: "5 — Kontrollierter Editor"
-    status: todo
+    status: done
     priority: must
     depends_on: [US-09, US-16]
     verification: frontend
     context_docs: [docs/TEMPLATE_AND_RENDERING.md]
     started_at:
-    completed_at:
+    completed_at: 2026-07-30
     ---
 
     # US-14 — Logo anpassen
@@ -39,9 +39,7 @@
 
     ## Result
 
-    _Fill only when work starts or completes._
-
-    - Changed:
-    - Decisions:
-    - Verification:
-    - Remaining risks:
+    - Changed: Logo-Transformen können nun innerhalb einer sicheren Zone verschoben und skaliert werden, inklusive Reset und sofortiger Vorschau-Aktualisierung.
+    - Decisions: Das Logo bleibt proportional und wird über denselben Layout-State wie die restliche Vorschau gesteuert, damit Preview und Produktion übereinstimmen.
+    - Verification: `backend/.venv/bin/pytest backend/tests/test_drafts.py backend/tests/test_assets.py backend/tests/test_rendering_proof.py -q`, `make lint`, `make typecheck`, `make test`, `make build`.
+    - Remaining risks: Feinkörnige UI-Gesten wie direkte Drag-Handles sind für den MVP nicht erforderlich und können später ergänzt werden.

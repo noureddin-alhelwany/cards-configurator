@@ -98,6 +98,7 @@ class ImageElementDefinition(ElementBase):
     alt: str
     fit: Literal["contain", "cover"] = "contain"
     movement_mm: BoxMm | None = None
+    enhancement: Literal["none", "contrast", "sharpen"] = "none"
 
 
 class QrElementDefinition(ElementBase):

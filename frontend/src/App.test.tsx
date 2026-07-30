@@ -9,6 +9,7 @@ afterEach(() => {
 
 test('renders the registry selection flow and filters matching products', async () => {
   let persistedTextValues: Record<string, string> = {};
+  let persistedElementAdjustments: Record<string, { offset_x: number; offset_y: number; scale: number }> = {};
 
   function normalizeUrl(value: string) {
     const trimmed = value.trim();
@@ -70,6 +71,27 @@ test('renders the registry selection flow and filters matching products', async 
       },
       {
         kind: 'image',
+        id: 'proof-hero-image',
+        box_mm: {
+          x_mm: 54,
+          y_mm: 14,
+          width_mm: 42,
+          height_mm: 44,
+        },
+        z_index: 1,
+        asset_key: 'heroImage',
+        alt: 'Review hero image',
+        fit: 'cover',
+        enhancement: 'contrast',
+        movement_mm: {
+          x_mm: 0,
+          y_mm: 0,
+          width_mm: 4,
+          height_mm: 4,
+        },
+      },
+      {
+        kind: 'image',
         id: 'proof-logo',
         box_mm: {
           x_mm: 15,
@@ -81,6 +103,7 @@ test('renders the registry selection flow and filters matching products', async 
         asset_key: 'logo',
         alt: 'Studio logo',
         fit: 'contain',
+        enhancement: 'contrast',
         movement_mm: {
           x_mm: 0,
           y_mm: 0,
@@ -193,16 +216,23 @@ test('renders the registry selection flow and filters matching products', async 
             max_length: 60,
             max_lines: 3,
           },
-          {
-            id: 'logo',
-            type: 'logo',
-            required: false,
-            max_length: null,
-            max_lines: null,
-          },
-          {
-            id: 'qrTarget',
-            type: 'url',
+        {
+          id: 'logo',
+          type: 'logo',
+          required: false,
+          max_length: null,
+          max_lines: null,
+        },
+        {
+          id: 'heroImage',
+          type: 'image',
+          required: false,
+          max_length: null,
+          max_lines: null,
+        },
+        {
+          id: 'qrTarget',
+          type: 'url',
             required: true,
             max_length: null,
             max_lines: null,
@@ -248,16 +278,23 @@ test('renders the registry selection flow and filters matching products', async 
             max_length: 60,
             max_lines: 3,
           },
-          {
-            id: 'logo',
-            type: 'logo',
-            required: false,
-            max_length: null,
-            max_lines: null,
-          },
-          {
-            id: 'qrTarget',
-            type: 'url',
+        {
+          id: 'logo',
+          type: 'logo',
+          required: false,
+          max_length: null,
+          max_lines: null,
+        },
+        {
+          id: 'heroImage',
+          type: 'image',
+          required: false,
+          max_length: null,
+          max_lines: null,
+        },
+        {
+          id: 'qrTarget',
+          type: 'url',
             required: true,
             max_length: null,
             max_lines: null,
@@ -303,16 +340,23 @@ test('renders the registry selection flow and filters matching products', async 
             max_length: 60,
             max_lines: 3,
           },
-          {
-            id: 'logo',
-            type: 'logo',
-            required: false,
-            max_length: null,
-            max_lines: null,
-          },
-          {
-            id: 'qrTarget',
-            type: 'url',
+        {
+          id: 'logo',
+          type: 'logo',
+          required: false,
+          max_length: null,
+          max_lines: null,
+        },
+        {
+          id: 'heroImage',
+          type: 'image',
+          required: false,
+          max_length: null,
+          max_lines: null,
+        },
+        {
+          id: 'qrTarget',
+          type: 'url',
             required: true,
             max_length: null,
             max_lines: null,
@@ -399,7 +443,7 @@ test('renders the registry selection flow and filters matching products', async 
             variant_id: selection.variant_id ?? 'logo-focused',
             layout_state: {
               variant_id: selection.variant_id ?? 'logo-focused',
-              element_adjustments: {},
+              element_adjustments: persistedElementAdjustments,
               text_values: {},
               asset_values: {},
             },
@@ -413,12 +457,17 @@ test('renders the registry selection flow and filters matching products', async 
           ...persistedTextValues,
           ...(body.text_values ?? {}),
         };
+        const nextElementAdjustments = {
+          ...persistedElementAdjustments,
+          ...(body.element_adjustments ?? {}),
+        };
         Object.entries(nextTextValues).forEach(([fieldId, value]) => {
           if (fieldId === 'qrTarget') {
             nextTextValues[fieldId] = normalizeUrl(value as string);
           }
         });
         persistedTextValues = nextTextValues;
+        persistedElementAdjustments = nextElementAdjustments;
         return {
           ok: true,
           json: async () => ({
@@ -431,7 +480,7 @@ test('renders the registry selection flow and filters matching products', async 
             variant_id: nextVariantId,
             layout_state: {
               variant_id: nextVariantId,
-              element_adjustments: {},
+              element_adjustments: nextElementAdjustments,
               text_values: nextTextValues,
               asset_values: {},
             },
@@ -521,6 +570,33 @@ test('renders the registry selection flow and filters matching products', async 
   });
   expect(screen.getByRole('img', { name: 'Studio logo' })).toBeInTheDocument();
   expect(screen.getByRole('img', { name: 'QR: https://example.com/review' })).toBeInTheDocument();
+  const logoOffsetX = screen.getByLabelText('logo verschiebung x');
+  fireEvent.change(logoOffsetX, { target: { value: '0.25' } });
+  await waitFor(() => {
+    expect(screen.getByDisplayValue('0.25')).toBeInTheDocument();
+  });
+  await waitFor(() => {
+    expect(screen.getByRole('img', { name: 'Studio logo' })).toHaveStyle(
+      'transform: translate(1.5mm, 0mm) scale(1);',
+    );
+  });
+  expect(screen.getByRole('img', { name: 'Studio logo' })).toHaveStyle(
+    'filter: contrast(1.06) saturate(1.01);',
+  );
+
+  const heroFile = new File([new Uint8Array([4, 5, 6])], 'hero.png', { type: 'image/png' });
+  const heroInput = screen.getByLabelText('heroImage');
+  fireEvent.change(heroInput, { target: { files: [heroFile] } });
+  await waitFor(() => {
+    expect(screen.getByAltText('heroImage Vorschau')).toBeInTheDocument();
+  });
+  const heroOffsetY = screen.getByLabelText('heroImage verschiebung y');
+  fireEvent.change(heroOffsetY, { target: { value: '-0.2' } });
+  await waitFor(() => {
+    expect(screen.getByRole('img', { name: 'Review hero image' })).toHaveStyle(
+      'transform: translate(0mm, -0.8mm) scale(1);',
+    );
+  });
 
   fireEvent.click(screen.getByRole('tab', { name: 'Text im Fokus' }));
   await waitFor(() => {

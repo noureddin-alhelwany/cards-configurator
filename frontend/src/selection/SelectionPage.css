@@ -507,6 +507,47 @@
   object-fit: cover;
 }
 
+.template-field__transform {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(143, 90, 42, 0.06);
+}
+
+.template-field__control {
+  display: grid;
+  gap: 6px;
+  font-size: 0.86rem;
+  color: #4f4034;
+}
+
+.template-field__control input[type='range'] {
+  width: 100%;
+}
+
+.template-field__control output {
+  font-variant-numeric: tabular-nums;
+  color: #5c3a1b;
+}
+
+.template-field__reset {
+  justify-self: start;
+  padding: 8px 12px;
+  border: 1px solid rgba(143, 90, 42, 0.24);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #5c3a1b;
+  cursor: pointer;
+}
+
+.template-field__error {
+  margin: 0;
+  color: #8a3b24;
+  font-size: 0.9rem;
+}
+
 .template-live-preview {
   margin-top: 18px;
   padding: 14px 16px;

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from ..registries.schemas import LayoutState
+from ..registries.schemas import ElementAdjustment, LayoutState
 
 
 class TemplateSelectionRequest(BaseModel):
@@ -17,6 +17,7 @@ class LayoutStateUpdateRequest(BaseModel):
     variant_id: str | None = None
     text_values: dict[str, str] | None = None
     asset_values: dict[str, str] | None = None
+    element_adjustments: dict[str, ElementAdjustment] | None = None
 
 
 class DraftState(BaseModel):

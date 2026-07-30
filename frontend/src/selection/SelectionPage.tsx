@@ -7,7 +7,7 @@ import type {
   UseCaseDefinition,
 } from '../registries/types';
 import type { DraftState, TemplateSelectionRequest } from '../drafts/types';
-import type { ProofFixture } from '../design/types';
+import type { ElementAdjustment, ProofFixture } from '../design/types';
 import DesignRenderer from '../design/DesignRenderer';
 import './SelectionPage.css';
 
@@ -23,6 +23,13 @@ type LoadedState = {
 type DraftLayoutValues = {
   text_values: Record<string, string>;
   asset_values: Record<string, string>;
+  element_adjustments: Record<string, ElementAdjustment>;
+};
+
+const DEFAULT_ELEMENT_ADJUSTMENT: ElementAdjustment = {
+  offset_x: 0,
+  offset_y: 0,
+  scale: 1,
 };
 
 function templateKey(template: TemplateDefinition) {
@@ -40,6 +47,22 @@ function activeVariant(template: TemplateDefinition, variantId: string | null) {
 function templatePreviewAsset(template: TemplateDefinition, variantId: string | null) {
   const variant = activeVariant(template, variantId);
   return variant?.preview_asset ?? template.preview_asset ?? 'a6_preview.png';
+}
+
+function layoutValuesFromState(layoutState: DraftState['layout_state']): DraftLayoutValues {
+  return {
+    text_values: layoutState.text_values,
+    asset_values: layoutState.asset_values,
+    element_adjustments: layoutState.element_adjustments,
+  };
+}
+
+function assetElementForField(template: TemplateDefinition, fieldId: string) {
+  return template.elements.find((element) => element.kind === 'image' && element.asset_key === fieldId) ?? null;
+}
+
+function clamp(value: number, minimum: number, maximum: number) {
+  return Math.min(maximum, Math.max(minimum, value));
 }
 
 async function loadRegistries(): Promise<RegistryBundle> {
@@ -77,6 +100,7 @@ async function saveLayoutValues(values: {
   variant_id?: string | null;
   text_values?: Record<string, string>;
   asset_values?: Record<string, string>;
+  element_adjustments?: Record<string, ElementAdjustment>;
 }): Promise<DraftState> {
   const response = await fetch('/api/drafts/current/layout', {
     method: 'PATCH',
@@ -130,6 +154,7 @@ function useRegistrySelection() {
   const [layoutValues, setLayoutValues] = useState<DraftLayoutValues>({
     text_values: {},
     asset_values: {},
+    element_adjustments: {},
   });
 
   useEffect(() => {
@@ -156,10 +181,7 @@ function useRegistrySelection() {
           draft.template_id && draft.template_version ? `${draft.template_id}@${draft.template_version}` : null,
         );
         setSelectedVariantId(draft.layout_state.variant_id || null);
-        setLayoutValues({
-          text_values: draft.layout_state.text_values,
-          asset_values: draft.layout_state.asset_values,
-        });
+        setLayoutValues(layoutValuesFromState(draft.layout_state));
       })
       .catch((exception: unknown) => {
         if (active) {
@@ -364,14 +386,20 @@ function TemplateFieldsList({
   template,
   layoutValues,
   assetPreviews,
+  assetErrors,
   onTextChange,
   onAssetChange,
+  onAssetAdjustmentChange,
+  onAssetAdjustmentReset,
 }: {
   template: TemplateDefinition;
   layoutValues: DraftLayoutValues;
   assetPreviews: Record<string, string>;
+  assetErrors: Record<string, string | null>;
   onTextChange: (fieldId: string, value: string) => void;
   onAssetChange: (fieldId: string, kind: 'logo' | 'image', file: File | null) => void;
+  onAssetAdjustmentChange: (fieldId: string, adjustment: ElementAdjustment) => void;
+  onAssetAdjustmentReset: (fieldId: string) => void;
 }) {
   return (
     <div className="template-fields">
@@ -425,6 +453,8 @@ function TemplateFieldsList({
 
         const assetValue = layoutValues.asset_values[field.id] ?? '';
         const assetPreview = assetPreviews[field.id] ?? (assetValue.startsWith('data:') ? assetValue : '');
+        const assetElement = assetElementForField(template, field.id);
+        const assetAdjustment = assetElement ? layoutValues.element_adjustments[assetElement.id] ?? DEFAULT_ELEMENT_ADJUSTMENT : null;
         return (
           <div key={field.id} className="template-field">
             <div className="template-field__header">
@@ -446,6 +476,68 @@ function TemplateFieldsList({
             ) : (
               <p className="template-field__hint">Datei noch nicht gewählt</p>
             )}
+            {assetErrors[field.id] ? <p className="template-field__error">{assetErrors[field.id]}</p> : null}
+            {assetElement && assetAdjustment ? (
+              <div className="template-field__transform">
+                <label className="template-field__control">
+                  <span>Verschiebung X</span>
+                  <input
+                    type="range"
+                    min="-1"
+                    max="1"
+                    step="0.01"
+                    aria-label={`${field.id} verschiebung x`}
+                    value={assetAdjustment.offset_x}
+                    onChange={(event) =>
+                      onAssetAdjustmentChange(field.id, {
+                        ...assetAdjustment,
+                        offset_x: clamp(Number(event.target.value), -1, 1),
+                      })
+                    }
+                  />
+                  <output>{assetAdjustment.offset_x.toFixed(2)}</output>
+                </label>
+                <label className="template-field__control">
+                  <span>Verschiebung Y</span>
+                  <input
+                    type="range"
+                    min="-1"
+                    max="1"
+                    step="0.01"
+                    aria-label={`${field.id} verschiebung y`}
+                    value={assetAdjustment.offset_y}
+                    onChange={(event) =>
+                      onAssetAdjustmentChange(field.id, {
+                        ...assetAdjustment,
+                        offset_y: clamp(Number(event.target.value), -1, 1),
+                      })
+                    }
+                  />
+                  <output>{assetAdjustment.offset_y.toFixed(2)}</output>
+                </label>
+                <label className="template-field__control">
+                  <span>Skalierung</span>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="1.5"
+                    step="0.01"
+                    aria-label={`${field.id} skalierung`}
+                    value={assetAdjustment.scale}
+                    onChange={(event) =>
+                      onAssetAdjustmentChange(field.id, {
+                        ...assetAdjustment,
+                        scale: clamp(Number(event.target.value), 0.5, 1.5),
+                      })
+                    }
+                  />
+                  <output>{assetAdjustment.scale.toFixed(2)}</output>
+                </label>
+                <button type="button" className="template-field__reset" onClick={() => onAssetAdjustmentReset(field.id)}>
+                  Zurücksetzen
+                </button>
+              </div>
+            ) : null}
           </div>
         );
       })}
@@ -498,7 +590,7 @@ function buildProofFixture(
     use_case: useCase,
     layout_state: {
       variant_id: selectedVariantId ?? template.variants.find((variant) => variant.active)?.id ?? '',
-      element_adjustments: {},
+      element_adjustments: layoutValues.element_adjustments,
       text_values: layoutValues.text_values,
       asset_values: layoutValues.asset_values,
     },
@@ -628,6 +720,7 @@ export default function SelectionPage() {
     [selectedTemplate, selectedVariantId],
   );
   const [assetPreviews, setAssetPreviews] = useState<Record<string, string>>({});
+  const [assetErrors, setAssetErrors] = useState<Record<string, string | null>>({});
 
   const matchingProducts = useMemo(() => (bundle ? visibleProducts(bundle) : []), [bundle]);
   const matchingTemplates = useMemo(
@@ -733,10 +826,7 @@ export default function SelectionPage() {
       response.template_id && response.template_version ? `${response.template_id}@${response.template_version}` : null,
     );
     setSelectedVariantId(response.variant_id ?? response.layout_state.variant_id ?? fallbackVariant?.id ?? null);
-    setLayoutValues({
-      text_values: response.layout_state.text_values,
-      asset_values: response.layout_state.asset_values,
-    });
+    setLayoutValues(layoutValuesFromState(response.layout_state));
   }
 
   async function handleVariantSelect(variant: TemplateVariantDefinition) {
@@ -745,34 +835,57 @@ export default function SelectionPage() {
     }
     const response = await saveLayoutValues({ variant_id: variant.id });
     setSelectedVariantId(response.layout_state.variant_id || variant.id);
-    setLayoutValues({
-      text_values: response.layout_state.text_values,
-      asset_values: response.layout_state.asset_values,
-    });
+    setLayoutValues(layoutValuesFromState(response.layout_state));
   }
 
   async function handleTextFieldChange(fieldId: string, value: string) {
     const response = await saveLayoutValues({ text_values: { [fieldId]: value } });
-    setLayoutValues({
-      text_values: response.layout_state.text_values,
-      asset_values: response.layout_state.asset_values,
-    });
+    setLayoutValues(layoutValuesFromState(response.layout_state));
   }
 
   async function handleAssetFieldChange(fieldId: string, kind: 'logo' | 'image', file: File | null) {
     if (!file) {
       return;
     }
-    const uploadedAsset = await uploadAsset(kind, file);
-    const response = await saveLayoutValues({ asset_values: { [fieldId]: uploadedAsset.id } });
-    setAssetPreviews((current) => ({
-      ...current,
-      [fieldId]: uploadedAsset.preview_data_url,
-    }));
-    setLayoutValues({
-      text_values: response.layout_state.text_values,
-      asset_values: response.layout_state.asset_values,
+    try {
+      const uploadedAsset = await uploadAsset(kind, file);
+      const response = await saveLayoutValues({ asset_values: { [fieldId]: uploadedAsset.id } });
+      setAssetErrors((current) => ({ ...current, [fieldId]: null }));
+      setAssetPreviews((current) => ({
+        ...current,
+        [fieldId]: uploadedAsset.preview_data_url,
+      }));
+      setLayoutValues(layoutValuesFromState(response.layout_state));
+    } catch (exception: unknown) {
+      setAssetErrors((current) => ({
+        ...current,
+        [fieldId]: exception instanceof Error ? exception.message : 'Upload fehlgeschlagen',
+      }));
+    }
+  }
+
+  async function handleAssetAdjustmentChange(fieldId: string, adjustment: ElementAdjustment) {
+    if (!selectedTemplate) {
+      return;
+    }
+    const assetElement = assetElementForField(selectedTemplate, fieldId);
+    if (!assetElement) {
+      return;
+    }
+    const response = await saveLayoutValues({
+      element_adjustments: {
+        [assetElement.id]: {
+          offset_x: clamp(adjustment.offset_x, -1, 1),
+          offset_y: clamp(adjustment.offset_y, -1, 1),
+          scale: clamp(adjustment.scale, 0.5, 1.5),
+        },
+      },
     });
+    setLayoutValues(layoutValuesFromState(response.layout_state));
+  }
+
+  async function handleAssetAdjustmentReset(fieldId: string) {
+    await handleAssetAdjustmentChange(fieldId, DEFAULT_ELEMENT_ADJUSTMENT);
   }
 
   if (state.error) {
@@ -960,8 +1073,11 @@ export default function SelectionPage() {
                     template={selectedTemplate}
                     layoutValues={layoutValues}
                     assetPreviews={assetPreviews}
+                    assetErrors={assetErrors}
                     onTextChange={handleTextFieldChange}
                     onAssetChange={handleAssetFieldChange}
+                    onAssetAdjustmentChange={handleAssetAdjustmentChange}
+                    onAssetAdjustmentReset={handleAssetAdjustmentReset}
                   />
                 </div>
               </article>
