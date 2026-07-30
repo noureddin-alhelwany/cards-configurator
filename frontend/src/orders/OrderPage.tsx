@@ -2,7 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import type { OrderDetail } from './types';
 import './OrderPage.css';
 import StateMessage from '../ui/StateMessage';
-import { formatLocalizedDate, snapshotString } from '../ui/viewHelpers';
+import { snapshotString } from '../ui/viewHelpers';
+import {
+  OrderActionLinks,
+  OrderNextStepSection,
+  OrderPreviewSection,
+  OrderSummaryGrid,
+} from './orderUi';
 
 async function loadOrder(orderId: string): Promise<OrderDetail> {
   const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}`);
@@ -101,107 +107,35 @@ export default function OrderPage({ orderId }: { orderId: string }) {
             <p className="order-kicker">Auftrag erstellt</p>
             <h1>{order.order_number}</h1>
             <p className="order-summary">Dein Auftrag ist gespeichert und bereit für die Produktion.</p>
-            <dl className="order-meta order-meta--inline">
-              <div>
-                <dt>Produkt</dt>
-                <dd>{productName}</dd>
-              </div>
-              <div>
-                <dt>Use Case</dt>
-                <dd>{useCaseName}</dd>
-              </div>
-              <div>
-                <dt>Datum</dt>
-                <dd>{formatLocalizedDate(order.created_at)}</dd>
-              </div>
-              <div>
-                <dt>Name</dt>
-                <dd>{displayName}</dd>
-              </div>
-            </dl>
+            <OrderSummaryGrid
+              productName={productName}
+              useCaseName={useCaseName}
+              createdAt={order.created_at}
+              displayName={displayName}
+            />
           </div>
-          <div className="order-header__actions">
-            <a className="order-download" href={productionHref}>
-              Zur Produktionsansicht
-            </a>
-            {order.pdf_path ? (
-              <a className="order-download" href={pdfHref}>
-                Produktions-PDF herunterladen
-              </a>
-            ) : (
-              <p className="order-download order-download--disabled">Produktions-PDF wird erzeugt</p>
-            )}
-            <a className="order-reopen" href={reopenHref}>
-              Auftrag erneut öffnen
-            </a>
-          </div>
+          <OrderActionLinks productionHref={productionHref} pdfHref={pdfHref} pdfAvailable={Boolean(order.pdf_path)} reopenHref={reopenHref} />
         </header>
 
         <div className="order-layout">
-          <section className="order-preview">
-            <p className="order-section-title">Vorschau</p>
-            {order.preview_path ? (
-              previewError ? (
-                <StateMessage
-                  tone="empty"
-                  kicker="Vorschau"
-                  title="Vorschau konnte nicht geladen werden"
-                  description="Die Produktion ist trotzdem gespeichert. Öffne die Produktionsansicht, um weiterzuarbeiten."
-                />
-              ) : (
-                <img
-                  src={previewSrc}
-                  alt={`Vorschau für ${order.order_number}`}
-                  onLoad={() => setPreviewReady(true)}
-                  onError={() => setPreviewError(true)}
-                />
-              )
-            ) : (
-              <StateMessage
-                tone="empty"
-                kicker="Vorschau"
-                title="Keine Vorschau verfügbar"
-                description="Die Auftragsdaten sind gespeichert. Öffne die Produktionsansicht, um weiterzuarbeiten."
-              />
-            )}
-          </section>
+          <OrderPreviewSection
+            orderNumber={order.order_number}
+            previewSrc={previewSrc}
+            previewPath={order.preview_path}
+            previewReady={previewReady}
+            previewError={previewError}
+            onPreviewLoad={() => setPreviewReady(true)}
+            onPreviewError={() => setPreviewError(true)}
+          />
 
-          <section className="order-snapshot">
-            <p className="order-section-title">Nächster Schritt</p>
-            <h2>Produktions-PDF prüfen</h2>
-            <p className="order-snapshot__lead">
-              In der Produktionsansicht siehst du dieselbe Geometrie wie in der Vorschau. Danach kannst du den Auftrag erneut
-              öffnen oder weiter im Workflow arbeiten.
-            </p>
-            <div className="order-snapshot__actions">
-              <a className="order-download" href={productionHref}>
-                Produktionsansicht öffnen
-              </a>
-              {order.pdf_path ? (
-                <a className="order-download" href={pdfHref}>
-                  PDF herunterladen
-                </a>
-              ) : null}
-            </div>
-            <dl className="order-snapshot__grid">
-              <div>
-                <dt>Erstellt</dt>
-                <dd>{formatLocalizedDate(order.created_at)}</dd>
-              </div>
-              <div>
-                <dt>Freigabe</dt>
-                <dd>{formatLocalizedDate(order.approved_at)}</dd>
-              </div>
-              <div>
-                <dt>Vorschau</dt>
-                <dd>{previewReady ? 'Geladen' : 'Wird geladen'}</dd>
-              </div>
-              <div>
-                <dt>Status</dt>
-                <dd>Bereit für die Produktion</dd>
-              </div>
-            </dl>
-          </section>
+          <OrderNextStepSection
+            productionHref={productionHref}
+            pdfHref={pdfHref}
+            pdfAvailable={Boolean(order.pdf_path)}
+            createdAt={order.created_at}
+            approvedAt={order.approved_at}
+            previewReady={previewReady}
+          />
         </div>
       </section>
     </main>
