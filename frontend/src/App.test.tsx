@@ -449,8 +449,24 @@ test('renders the registry selection flow and filters matching products', async 
         return {
           ok: true,
           json: async () => ({
-            issues: [],
-            blocking: false,
+            issues: [
+              {
+                code: 'qr_too_small',
+                severity: 'error',
+                path: 'proof-qr',
+                message: "QR code 'proof-qr' is below the minimum size",
+                blocking: true,
+                details: {
+                  effective_width_mm: 10,
+                  effective_module_mm: 0.24,
+                  minimum_width_mm: 18,
+                  minimum_module_mm: 0.42,
+                  quiet_zone_mm: 2,
+                  module_count: 25,
+                },
+              },
+            ],
+            blocking: true,
           }),
         };
       }
@@ -610,6 +626,10 @@ test('renders the registry selection flow and filters matching products', async 
   expect(screen.getByRole('textbox', { name: 'qrTarget' })).toBeInTheDocument();
   expect(screen.getByText('Logo im Fokus')).toBeInTheDocument();
   expect(screen.getByText('Text im Fokus')).toBeInTheDocument();
+  await waitFor(() => {
+    expect(screen.getByText(/QR code 'proof-qr' is below the minimum size/)).toBeInTheDocument();
+  });
+  expect(screen.getByRole('button', { name: 'Design freigeben' })).toBeDisabled();
 
   const businessNameInput = screen.getByRole('textbox', { name: 'businessName' });
   fireEvent.change(businessNameInput, { target: { value: 'Studio One' } });

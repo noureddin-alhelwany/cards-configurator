@@ -3,13 +3,13 @@
     type: user-story
     title: "QR-Mindestgröße prüfen"
     epic: "7 — Qualitätsprüfung"
-    status: todo
+    status: done
     priority: must
     depends_on: [US-08, US-16]
     verification: mixed
     context_docs: [docs/QUALITY_STRATEGY.md, docs/TEMPLATE_AND_RENDERING.md]
-    started_at:
-    completed_at:
+    started_at: 2026-07-30
+    completed_at: 2026-07-30
     ---
 
     # US-21 — QR-Mindestgröße prüfen
@@ -38,9 +38,7 @@
 
     ## Result
 
-    _Fill only when work starts or completes._
-
-    - Changed:
-    - Decisions:
-    - Verification:
-    - Remaining risks:
+    - Changed: Added blocking QR minimum-size validation using product thresholds and QR module geometry, and surfaced the issue in the selection quality panel.
+    - Decisions: Used the printed box size minus quiet zone to estimate module pitch conservatively, so both total QR footprint and module size can fail fast.
+    - Verification: `backend/.venv/bin/pytest backend/tests/test_quality.py backend/tests/test_assets.py backend/tests/test_drafts.py -q`, `cd frontend && COREPACK_HOME=/tmp/corepack corepack pnpm vitest run src/App.test.tsx`, `cd frontend && COREPACK_HOME=/tmp/corepack corepack pnpm typecheck`, `make lint`, `make test`, `make build`
+    - Remaining risks: The pitch estimate is conservative and may over-warn for unusual QR layouts, which is acceptable for the MVP.

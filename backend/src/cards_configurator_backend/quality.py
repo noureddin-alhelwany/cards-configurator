@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
+import segno
 from fastapi import HTTPException
 from pydantic import BaseModel
 
@@ -13,6 +14,7 @@ from .registries.schemas import (
     ElementAdjustment,
     ImageElementDefinition,
     LayoutState,
+    QrElementDefinition,
     RegistryIssue,
     TemplateDefinition,
     TextElementDefinition,
@@ -67,6 +69,10 @@ def _image_element_by_asset_key(template: TemplateDefinition, asset_key: str) ->
         if element.kind == "image" and element.asset_key == asset_key:
             return element
     return None
+
+
+def _qr_elements(template: TemplateDefinition) -> list[QrElementDefinition]:
+    return [element for element in template.elements if element.kind == "qr"]
 
 
 def _estimate_text_scale(element: TextElementDefinition, text: str, max_lines: int | None) -> tuple[float, float, int]:
@@ -137,6 +143,28 @@ def validate_current_draft(data_dir: Path, bundle: RegistryBundle, draft: DraftS
 
     product = next((record for record in bundle.products if record.id == template.product_id), None)
     if product is not None:
+        for element in _qr_elements(template):
+            qr = segno.make(element.value, error="m")
+            module_count = qr.symbol_size(border=0)[0]
+            visible_width_mm = min(element.box_mm.width_mm, element.box_mm.height_mm)
+            module_pitch_mm = max((visible_width_mm - 2 * element.quiet_zone_mm) / module_count, 0.0)
+            if visible_width_mm < product.qr_min_width_mm or module_pitch_mm < product.qr_min_module_mm:
+                issues.append(
+                    _issue(
+                        "qr_too_small",
+                        element.id,
+                        f"QR code '{element.id}' is below the minimum size",
+                        details={
+                            "effective_width_mm": round(visible_width_mm, 2),
+                            "effective_module_mm": round(module_pitch_mm, 3),
+                            "minimum_width_mm": product.qr_min_width_mm,
+                            "minimum_module_mm": product.qr_min_module_mm,
+                            "quiet_zone_mm": element.quiet_zone_mm,
+                            "module_count": module_count,
+                        },
+                    )
+                )
+
         for field in template.fields:
             asset_id = layout_state.asset_values.get(field.id, "")
             if field.type not in {"logo", "image"} or not asset_id:
