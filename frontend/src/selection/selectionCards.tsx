@@ -3,6 +3,10 @@ import DesignRenderer from '../design/DesignRenderer';
 import { buildTemplatePreviewFixture } from './selectionPreview';
 import { templateStyleDescription } from './selectionRules';
 
+function assetPath(asset: string) {
+  return `/preview-assets/${asset}`;
+}
+
 type TemplateCardProps = {
   template: TemplateDefinition;
   product: ProductDefinition | null;
@@ -80,5 +84,69 @@ export function TemplateVariantButtons({ template, selectedVariantId, onSelect, 
         </button>
       ))}
     </div>
+  );
+}
+
+type ProductCardProps = {
+  product: ProductDefinition;
+  selected: boolean;
+  onSelect: (id: string) => void;
+  useCaseNames: string[];
+  recommended?: boolean;
+  disabled?: boolean;
+};
+
+export function ProductCard({
+  product,
+  selected,
+  onSelect,
+  useCaseNames,
+  recommended = false,
+  disabled = false,
+}: ProductCardProps) {
+  return (
+    <button
+      type="button"
+      className={`product-card${selected ? ' product-card--selected' : ''}`}
+      aria-pressed={selected}
+      disabled={disabled}
+      onClick={() => onSelect(product.id)}
+    >
+      <span className="product-card__status">{selected ? 'Ausgewählt' : recommended ? 'Empfohlen' : 'Produkt'}</span>
+      <img className="product-card__image" src={assetPath(product.preview_asset)} alt="" />
+      <div className="product-card__body">
+        <h3>{product.name}</h3>
+        <p className="product-card__format">
+          {product.trim_width_mm} × {product.trim_height_mm} mm
+        </p>
+        <p className="product-card__meta">{useCaseNames.length} passende Use Cases</p>
+      </div>
+    </button>
+  );
+}
+
+type UseCaseCardProps = {
+  useCase: UseCaseDefinition;
+  selected: boolean;
+  onSelect: (id: string) => void;
+  disabled?: boolean;
+};
+
+export function UseCaseCard({ useCase, selected, onSelect, disabled = false }: UseCaseCardProps) {
+  return (
+    <button
+      type="button"
+      className={`use-case-card${selected ? ' use-case-card--selected' : ''}`}
+      aria-pressed={selected}
+      disabled={disabled}
+      onClick={() => onSelect(useCase.id)}
+    >
+      <img className="use-case-card__image" src={assetPath(useCase.preview_asset)} alt="" />
+      <div className="use-case-card__body">
+        <p className="use-case-card__eyebrow">Use case</p>
+        <h3>{useCase.name}</h3>
+        <p>{useCase.description}</p>
+      </div>
+    </button>
   );
 }

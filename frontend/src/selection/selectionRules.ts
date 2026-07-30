@@ -3,6 +3,42 @@ import type { ValidationIssue } from '../design/types';
 
 export type TemplateFieldRole = 'business' | 'headline' | 'body' | 'qrTarget' | 'logo' | 'image' | 'generic';
 
+export function buildWizardSteps(includeProductStep: boolean) {
+  return [
+    {
+      id: 'selection',
+      title: 'Auswahl',
+      description: 'Zuerst den passenden Anwendungsfall wählen.',
+    },
+    ...(includeProductStep
+      ? [
+          {
+            id: 'product',
+            title: 'Produkt',
+            description: 'Dann das passende Format auswählen.',
+          },
+        ]
+      : []),
+    {
+      id: 'design',
+      title: 'Design',
+      description: 'Eine Vorlage für den gewählten Einsatz auswählen.',
+    },
+    {
+      id: 'content',
+      title: 'Inhalte',
+      description: 'Texte, Medien und Anpassungen prüfen.',
+    },
+    {
+      id: 'review',
+      title: 'Prüfen',
+      description: 'Freigeben und den Auftrag erstellen.',
+    },
+  ] as const;
+}
+
+export type WizardStep = ReturnType<typeof buildWizardSteps>[number];
+
 export function templateStyleDescription(template: TemplateDefinition) {
   const name = (template.name ?? '').toLowerCase();
   if (name.includes('clean') || name.includes('classic') || name.includes('minimal')) {
