@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 
 from .assets import load_asset, store_uploaded_asset
 from .config import get_settings
 from .db import get_session_factory
 from .drafts import (
+    ApprovalRequest,
     DraftState,
     LayoutStateUpdateRequest,
     TemplateSelectionRequest,
+    approve_draft,
     get_current_draft,
     save_template_selection,
     update_layout_state,
@@ -80,6 +82,24 @@ def select_template(request: Request, selection: TemplateSelectionRequest) -> Dr
     session = get_session_factory()()
     try:
         return save_template_selection(session, bundle, selection)
+    finally:
+        session.close()
+
+
+@router.post("/drafts/current/approval", response_model=DraftState)
+def approve_current_draft(request: Request, body: ApprovalRequest) -> DraftState:
+    settings = get_settings()
+    bundle = getattr(request.app.state, "registry_bundle", None)
+    if bundle is None:
+        bundle = load_registry_bundle(settings.registries_dir)
+
+    session = get_session_factory()()
+    try:
+        draft = get_current_draft(session)
+        report = validate_current_draft(settings.data_dir, bundle, draft)
+        if report.blocking:
+            raise HTTPException(status_code=400, detail="Blocking issues must be resolved before approval")
+        return approve_draft(session, bundle, body)
     finally:
         session.close()
 

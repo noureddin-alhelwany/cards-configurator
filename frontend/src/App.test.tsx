@@ -710,3 +710,201 @@ test('renders the registry selection flow and filters matching products', async 
   expect(updatedDetail).not.toBeNull();
   expect(within(updatedDetail as HTMLElement).getByText('99 × 210 mm')).toBeInTheDocument();
 });
+
+test('approves a draft and locks editing afterward', async () => {
+  const bundle = {
+    use_cases: [
+      {
+        id: 'google_reviews',
+        name: 'Google Reviews',
+        description: 'Scan to leave a Google review after service.',
+        preview_asset: 'google_reviews_preview.png',
+        active: true,
+      },
+    ],
+    products: [
+      {
+        id: 'a6_card',
+        name: 'A6 Card',
+        trim_width_mm: 105,
+        trim_height_mm: 148,
+        bleed_mm: 3,
+        recommended_dpi: 450,
+        warning_dpi: 300,
+        minimum_dpi: 225,
+        qr_min_width_mm: 18,
+        qr_min_module_mm: 0.42,
+        preview_asset: 'a6_preview.png',
+        active: true,
+      },
+    ],
+    templates: [
+      {
+        schema_version: 1,
+        id: 'proof_a6_card',
+        version: '1.0.0',
+        name: 'Google Reviews Classic',
+        preview_asset: 'template_google_reviews_classic.png',
+        product_id: 'a6_card',
+        use_case_ids: ['google_reviews'],
+        active: true,
+        fields: [
+          {
+            id: 'businessName',
+            type: 'text',
+            required: true,
+            max_length: 40,
+            max_lines: 2,
+          },
+          {
+            id: 'headline',
+            type: 'text',
+            required: true,
+            max_length: 60,
+            max_lines: 3,
+          },
+          {
+            id: 'qrTarget',
+            type: 'url',
+            required: true,
+            max_length: null,
+            max_lines: null,
+          },
+        ],
+        variants: [
+          {
+            id: 'logo-focused',
+            name: 'Logo im Fokus',
+            active: true,
+            preview_asset: 'template_google_reviews_classic.png',
+          },
+        ],
+        elements: [],
+        page_width_mm: 111,
+        page_height_mm: 154,
+        bleed_mm: 3,
+        font_family: 'Proof Sans',
+        fonts: [],
+      },
+    ],
+  };
+
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/api/healthz')) {
+        return { ok: true, json: async () => ({ status: 'ok' }) };
+      }
+      if (url.endsWith('/api/registries')) {
+        return { ok: true, json: async () => bundle };
+      }
+      if (url.endsWith('/api/drafts/current')) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: 1,
+            name: 'Current draft',
+            use_case_id: 'google_reviews',
+            product_id: 'a6_card',
+            template_id: 'proof_a6_card',
+            template_version: '1.0.0',
+            variant_id: 'logo-focused',
+            approved_at: null,
+            approval_snapshot: null,
+            approval_checklist: null,
+            layout_state: {
+              variant_id: 'logo-focused',
+              element_adjustments: {},
+              text_values: {
+                businessName: 'Studio One',
+                headline: 'Leave a Google review',
+                qrTarget: 'https://example.com/review',
+              },
+              asset_values: {},
+            },
+          }),
+        };
+      }
+      if (url.endsWith('/api/drafts/current/validation')) {
+        return {
+          ok: true,
+          json: async () => ({
+            issues: [],
+            blocking: false,
+          }),
+        };
+      }
+      if (url.endsWith('/api/drafts/current/approval')) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: 1,
+            name: 'Current draft',
+            use_case_id: 'google_reviews',
+            product_id: 'a6_card',
+            template_id: 'proof_a6_card',
+            template_version: '1.0.0',
+            variant_id: 'logo-focused',
+            approved_at: '2026-07-30T12:00:00.000Z',
+            approval_snapshot: {
+              template_id: 'proof_a6_card',
+              template_version: '1.0.0',
+              variant_id: 'logo-focused',
+              layout_state: {
+                variant_id: 'logo-focused',
+                element_adjustments: {},
+                text_values: {
+                  businessName: 'Studio One',
+                  headline: 'Leave a Google review',
+                  qrTarget: 'https://example.com/review',
+                },
+                asset_values: {},
+              },
+            },
+            approval_checklist: {
+              texts_checked: true,
+              url_checked: true,
+              image_crop_checked: true,
+              preview_released: true,
+            },
+            layout_state: {
+              variant_id: 'logo-focused',
+              element_adjustments: {},
+              text_values: {
+                businessName: 'Studio One',
+                headline: 'Leave a Google review',
+                qrTarget: 'https://example.com/review',
+              },
+              asset_values: {},
+            },
+          }),
+        };
+      }
+      return {
+        ok: false,
+        json: async () => ({}),
+        text: async () => 'not found',
+      };
+    }),
+  );
+
+  render(<App />);
+
+  expect(await screen.findByRole('button', { name: /Google Reviews Classic/i, pressed: true })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByLabelText('Texte geprüft'));
+  fireEvent.click(screen.getByLabelText('URL geprüft'));
+  fireEvent.click(screen.getByLabelText('Bildausschnitt geprüft'));
+  fireEvent.click(screen.getByLabelText('Vorschau freigegeben'));
+  expect(screen.getByRole('button', { name: 'Design freigeben' })).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Design freigeben' }));
+
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: 'Freigegeben' })).toBeDisabled();
+  });
+  expect(screen.getByText(/Freigegeben am/)).toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: 'businessName' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Layout zurücksetzen' })).toBeDisabled();
+  expect(screen.getByRole('checkbox', { name: 'Texte geprüft' })).toBeDisabled();
+});

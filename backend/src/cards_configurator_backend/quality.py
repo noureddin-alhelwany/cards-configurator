@@ -143,23 +143,23 @@ def validate_current_draft(data_dir: Path, bundle: RegistryBundle, draft: DraftS
 
     product = next((record for record in bundle.products if record.id == template.product_id), None)
     if product is not None:
-        for element in _qr_elements(template):
-            qr = segno.make(element.value, error="m")
+        for qr_element in _qr_elements(template):
+            qr = segno.make(qr_element.value, error="m")
             module_count = qr.symbol_size(border=0)[0]
-            visible_width_mm = min(element.box_mm.width_mm, element.box_mm.height_mm)
-            module_pitch_mm = max((visible_width_mm - 2 * element.quiet_zone_mm) / module_count, 0.0)
+            visible_width_mm = min(qr_element.box_mm.width_mm, qr_element.box_mm.height_mm)
+            module_pitch_mm = max((visible_width_mm - 2 * qr_element.quiet_zone_mm) / module_count, 0.0)
             if visible_width_mm < product.qr_min_width_mm or module_pitch_mm < product.qr_min_module_mm:
                 issues.append(
                     _issue(
                         "qr_too_small",
-                        element.id,
-                        f"QR code '{element.id}' is below the minimum size",
+                        qr_element.id,
+                        f"QR code '{qr_element.id}' is below the minimum size",
                         details={
                             "effective_width_mm": round(visible_width_mm, 2),
                             "effective_module_mm": round(module_pitch_mm, 3),
                             "minimum_width_mm": product.qr_min_width_mm,
                             "minimum_module_mm": product.qr_min_module_mm,
-                            "quiet_zone_mm": element.quiet_zone_mm,
+                            "quiet_zone_mm": qr_element.quiet_zone_mm,
                             "module_count": module_count,
                         },
                     )
@@ -169,8 +169,8 @@ def validate_current_draft(data_dir: Path, bundle: RegistryBundle, draft: DraftS
             asset_id = layout_state.asset_values.get(field.id, "")
             if field.type not in {"logo", "image"} or not asset_id:
                 continue
-            element = _image_element_by_asset_key(template, field.id)
-            if element is None:
+            image_element = _image_element_by_asset_key(template, field.id)
+            if image_element is None:
                 continue
             try:
                 asset = load_asset(data_dir, asset_id)
@@ -179,8 +179,8 @@ def validate_current_draft(data_dir: Path, bundle: RegistryBundle, draft: DraftS
             width_px = asset.get("width_px")
             if not isinstance(width_px, (int, float)) or width_px <= 0:
                 continue
-            adjustment: ElementAdjustment = layout_state.element_adjustments.get(element.id, ElementAdjustment())
-            visible_width_mm = max(element.box_mm.width_mm * adjustment.scale, 0.1)
+            adjustment: ElementAdjustment = layout_state.element_adjustments.get(image_element.id, ElementAdjustment())
+            visible_width_mm = max(image_element.box_mm.width_mm * adjustment.scale, 0.1)
             effective_dpi = float(width_px) / (visible_width_mm / 25.4)
             if effective_dpi < product.minimum_dpi:
                 issues.append(

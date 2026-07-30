@@ -10,7 +10,12 @@ from ..models import DraftRecord
 from ..registries.loader import RegistryBundle
 from ..registries.schemas import LayoutState, TemplateDefinition
 from ..urls import normalize_url
-from .schemas import DraftState, LayoutStateUpdateRequest, TemplateSelectionRequest
+from .schemas import (
+    ApprovalRequest,
+    DraftState,
+    LayoutStateUpdateRequest,
+    TemplateSelectionRequest,
+)
 
 DEFAULT_DRAFT_NAME = "Current draft"
 
@@ -46,12 +51,26 @@ def _draft_state_from_record(record: DraftRecord) -> DraftState:
         if isinstance(payload.get("template_version"), str)
         else None,
         variant_id=payload.get("variant_id") if isinstance(payload.get("variant_id"), str) else None,
+        approved_at=payload.get("approved_at") if isinstance(payload.get("approved_at"), str) else None,
+        approval_snapshot=payload.get("approval_snapshot") if isinstance(payload.get("approval_snapshot"), dict) else None,
+        approval_checklist=payload.get("approval_checklist")
+        if isinstance(payload.get("approval_checklist"), dict)
+        else None,
         layout_state=LayoutState.model_validate(layout_payload),
     )
 
 
 def _get_first_draft(session: Session) -> DraftRecord | None:
     return session.scalar(select(DraftRecord).order_by(DraftRecord.id.asc()))
+
+
+def _is_locked(payload: dict[str, object]) -> bool:
+    return isinstance(payload.get("approved_at"), str)
+
+
+def _assert_draft_is_editable(payload: dict[str, object]) -> None:
+    if _is_locked(payload):
+        raise HTTPException(status_code=409, detail="Draft has been approved and is locked")
 
 
 def get_current_draft(session: Session) -> DraftState:
@@ -112,6 +131,9 @@ def save_template_selection(session: Session, bundle: RegistryBundle, request: T
         session.add(draft)
         session.flush()
 
+    payload = dict(draft.payload or {})
+    _assert_draft_is_editable(payload)
+
     draft.payload = {
         "use_case_id": request.use_case_id,
         "product_id": request.product_id,
@@ -134,6 +156,7 @@ def update_layout_state(session: Session, bundle: RegistryBundle, request: Layou
         session.flush()
 
     payload = dict(draft.payload or {})
+    _assert_draft_is_editable(payload)
     layout_payload = payload.get("layout_state")
     if not isinstance(layout_payload, dict):
         layout_payload = _empty_layout_state().model_dump()
@@ -159,6 +182,40 @@ def update_layout_state(session: Session, bundle: RegistryBundle, request: Layou
         layout_state.element_adjustments.update(request.element_adjustments)
 
     payload["layout_state"] = layout_state.model_dump()
+    draft.payload = payload
+    draft.updated_at = datetime.now(timezone.utc)
+    session.commit()
+    session.refresh(draft)
+    return _draft_state_from_record(draft)
+
+
+def approve_draft(session: Session, bundle: RegistryBundle, request: ApprovalRequest) -> DraftState:
+    draft = _get_first_draft(session)
+    if draft is None:
+        raise HTTPException(status_code=404, detail="Draft not found")
+
+    payload = dict(draft.payload or {})
+    _assert_draft_is_editable(payload)
+
+    checklist = request.model_dump()
+    if not all(checklist.values()):
+        raise HTTPException(status_code=400, detail="Approval checklist is incomplete")
+
+    current_state = _draft_state_from_record(draft)
+    template = None
+    if current_state.template_id and current_state.template_version:
+        template = _find_template(bundle, current_state.template_id, current_state.template_version)
+    if template is None:
+        raise HTTPException(status_code=400, detail="A template must be selected before approval")
+
+    payload["approved_at"] = datetime.now(timezone.utc).isoformat()
+    payload["approval_checklist"] = checklist
+    payload["approval_snapshot"] = {
+        "template_id": current_state.template_id,
+        "template_version": current_state.template_version,
+        "variant_id": current_state.variant_id,
+        "layout_state": current_state.layout_state.model_dump(),
+    }
     draft.payload = payload
     draft.updated_at = datetime.now(timezone.utc)
     session.commit()

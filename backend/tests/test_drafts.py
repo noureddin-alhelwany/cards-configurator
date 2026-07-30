@@ -91,3 +91,73 @@ def test_url_values_are_normalized_and_qr_preview_is_generated(tmp_path: Path, m
         qr_payload = qr_response.json()
         assert qr_payload['value'] == 'https://example.com/review'
         assert qr_payload['data_url'].startswith('data:image/svg+xml;base64,')
+
+
+def test_design_approval_locks_the_draft(tmp_path: Path, monkeypatch) -> None:
+    db_path = tmp_path / 'drafts.sqlite3'
+    monkeypatch.setenv('DATABASE_URL', f'sqlite:///{db_path}')
+
+    with TestClient(create_app()) as client:
+        template_response = client.post(
+            '/api/drafts/current/template',
+            json={
+                'use_case_id': 'google_reviews',
+                'product_id': 'a6_card',
+                'template_id': 'proof_a6_card',
+                'template_version': '1.0.0',
+            },
+        )
+        assert template_response.status_code == 200
+
+        layout_response = client.patch(
+            '/api/drafts/current/layout',
+            json={
+                'text_values': {
+                    'businessName': 'Studio One',
+                    'headline': 'Leave a Google review',
+                    'qrTarget': 'example.com/review',
+                },
+            },
+        )
+        assert layout_response.status_code == 200
+
+        approval_response = client.post(
+            '/api/drafts/current/approval',
+            json={
+                'texts_checked': True,
+                'url_checked': True,
+                'image_crop_checked': True,
+                'preview_released': True,
+            },
+        )
+        assert approval_response.status_code == 200
+        approval_payload = approval_response.json()
+        assert approval_payload['approved_at'] is not None
+        assert approval_payload['approval_checklist'] == {
+            'texts_checked': True,
+            'url_checked': True,
+            'image_crop_checked': True,
+            'preview_released': True,
+        }
+        assert approval_payload['approval_snapshot']['template_id'] == 'proof_a6_card'
+
+        locked_layout_response = client.patch(
+            '/api/drafts/current/layout',
+            json={
+                'text_values': {
+                    'businessName': 'Another Studio',
+                },
+            },
+        )
+        assert locked_layout_response.status_code == 409
+
+        locked_template_response = client.post(
+            '/api/drafts/current/template',
+            json={
+                'use_case_id': 'google_reviews',
+                'product_id': 'a6_card',
+                'template_id': 'proof_a6_card',
+                'template_version': '1.1.0',
+            },
+        )
+        assert locked_template_response.status_code == 409

@@ -20,6 +20,13 @@ class LayoutStateUpdateRequest(BaseModel):
     element_adjustments: dict[str, ElementAdjustment] | None = None
 
 
+class ApprovalRequest(BaseModel):
+    texts_checked: bool
+    url_checked: bool
+    image_crop_checked: bool
+    preview_released: bool
+
+
 class DraftState(BaseModel):
     id: int
     name: str
@@ -28,6 +35,9 @@ class DraftState(BaseModel):
     template_id: str | None = None
     template_version: str | None = None
     variant_id: str | None = None
+    approved_at: str | None = None
+    approval_snapshot: dict[str, object] | None = None
+    approval_checklist: dict[str, bool] | None = None
     layout_state: LayoutState = Field(
         default_factory=lambda: LayoutState(variant_id="", element_adjustments={}, text_values={}, asset_values={})
     )

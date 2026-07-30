@@ -361,6 +361,12 @@
   color: #514236;
 }
 
+.template-detail__approved {
+  margin: 10px 0 0;
+  color: #4f7a2b;
+  font-weight: 700;
+}
+
 .template-detail__actions {
   display: flex;
   flex-wrap: wrap;
@@ -415,6 +421,44 @@
   background: rgba(143, 90, 42, 0.16);
   border-color: rgba(143, 90, 42, 0.5);
   font-weight: 700;
+}
+
+.template-variant-pill:disabled,
+.template-field__reset:disabled,
+.use-case-card:disabled,
+.product-card:disabled,
+.template-card:disabled,
+.template-field input:disabled,
+.template-field textarea:disabled,
+.template-field input[type='file']:disabled,
+.template-field input[type='range']:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.template-approval {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(143, 90, 42, 0.16);
+  background: rgba(255, 251, 245, 0.92);
+}
+
+.template-approval__list {
+  display: grid;
+  gap: 10px;
+}
+
+.template-approval__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #4f4034;
+}
+
+.template-approval__item input {
+  width: 18px;
+  height: 18px;
 }
 
 .template-fields {

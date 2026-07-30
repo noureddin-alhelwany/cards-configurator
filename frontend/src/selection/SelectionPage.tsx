@@ -33,6 +33,13 @@ type DraftLayoutValues = {
   element_adjustments: Record<string, ElementAdjustment>;
 };
 
+type ApprovalChecklist = {
+  texts_checked: boolean;
+  url_checked: boolean;
+  image_crop_checked: boolean;
+  preview_released: boolean;
+};
+
 type QualityReport = {
   issues: ValidationIssue[];
   blocking: boolean;
@@ -116,6 +123,21 @@ async function saveLayoutValues(values: {
   if (!response.ok) {
     const detail = await response.text();
     throw new Error(detail || `Failed to save layout values: ${response.status}`);
+  }
+  return (await response.json()) as DraftState;
+}
+
+async function approveDraft(body: ApprovalChecklist): Promise<DraftState> {
+  const response = await fetch('/api/drafts/current/approval', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `Failed to approve draft: ${response.status}`);
   }
   return (await response.json()) as DraftState;
 }
@@ -231,6 +253,7 @@ function useRegistrySelection() {
     setSelectedVariantId,
     layoutValues,
     setLayoutValues,
+    setDraft: (draft: DraftState) => setState((current) => ({ ...current, draft })),
   };
 }
 
@@ -268,17 +291,20 @@ function ProductCard({
   selected,
   onSelect,
   useCaseNames,
+  disabled = false,
 }: {
   product: ProductDefinition;
   selected: boolean;
   onSelect: (id: string) => void;
   useCaseNames: string[];
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       className={`product-card${selected ? ' product-card--selected' : ''}`}
       aria-pressed={selected}
+      disabled={disabled}
       onClick={() => onSelect(product.id)}
     >
       <span className="product-card__status">{selected ? 'Ausgewählt' : 'Produkt'}</span>
@@ -311,16 +337,19 @@ function UseCaseCard({
   useCase,
   selected,
   onSelect,
+  disabled = false,
 }: {
   useCase: UseCaseDefinition;
   selected: boolean;
   onSelect: (id: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       className={`use-case-card${selected ? ' use-case-card--selected' : ''}`}
       aria-pressed={selected}
+      disabled={disabled}
       onClick={() => onSelect(useCase.id)}
     >
       <img className="use-case-card__image" src={assetPath(useCase.preview_asset)} alt="" />
@@ -338,17 +367,20 @@ function TemplateCard({
   product,
   selected,
   onSelect,
+  disabled = false,
 }: {
   template: TemplateDefinition;
   product: ProductDefinition | null;
   selected: boolean;
   onSelect: (template: TemplateDefinition) => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       className={`template-card${selected ? ' template-card--selected' : ''}`}
       aria-pressed={selected}
+      disabled={disabled}
       onClick={() => onSelect(template)}
     >
       <img
@@ -373,10 +405,12 @@ function TemplateVariantButtons({
   template,
   selectedVariantId,
   onSelect,
+  disabled = false,
 }: {
   template: TemplateDefinition;
   selectedVariantId: string | null;
   onSelect: (variant: TemplateVariantDefinition) => void;
+  disabled?: boolean;
 }) {
   const activeVariants = template.variants.filter((variant) => variant.active);
 
@@ -393,6 +427,7 @@ function TemplateVariantButtons({
           role="tab"
           aria-selected={variant.id === selectedVariantId}
           className={`template-variant-pill${variant.id === selectedVariantId ? ' template-variant-pill--selected' : ''}`}
+          disabled={disabled}
           onClick={() => onSelect(variant)}
         >
           {variant.name}
@@ -414,6 +449,7 @@ function TemplateFieldsList({
   onAssetChange,
   onAssetAdjustmentChange,
   onAssetAdjustmentReset,
+  disabled = false,
 }: {
   template: TemplateDefinition;
   product: ProductDefinition;
@@ -426,6 +462,7 @@ function TemplateFieldsList({
   onAssetChange: (fieldId: string, kind: 'logo' | 'image', file: File | null) => void;
   onAssetAdjustmentChange: (fieldId: string, adjustment: ElementAdjustment) => void;
   onAssetAdjustmentReset: (fieldId: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="template-fields">
@@ -447,23 +484,25 @@ function TemplateFieldsList({
                 {commonLabel}
               </div>
               {field.type === 'url' ? (
-                <input
-                  type="text"
-                  inputMode="url"
-                  aria-label={field.id}
-                  value={value}
-                  maxLength={field.max_length ?? undefined}
-                  onChange={(event) => onTextChange(field.id, event.target.value)}
-                />
-              ) : (
-                <textarea
-                  aria-label={field.id}
-                  value={value}
-                  rows={field.max_lines ?? 1}
-                  maxLength={field.max_length ?? undefined}
-                  onChange={(event) => onTextChange(field.id, event.target.value)}
-                />
-              )}
+                  <input
+                    type="text"
+                    inputMode="url"
+                    aria-label={field.id}
+                    value={value}
+                    maxLength={field.max_length ?? undefined}
+                    disabled={disabled}
+                    onChange={(event) => onTextChange(field.id, event.target.value)}
+                  />
+                ) : (
+                  <textarea
+                    aria-label={field.id}
+                    value={value}
+                    rows={field.max_lines ?? 1}
+                    maxLength={field.max_length ?? undefined}
+                    disabled={disabled}
+                    onChange={(event) => onTextChange(field.id, event.target.value)}
+                  />
+                )}
               {field.max_length !== null ? (
                 <p className="template-field__hint">
                   Max. {field.max_length} Zeichen
@@ -500,6 +539,7 @@ function TemplateFieldsList({
               type="file"
               aria-label={field.id}
               accept={field.type === 'logo' || field.type === 'image' ? 'image/png,image/jpeg,image/svg+xml' : undefined}
+              disabled={disabled}
               onChange={(event) => onAssetChange(field.id, field.type === 'logo' ? 'logo' : 'image', event.target.files?.[0] ?? null)}
             />
             {assetPreview ? (
@@ -527,6 +567,7 @@ function TemplateFieldsList({
                     step="0.01"
                     aria-label={`${field.id} verschiebung x`}
                     value={assetAdjustment.offset_x}
+                    disabled={disabled}
                     onChange={(event) =>
                       onAssetAdjustmentChange(field.id, {
                         ...assetAdjustment,
@@ -545,6 +586,7 @@ function TemplateFieldsList({
                     step="0.01"
                     aria-label={`${field.id} verschiebung y`}
                     value={assetAdjustment.offset_y}
+                    disabled={disabled}
                     onChange={(event) =>
                       onAssetAdjustmentChange(field.id, {
                         ...assetAdjustment,
@@ -563,6 +605,7 @@ function TemplateFieldsList({
                     step="0.01"
                     aria-label={`${field.id} skalierung`}
                     value={assetAdjustment.scale}
+                    disabled={disabled}
                     onChange={(event) =>
                       onAssetAdjustmentChange(field.id, {
                         ...assetAdjustment,
@@ -572,7 +615,7 @@ function TemplateFieldsList({
                   />
                   <output>{assetAdjustment.scale.toFixed(2)}</output>
                 </label>
-                <button type="button" className="template-field__reset" onClick={() => onAssetAdjustmentReset(field.id)}>
+                <button type="button" className="template-field__reset" disabled={disabled} onClick={() => onAssetAdjustmentReset(field.id)}>
                   Zurücksetzen
                 </button>
               </div>
@@ -744,6 +787,7 @@ export default function SelectionPage() {
     setSelectedVariantId,
     layoutValues,
     setLayoutValues,
+    setDraft,
   } = useRegistrySelection();
   const bundle = state.bundle;
 
@@ -773,6 +817,28 @@ export default function SelectionPage() {
   const [assetErrors, setAssetErrors] = useState<Record<string, string | null>>({});
   const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
   const [qualityError, setQualityError] = useState<string | null>(null);
+  const [approvalChecklist, setApprovalChecklist] = useState<ApprovalChecklist>({
+    texts_checked: false,
+    url_checked: false,
+    image_crop_checked: false,
+    preview_released: false,
+  });
+  const [approvalError, setApprovalError] = useState<string | null>(null);
+  const [approvalSubmitting, setApprovalSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (state.draft?.approved_at && state.draft.approval_checklist) {
+      setApprovalChecklist({
+        texts_checked: state.draft.approval_checklist.texts_checked ?? false,
+        url_checked: state.draft.approval_checklist.url_checked ?? false,
+        image_crop_checked: state.draft.approval_checklist.image_crop_checked ?? false,
+        preview_released: state.draft.approval_checklist.preview_released ?? false,
+      });
+    }
+  }, [state.draft?.approved_at, state.draft?.approval_checklist, state.draft?.id]);
+
+  const isApproved = Boolean(state.draft?.approved_at);
+  const approvalReady = Object.values(approvalChecklist).every(Boolean);
 
   const matchingProducts = useMemo(() => (bundle ? visibleProducts(bundle) : []), [bundle]);
   const matchingTemplates = useMemo(
@@ -886,7 +952,7 @@ export default function SelectionPage() {
   }, [selectedTemplateKey, layoutValues, selectedVariantId]);
 
   async function handleTemplateSelect(template: TemplateDefinition) {
-    if (!selectedUseCaseId || !selectedProductId) {
+    if (!selectedUseCaseId || !selectedProductId || isApproved) {
       return;
     }
     const fallbackVariant =
@@ -905,24 +971,37 @@ export default function SelectionPage() {
     );
     setSelectedVariantId(response.variant_id ?? response.layout_state.variant_id ?? fallbackVariant?.id ?? null);
     setLayoutValues(layoutValuesFromState(response.layout_state));
+    setDraft(response);
+    setApprovalChecklist({
+      texts_checked: false,
+      url_checked: false,
+      image_crop_checked: false,
+      preview_released: false,
+    });
+    setApprovalError(null);
   }
 
   async function handleVariantSelect(variant: TemplateVariantDefinition) {
-    if (!selectedTemplate) {
+    if (!selectedTemplate || isApproved) {
       return;
     }
     const response = await saveLayoutValues({ variant_id: variant.id });
     setSelectedVariantId(response.layout_state.variant_id || variant.id);
     setLayoutValues(layoutValuesFromState(response.layout_state));
+    setDraft(response);
   }
 
   async function handleTextFieldChange(fieldId: string, value: string) {
+    if (isApproved) {
+      return;
+    }
     const response = await saveLayoutValues({ text_values: { [fieldId]: value } });
     setLayoutValues(layoutValuesFromState(response.layout_state));
+    setDraft(response);
   }
 
   async function handleAssetFieldChange(fieldId: string, kind: 'logo' | 'image', file: File | null) {
-    if (!file) {
+    if (!file || isApproved) {
       return;
     }
     try {
@@ -938,6 +1017,7 @@ export default function SelectionPage() {
         [fieldId]: uploadedAsset,
       }));
       setLayoutValues(layoutValuesFromState(response.layout_state));
+      setDraft(response);
     } catch (exception: unknown) {
       setAssetErrors((current) => ({
         ...current,
@@ -947,7 +1027,7 @@ export default function SelectionPage() {
   }
 
   async function handleAssetAdjustmentChange(fieldId: string, adjustment: ElementAdjustment) {
-    if (!selectedTemplate) {
+    if (!selectedTemplate || isApproved) {
       return;
     }
     const assetElement = assetElementForField(selectedTemplate, fieldId);
@@ -964,6 +1044,7 @@ export default function SelectionPage() {
       },
     });
     setLayoutValues(layoutValuesFromState(response.layout_state));
+    setDraft(response);
   }
 
   async function handleAssetAdjustmentReset(fieldId: string) {
@@ -971,11 +1052,34 @@ export default function SelectionPage() {
   }
 
   async function handleLayoutReset() {
-    if (!selectedTemplate) {
+    if (!selectedTemplate || isApproved) {
       return;
     }
     const response = await saveLayoutValues({ element_adjustments: defaultAdjustmentsForTemplate(selectedTemplate) });
     setLayoutValues(layoutValuesFromState(response.layout_state));
+    setDraft(response);
+  }
+
+  async function handleApprovalSubmit() {
+    if (!selectedTemplate || !selectedUseCase || !selectedProduct || isApproved) {
+      return;
+    }
+    setApprovalSubmitting(true);
+    setApprovalError(null);
+    try {
+      const response = await approveDraft(approvalChecklist);
+      setDraft(response);
+      setApprovalChecklist({
+        texts_checked: response.approval_checklist?.texts_checked ?? false,
+        url_checked: response.approval_checklist?.url_checked ?? false,
+        image_crop_checked: response.approval_checklist?.image_crop_checked ?? false,
+        preview_released: response.approval_checklist?.preview_released ?? false,
+      });
+    } catch (exception: unknown) {
+      setApprovalError(exception instanceof Error ? exception.message : 'Freigabe fehlgeschlagen');
+    } finally {
+      setApprovalSubmitting(false);
+    }
   }
 
   if (state.error) {
@@ -1053,6 +1157,7 @@ export default function SelectionPage() {
                   useCase={useCase}
                   selected={useCase.id === selectedUseCaseId}
                   onSelect={setSelectedUseCaseId}
+                  disabled={isApproved}
                 />
               ))}
           </div>
@@ -1072,6 +1177,7 @@ export default function SelectionPage() {
                   selected={product.id === selectedProductId}
                   onSelect={setSelectedProductId}
                   useCaseNames={visibleProductUseCaseNames(bundle, product.id)}
+                  disabled={isApproved}
                 />
               ))}
             </div>
@@ -1121,6 +1227,7 @@ export default function SelectionPage() {
                     product={productById.get(template.product_id) ?? null}
                     selected={templateKey(template) === selectedTemplateKey}
                     onSelect={handleTemplateSelect}
+                    disabled={isApproved}
                   />
                 ))
               ) : (
@@ -1135,18 +1242,74 @@ export default function SelectionPage() {
                   {selectedTemplate.name ?? selectedTemplate.id} <span>@{selectedTemplate.version}</span>
                 </h3>
                 <div className="template-detail__actions">
-                  <button type="button" className="template-field__reset" onClick={handleLayoutReset}>
+                  <button type="button" className="template-field__reset" disabled={isApproved} onClick={handleLayoutReset}>
                     Layout zurücksetzen
                   </button>
-                  <button type="button" className="template-field__reset" disabled={blockingIssues.length > 0}>
-                    Design freigeben
+                  <button
+                    type="button"
+                    className="template-field__reset"
+                    disabled={isApproved || blockingIssues.length > 0 || approvalSubmitting || !approvalReady}
+                    onClick={handleApprovalSubmit}
+                  >
+                    {isApproved ? 'Freigegeben' : approvalSubmitting ? 'Freigabe läuft...' : 'Design freigeben'}
                   </button>
                 </div>
+                {isApproved ? (
+                  <p className="template-detail__approved">
+                    Freigegeben am {new Date(state.draft?.approved_at ?? '').toLocaleString('de-DE')}
+                  </p>
+                ) : null}
                 <p className="template-detail__meta">
                   Produkt {selectedTemplate.product_id}, {selectedTemplate.use_case_ids.length} Use Cases,{' '}
                   {selectedTemplate.fields.length} Felder
                 </p>
+                <div className="template-approval">
+                  <p className="template-detail__group-title">Freigabe-Checkliste</p>
+                  <div className="template-approval__list">
+                    <label className="template-approval__item">
+                      <input
+                        type="checkbox"
+                        checked={approvalChecklist.texts_checked}
+                        disabled={isApproved}
+                        onChange={(event) => setApprovalChecklist((current) => ({ ...current, texts_checked: event.target.checked }))}
+                      />
+                      <span>Texte geprüft</span>
+                    </label>
+                    <label className="template-approval__item">
+                      <input
+                        type="checkbox"
+                        checked={approvalChecklist.url_checked}
+                        disabled={isApproved}
+                        onChange={(event) => setApprovalChecklist((current) => ({ ...current, url_checked: event.target.checked }))}
+                      />
+                      <span>URL geprüft</span>
+                    </label>
+                    <label className="template-approval__item">
+                      <input
+                        type="checkbox"
+                        checked={approvalChecklist.image_crop_checked}
+                        disabled={isApproved}
+                        onChange={(event) =>
+                          setApprovalChecklist((current) => ({ ...current, image_crop_checked: event.target.checked }))
+                        }
+                      />
+                      <span>Bildausschnitt geprüft</span>
+                    </label>
+                    <label className="template-approval__item">
+                      <input
+                        type="checkbox"
+                        checked={approvalChecklist.preview_released}
+                        disabled={isApproved}
+                        onChange={(event) =>
+                          setApprovalChecklist((current) => ({ ...current, preview_released: event.target.checked }))
+                        }
+                      />
+                      <span>Vorschau freigegeben</span>
+                    </label>
+                  </div>
+                </div>
                 {qualityError ? <p className="template-field__error">{qualityError}</p> : null}
+                {approvalError ? <p className="template-field__error">{approvalError}</p> : null}
                 {validationIssues.length > 0 ? (
                   <div className="template-quality">
                     <p className="template-detail__group-title">Qualitätsprüfung</p>
@@ -1181,6 +1344,7 @@ export default function SelectionPage() {
                     template={selectedTemplate}
                     selectedVariantId={selectedVariantId}
                     onSelect={handleVariantSelect}
+                    disabled={isApproved}
                   />
                 </div>
                 <div className="template-detail__group">
@@ -1197,6 +1361,7 @@ export default function SelectionPage() {
                     onAssetChange={handleAssetFieldChange}
                     onAssetAdjustmentChange={handleAssetAdjustmentChange}
                     onAssetAdjustmentReset={handleAssetAdjustmentReset}
+                    disabled={isApproved}
                   />
                 </div>
               </article>
