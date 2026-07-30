@@ -613,16 +613,11 @@ test('renders the registry selection flow and filters matching products', async 
   fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
 
   await waitFor(() => {
-    expect(screen.getByRole('button', { name: /A6 Card/i, pressed: true })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '2. Design' })).toBeInTheDocument();
   });
-  expect(screen.getByRole('button', { name: /DL Card/i })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /A6 Card/i })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /DL Card/i })).not.toBeInTheDocument();
   expect(screen.queryByText('Hidden Card')).not.toBeInTheDocument();
-  const initialDetail = screen.getByText('Ausgewähltes Produkt').closest('article');
-  expect(initialDetail).not.toBeNull();
-  expect(within(initialDetail as HTMLElement).getByText('105 × 148 mm')).toBeInTheDocument();
-  expect(within(initialDetail as HTMLElement).getByText('DPI')).toBeInTheDocument();
-
-  fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
 
   await waitFor(() => {
     expect(screen.getByRole('button', { name: /Google Reviews Classic/i })).toBeInTheDocument();
@@ -634,7 +629,7 @@ test('renders the registry selection flow and filters matching products', async 
   fireEvent.click(screen.getByRole('button', { name: /Google Reviews Classic/i }));
 
   await waitFor(() => {
-    expect(screen.getByRole('heading', { name: '4. Inhalte' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '3. Inhalte' })).toBeInTheDocument();
   });
   expect(screen.getByRole('button', { name: 'Zur Prüfung' })).toBeEnabled();
   expect(screen.getByRole('textbox', { name: 'Unternehmensname' })).toBeInTheDocument();

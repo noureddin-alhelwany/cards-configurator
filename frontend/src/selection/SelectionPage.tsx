@@ -347,6 +347,21 @@ function visibleProducts(bundle: RegistryBundle): ProductDefinition[] {
   return bundle.products.filter((product) => product.active);
 }
 
+function compatibleProducts(bundle: RegistryBundle, selectedUseCaseId: string | null): ProductDefinition[] {
+  const activeProducts = visibleProducts(bundle);
+  if (!selectedUseCaseId) {
+    return activeProducts;
+  }
+
+  const compatibleProductIds = new Set(
+    bundle.templates
+      .filter((template) => template.active && template.use_case_ids.includes(selectedUseCaseId))
+      .map((template) => template.product_id),
+  );
+
+  return activeProducts.filter((product) => compatibleProductIds.has(product.id));
+}
+
 function visibleTemplates(bundle: RegistryBundle, selectedUseCaseId: string | null): TemplateDefinition[] {
   if (!selectedUseCaseId) {
     return bundle.templates.filter((template) => template.active);
@@ -373,12 +388,14 @@ function ProductCard({
   selected,
   onSelect,
   useCaseNames,
+  recommended = false,
   disabled = false,
 }: {
   product: ProductDefinition;
   selected: boolean;
   onSelect: (id: string) => void;
   useCaseNames: string[];
+  recommended?: boolean;
   disabled?: boolean;
 }) {
   return (
@@ -389,15 +406,12 @@ function ProductCard({
       disabled={disabled}
       onClick={() => onSelect(product.id)}
     >
-      <span className="product-card__status">{selected ? 'Ausgewählt' : 'Produkt'}</span>
+      <span className="product-card__status">{selected ? 'Ausgewählt' : recommended ? 'Empfohlen' : 'Produkt'}</span>
       <img className="product-card__image" src={assetPath(product.preview_asset)} alt="" />
       <div className="product-card__body">
         <h3>{product.name}</h3>
         <p className="product-card__format">
-          {product.trim_width_mm} × {product.trim_height_mm} mm, {product.bleed_mm} mm Beschnitt
-        </p>
-        <p className="product-card__meta">
-          DPI {product.minimum_dpi} / {product.warning_dpi} / {product.recommended_dpi}
+          {product.trim_width_mm} × {product.trim_height_mm} mm
         </p>
         <p className="product-card__meta">{useCaseNames.length} passende Use Cases</p>
       </div>
@@ -512,7 +526,10 @@ export default function SelectionPage() {
   const isApproved = Boolean(state.draft?.approved_at);
   const approvalReady = Object.values(approvalChecklist).every(Boolean);
 
-  const matchingProducts = useMemo(() => (bundle ? visibleProducts(bundle) : []), [bundle]);
+  const matchingProducts = useMemo(
+    () => (bundle ? compatibleProducts(bundle, selectedUseCaseId) : []),
+    [bundle, selectedUseCaseId],
+  );
   const showProductStep = matchingProducts.length > 1;
   const wizardSteps = useMemo(() => buildWizardSteps(showProductStep), [showProductStep]);
   const selectionState = useMemo(
@@ -585,6 +602,7 @@ export default function SelectionPage() {
   const visibleBlockingIssues = visibleValidationIssues.filter((issue) => issue.blocking);
   const showBlockingSummary = validationRevealAll && visibleBlockingIssues.length > 1;
   const recommendedTemplateKey = matchingTemplates[0] ? templateKey(matchingTemplates[0]) : null;
+  const recommendedProductId = matchingProducts[0]?.id ?? null;
 
   function syncSelectionFromDraft(draft: DraftState) {
     const firstUseCase = bundle?.use_cases.find((useCase) => useCase.active);
@@ -1167,6 +1185,7 @@ export default function SelectionPage() {
                       selected={product.id === selectedProductId}
                       onSelect={handleProductSelect}
                       useCaseNames={visibleProductUseCaseNames(bundle, product.id)}
+                      recommended={product.id === recommendedProductId}
                       disabled={isApproved}
                     />
                   ))}
@@ -1175,30 +1194,9 @@ export default function SelectionPage() {
                   <article className="product-detail">
                     <p className="product-detail__eyebrow">Ausgewähltes Produkt</p>
                     <h3>{selectedProduct.name}</h3>
-                    <dl className="product-detail__grid">
-                      <div>
-                        <dt>Format</dt>
-                        <dd>
-                          {selectedProduct.trim_width_mm} × {selectedProduct.trim_height_mm} mm
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Bleed</dt>
-                        <dd>{selectedProduct.bleed_mm} mm</dd>
-                      </div>
-                      <div>
-                        <dt>DPI</dt>
-                        <dd>
-                          {selectedProduct.minimum_dpi} / {selectedProduct.warning_dpi} / {selectedProduct.recommended_dpi}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>QR min</dt>
-                        <dd>
-                          {selectedProduct.qr_min_width_mm} mm, {selectedProduct.qr_min_module_mm} mm
-                        </dd>
-                      </div>
-                    </dl>
+                    <p className="product-detail__hint">
+                      {selectedProduct.trim_width_mm} × {selectedProduct.trim_height_mm} mm für {visibleProductUseCaseNames(bundle, selectedProduct.id).length} passende Use Cases.
+                    </p>
                   </article>
                 ) : null}
                 <div className="wizard-step-nav">

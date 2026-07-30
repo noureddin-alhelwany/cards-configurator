@@ -5,9 +5,9 @@ a work-item move.
 
 ## Summary
 
-- Todo: 3
+- Todo: 2
 - In progress: 0
-- Done: 29
+- Done: 36
 - Blocked: 0
 
 ## Work items
@@ -24,8 +24,13 @@ a work-item move.
 | US-04 | story | must | done | US-03 | Template auswählen |
 | US-05 | story | should | done | US-04 | Layoutvariante auswählen |
 | US-06 | story | must | done | US-04 | Template-Felder anzeigen |
+| UI-07 | story | should | done | UI-06 | Produktauswahl dynamisch anzeigen |
 | US-07 | story | must | done | US-06 | Text eingeben |
 | US-08 | story | must | done | US-06 | URL eingeben |
+| UI-09 | story | should | done | UI-08 | Dynamisches Personalisierungsformular erstellen |
+| UI-10 | story | should | done | UI-09 | Textvorschläge integrieren |
+| UI-11 | story | should | done | UI-09 | Logo- und Bildupload erstellen |
+| UI-12 | story | should | done | UI-11, US-16 | Einfaches Zuschneiden und Positionieren vorbereiten |
 | US-09 | story | must | done | TECH-01, US-06 | Logo hochladen |
 | US-10 | story | must | done | TECH-01, US-06 | Bild hochladen |
 | US-11 | story | should | done | US-10 | Bild automatisch optimieren |
@@ -42,8 +47,8 @@ a work-item move.
 | US-22 | story | must | done | US-18, US-19, US-20, US-21 | Design freigeben |
 | US-23 | story | must | done | TECH-01, US-22 | Auftrag erstellen |
 | US-24 | story | must | done | TECH-04, US-23 | Produktions-PDF erzeugen |
-| US-25 | story | should | todo | US-24 | Rendering wiederholen |
-| US-26 | story | must | todo | US-23 | Aufträge anzeigen |
+| US-25 | story | should | done | US-24 | Rendering wiederholen |
+| US-26 | story | must | done | US-23 | Aufträge anzeigen |
 | US-27 | story | must | todo | US-23, US-24 | Auftrag öffnen |
 | US-28 | story | should | todo | US-06 | Entwurf automatisch speichern |
 
