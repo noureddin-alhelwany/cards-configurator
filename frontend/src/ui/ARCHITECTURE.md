@@ -9,6 +9,14 @@ Current shared pieces:
 - `selection/selectionHelpers.ts` for asset and layout utilities
 - `orders/viewHelpers.ts` for user-facing order labels and dates
 
+Selection modules:
+
+- `selection/selectionRules.ts` for template roles, labels, validation wording and ordering rules
+- `selection/selectionCards.tsx` for template cards and variant buttons
+- `selection/selectionFields.tsx` for content and asset form sections
+- `selection/selectionPreview.tsx` for live preview and mockup rendering
+- `selection/selectionPanels.tsx` for page-side panels that compose the step flow
+
 Guidelines:
 
 - Use functional class names, not visual ones.
