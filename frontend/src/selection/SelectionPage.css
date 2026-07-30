@@ -361,6 +361,13 @@
   color: #514236;
 }
 
+.template-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
 .template-detail__group {
   margin-top: 16px;
 }
@@ -422,6 +429,21 @@
   border-radius: 18px;
   border: 1px solid rgba(33, 26, 21, 0.08);
   background: rgba(255, 255, 255, 0.9);
+}
+
+.template-field--issue {
+  border-color: rgba(138, 59, 36, 0.3);
+  background: rgba(255, 248, 244, 0.96);
+}
+
+.template-field--issue--warning {
+  border-color: rgba(143, 90, 42, 0.32);
+  background: rgba(255, 251, 242, 0.96);
+}
+
+.template-field--issue--error {
+  border-color: rgba(138, 59, 36, 0.42);
+  background: rgba(255, 244, 241, 0.98);
 }
 
 .template-field__header {
@@ -548,6 +570,46 @@
   font-size: 0.9rem;
 }
 
+.template-quality {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(138, 59, 36, 0.16);
+  background: rgba(255, 247, 243, 0.9);
+}
+
+.template-quality__list {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.template-quality__item {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.template-quality__item strong {
+  color: #211a15;
+}
+
+.template-quality__item span {
+  color: #514236;
+}
+
+.template-quality__item--warning {
+  border: 1px solid rgba(143, 90, 42, 0.18);
+}
+
+.template-quality__item--error {
+  border: 1px solid rgba(138, 59, 36, 0.22);
+}
+
 .template-live-preview {
   margin-top: 18px;
   padding: 14px 16px;
@@ -581,6 +643,28 @@
   margin: 0;
   color: #211a15;
   word-break: break-word;
+}
+
+.template-mockup {
+  margin-top: 18px;
+}
+
+.template-mockup__frame {
+  margin-top: 10px;
+  padding: 18px;
+  border-radius: 26px;
+  border: 1px solid rgba(33, 26, 21, 0.08);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 40%),
+    linear-gradient(180deg, rgba(246, 238, 228, 0.96), rgba(232, 221, 208, 0.98));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 18px 36px rgba(72, 48, 28, 0.08);
+  transform: perspective(1200px) rotateX(4deg);
+  transform-origin: top center;
+}
+
+.template-mockup__frame .design-stage-shell {
+  transform: scale(0.96);
+  transform-origin: center top;
 }
 
 .template-live-preview__qr {

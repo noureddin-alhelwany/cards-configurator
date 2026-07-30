@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import type {
   ProductDefinition,
   RegistryBundle,
+  ImageElementDefinition,
   TemplateDefinition,
   TemplateVariantDefinition,
   UseCaseDefinition,
 } from '../registries/types';
 import type { DraftState, TemplateSelectionRequest } from '../drafts/types';
-import type { ElementAdjustment, ProofFixture } from '../design/types';
+import type { ElementAdjustment, ProofFixture, ValidationIssue } from '../design/types';
 import DesignRenderer from '../design/DesignRenderer';
 import './SelectionPage.css';
 
@@ -24,6 +25,11 @@ type DraftLayoutValues = {
   text_values: Record<string, string>;
   asset_values: Record<string, string>;
   element_adjustments: Record<string, ElementAdjustment>;
+};
+
+type QualityReport = {
+  issues: ValidationIssue[];
+  blocking: boolean;
 };
 
 const DEFAULT_ELEMENT_ADJUSTMENT: ElementAdjustment = {
@@ -57,12 +63,29 @@ function layoutValuesFromState(layoutState: DraftState['layout_state']): DraftLa
   };
 }
 
-function assetElementForField(template: TemplateDefinition, fieldId: string) {
-  return template.elements.find((element) => element.kind === 'image' && element.asset_key === fieldId) ?? null;
+function assetElementForField(template: TemplateDefinition, fieldId: string): ImageElementDefinition | null {
+  return (template.elements.find(
+    (element): element is ImageElementDefinition => element.kind === 'image' && element.asset_key === fieldId,
+  ) ?? null) as ImageElementDefinition | null;
 }
 
 function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
+}
+
+function defaultAdjustmentsForTemplate(template: TemplateDefinition) {
+  return Object.fromEntries(
+    template.elements
+      .filter((element): element is ImageElementDefinition => element.kind === 'image')
+      .map((element) => [
+        element.id,
+        {
+          offset_x: 0,
+          offset_y: 0,
+          scale: 1,
+        } satisfies ElementAdjustment,
+      ]),
+  ) as Record<string, ElementAdjustment>;
 }
 
 async function loadRegistries(): Promise<RegistryBundle> {
@@ -116,7 +139,15 @@ async function saveLayoutValues(values: {
   return (await response.json()) as DraftState;
 }
 
-async function uploadAsset(kind: 'logo' | 'image', file: File): Promise<{ id: string; preview_data_url: string }> {
+type AssetResponse = {
+  id: string;
+  preview_data_url: string;
+  width_px: number | null;
+  height_px: number | null;
+  mime_type: string;
+};
+
+async function uploadAsset(kind: 'logo' | 'image', file: File): Promise<AssetResponse> {
   const response = await fetch(
     `/api/assets?kind=${encodeURIComponent(kind)}&filename=${encodeURIComponent(file.name)}&mime_type=${encodeURIComponent(file.type)}`,
     {
@@ -128,7 +159,7 @@ async function uploadAsset(kind: 'logo' | 'image', file: File): Promise<{ id: st
     const detail = await response.text();
     throw new Error(detail || `Failed to upload asset: ${response.status}`);
   }
-  return (await response.json()) as { id: string; preview_data_url: string };
+  return (await response.json()) as AssetResponse;
 }
 
 async function loadQrPreview(value: string): Promise<{ value: string; data_url: string }> {
@@ -138,6 +169,14 @@ async function loadQrPreview(value: string): Promise<{ value: string; data_url: 
     throw new Error(detail || `Failed to load QR preview: ${response.status}`);
   }
   return (await response.json()) as { value: string; data_url: string };
+}
+
+async function loadValidationReport(): Promise<QualityReport> {
+  const response = await fetch('/api/drafts/current/validation');
+  if (!response.ok) {
+    throw new Error(`Failed to load validation report: ${response.status}`);
+  }
+  return (await response.json()) as QualityReport;
 }
 
 function useRegistrySelection() {
@@ -384,18 +423,24 @@ function TemplateVariantButtons({
 
 function TemplateFieldsList({
   template,
+  product,
   layoutValues,
   assetPreviews,
+  assetDetails,
   assetErrors,
+  validationIssues,
   onTextChange,
   onAssetChange,
   onAssetAdjustmentChange,
   onAssetAdjustmentReset,
 }: {
   template: TemplateDefinition;
+  product: ProductDefinition;
   layoutValues: DraftLayoutValues;
   assetPreviews: Record<string, string>;
+  assetDetails: Record<string, { width_px: number | null; height_px: number | null; mime_type: string; preview_data_url: string }>;
   assetErrors: Record<string, string | null>;
+  validationIssues: ValidationIssue[];
   onTextChange: (fieldId: string, value: string) => void;
   onAssetChange: (fieldId: string, kind: 'logo' | 'image', file: File | null) => void;
   onAssetAdjustmentChange: (fieldId: string, adjustment: ElementAdjustment) => void;
@@ -453,10 +498,26 @@ function TemplateFieldsList({
 
         const assetValue = layoutValues.asset_values[field.id] ?? '';
         const assetPreview = assetPreviews[field.id] ?? (assetValue.startsWith('data:') ? assetValue : '');
+        const assetDetail = assetDetails[field.id] ?? null;
         const assetElement = assetElementForField(template, field.id);
-        const assetAdjustment = assetElement ? layoutValues.element_adjustments[assetElement.id] ?? DEFAULT_ELEMENT_ADJUSTMENT : null;
+        const assetAdjustment = assetElement
+          ? layoutValues.element_adjustments[assetElement.id] ?? DEFAULT_ELEMENT_ADJUSTMENT
+          : DEFAULT_ELEMENT_ADJUSTMENT;
+        const fieldIssue = validationIssues.find((issue) => issue.path === field.id) ?? null;
+        const effectiveDpi =
+          assetElement && assetDetail?.width_px
+            ? assetDetail.width_px / ((assetElement.box_mm.width_mm * assetAdjustment.scale) / 25.4)
+            : null;
+        const dpiLabel =
+          effectiveDpi === null
+            ? null
+            : effectiveDpi < product.minimum_dpi
+              ? `Effektive DPI ${effectiveDpi.toFixed(0)} unter Minimum ${product.minimum_dpi}`
+              : effectiveDpi < product.warning_dpi
+                ? `Effektive DPI ${effectiveDpi.toFixed(0)} unter Warnschwelle ${product.warning_dpi}`
+                : `Effektive DPI ${effectiveDpi.toFixed(0)} / empfohlen ${product.recommended_dpi}`;
         return (
-          <div key={field.id} className="template-field">
+          <div key={field.id} className={`template-field${fieldIssue ? ` template-field--issue template-field--issue--${fieldIssue.severity}` : ''}`}>
             <div className="template-field__header">
               <span className="template-field__label">{field.id}</span>
               {commonLabel}
@@ -476,8 +537,10 @@ function TemplateFieldsList({
             ) : (
               <p className="template-field__hint">Datei noch nicht gewählt</p>
             )}
+            {dpiLabel ? <p className="template-field__hint">{dpiLabel}</p> : null}
             {assetErrors[field.id] ? <p className="template-field__error">{assetErrors[field.id]}</p> : null}
-            {assetElement && assetAdjustment ? (
+            {fieldIssue ? <p className="template-field__error">{fieldIssue.message}</p> : null}
+            {assetElement ? (
               <div className="template-field__transform">
                 <label className="template-field__control">
                   <span>Verschiebung X</span>
@@ -519,15 +582,15 @@ function TemplateFieldsList({
                   <span>Skalierung</span>
                   <input
                     type="range"
-                    min="0.5"
-                    max="1.5"
+                    min={assetElement.min_scale}
+                    max={assetElement.max_scale}
                     step="0.01"
                     aria-label={`${field.id} skalierung`}
                     value={assetAdjustment.scale}
                     onChange={(event) =>
                       onAssetAdjustmentChange(field.id, {
                         ...assetAdjustment,
-                        scale: clamp(Number(event.target.value), 0.5, 1.5),
+                        scale: clamp(Number(event.target.value), assetElement.min_scale, assetElement.max_scale),
                       })
                     }
                   />
@@ -605,6 +668,7 @@ function TemplateLivePreview({
   selectedVariantId,
   layoutValues,
   assetPreviews,
+  validationIssues,
 }: {
   template: TemplateDefinition;
   product: ProductDefinition;
@@ -612,6 +676,7 @@ function TemplateLivePreview({
   selectedVariantId: string | null;
   layoutValues: DraftLayoutValues;
   assetPreviews: Record<string, string>;
+  validationIssues: ValidationIssue[];
 }) {
   const [qrPreview, setQrPreview] = useState<{ value: string; data_url: string } | null>(null);
   const [qrError, setQrError] = useState<string | null>(null);
@@ -664,7 +729,7 @@ function TemplateLivePreview({
       <p className="template-detail__group-title">Live-Vorschau</p>
       {proofFixture ? (
         <div className="template-live-preview__stage">
-          <DesignRenderer fixture={proofFixture} />
+          <DesignRenderer fixture={proofFixture} validationIssues={validationIssues} />
         </div>
       ) : (
         <p className="template-field__hint">Live-Vorschau nutzt gerenderte Template-Elemente, sobald sie verfügbar sind.</p>
@@ -677,6 +742,14 @@ function TemplateLivePreview({
           </div>
         ))}
       </dl>
+      {proofFixture ? (
+        <div className="template-mockup">
+          <p className="template-detail__group-title">Produkt-Mockup</p>
+          <div className="template-mockup__frame">
+            <DesignRenderer fixture={proofFixture} validationIssues={validationIssues} />
+          </div>
+        </div>
+      ) : null}
       {qrField && !qrPreview ? <p className="template-field__hint">{qrError ?? 'QR-Vorschau erscheint nach URL-Eingabe'}</p> : null}
     </div>
   );
@@ -720,7 +793,12 @@ export default function SelectionPage() {
     [selectedTemplate, selectedVariantId],
   );
   const [assetPreviews, setAssetPreviews] = useState<Record<string, string>>({});
+  const [assetDetails, setAssetDetails] = useState<
+    Record<string, { width_px: number | null; height_px: number | null; mime_type: string; preview_data_url: string }>
+  >({});
   const [assetErrors, setAssetErrors] = useState<Record<string, string | null>>({});
+  const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
+  const [qualityError, setQualityError] = useState<string | null>(null);
 
   const matchingProducts = useMemo(() => (bundle ? visibleProducts(bundle) : []), [bundle]);
   const matchingTemplates = useMemo(
@@ -785,17 +863,21 @@ export default function SelectionPage() {
         if (!response.ok) {
           return null;
         }
-        const asset = (await response.json()) as { preview_data_url?: string };
-        return asset.preview_data_url ? [fieldId, asset.preview_data_url] as const : null;
+        const asset = (await response.json()) as AssetResponse;
+        return [fieldId, asset] as const;
       }),
     )
       .then((entries) => {
         if (!active) {
           return;
         }
-        const hydratedAssets = Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => entry !== null));
-        if (Object.keys(hydratedAssets).length > 0) {
-          setAssetPreviews((current) => ({ ...current, ...hydratedAssets }));
+        const hydratedPreviews = Object.fromEntries(
+          entries.filter((entry): entry is readonly [string, AssetResponse] => entry !== null).map(([fieldId, asset]) => [fieldId, asset.preview_data_url] as const),
+        );
+        const hydratedDetails = Object.fromEntries(entries.filter((entry): entry is readonly [string, AssetResponse] => entry !== null));
+        if (Object.keys(hydratedPreviews).length > 0) {
+          setAssetPreviews((current) => ({ ...current, ...hydratedPreviews }));
+          setAssetDetails((current) => ({ ...current, ...hydratedDetails }));
         }
       })
       .catch(() => {
@@ -806,6 +888,28 @@ export default function SelectionPage() {
       active = false;
     };
   }, [assetPreviews, layoutValues.asset_values]);
+
+  useEffect(() => {
+    let active = true;
+
+    loadValidationReport()
+      .then((report) => {
+        if (active) {
+          setQualityReport(report);
+          setQualityError(null);
+        }
+      })
+      .catch((exception: unknown) => {
+        if (active) {
+          setQualityReport(null);
+          setQualityError(exception instanceof Error ? exception.message : 'Qualitätsprüfung fehlgeschlagen');
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [selectedTemplateKey, layoutValues, selectedVariantId]);
 
   async function handleTemplateSelect(template: TemplateDefinition) {
     if (!selectedUseCaseId || !selectedProductId) {
@@ -855,6 +959,10 @@ export default function SelectionPage() {
         ...current,
         [fieldId]: uploadedAsset.preview_data_url,
       }));
+      setAssetDetails((current) => ({
+        ...current,
+        [fieldId]: uploadedAsset,
+      }));
       setLayoutValues(layoutValuesFromState(response.layout_state));
     } catch (exception: unknown) {
       setAssetErrors((current) => ({
@@ -877,7 +985,7 @@ export default function SelectionPage() {
         [assetElement.id]: {
           offset_x: clamp(adjustment.offset_x, -1, 1),
           offset_y: clamp(adjustment.offset_y, -1, 1),
-          scale: clamp(adjustment.scale, 0.5, 1.5),
+          scale: clamp(adjustment.scale, assetElement.min_scale, assetElement.max_scale),
         },
       },
     });
@@ -886,6 +994,14 @@ export default function SelectionPage() {
 
   async function handleAssetAdjustmentReset(fieldId: string) {
     await handleAssetAdjustmentChange(fieldId, DEFAULT_ELEMENT_ADJUSTMENT);
+  }
+
+  async function handleLayoutReset() {
+    if (!selectedTemplate) {
+      return;
+    }
+    const response = await saveLayoutValues({ element_adjustments: defaultAdjustmentsForTemplate(selectedTemplate) });
+    setLayoutValues(layoutValuesFromState(response.layout_state));
   }
 
   if (state.error) {
@@ -910,6 +1026,9 @@ export default function SelectionPage() {
       </main>
     );
   }
+
+  const validationIssues = qualityReport?.issues ?? [];
+  const blockingIssues = validationIssues.filter((issue) => issue.blocking);
 
   return (
     <main className="selection-shell">
@@ -1041,10 +1160,32 @@ export default function SelectionPage() {
                 <h3>
                   {selectedTemplate.name ?? selectedTemplate.id} <span>@{selectedTemplate.version}</span>
                 </h3>
+                <div className="template-detail__actions">
+                  <button type="button" className="template-field__reset" onClick={handleLayoutReset}>
+                    Layout zurücksetzen
+                  </button>
+                  <button type="button" className="template-field__reset" disabled={blockingIssues.length > 0}>
+                    Design freigeben
+                  </button>
+                </div>
                 <p className="template-detail__meta">
                   Produkt {selectedTemplate.product_id}, {selectedTemplate.use_case_ids.length} Use Cases,{' '}
                   {selectedTemplate.fields.length} Felder
                 </p>
+                {qualityError ? <p className="template-field__error">{qualityError}</p> : null}
+                {validationIssues.length > 0 ? (
+                  <div className="template-quality">
+                    <p className="template-detail__group-title">Qualitätsprüfung</p>
+                    <ul className="template-quality__list">
+                      {validationIssues.map((issue) => (
+                        <li key={`${issue.path}-${issue.code}`} className={`template-quality__item template-quality__item--${issue.severity}`}>
+                          <strong>{issue.path}</strong>
+                          <span>{issue.message}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
                 <div className="template-detail__preview">
                   <img
                     src={assetPath(selectedTemplatePreview ?? 'a6_preview.png')}
@@ -1058,6 +1199,7 @@ export default function SelectionPage() {
                   selectedVariantId={selectedVariantId}
                   layoutValues={layoutValues}
                   assetPreviews={assetPreviews}
+                  validationIssues={validationIssues}
                 />
                 <div className="template-detail__group">
                   <p className="template-detail__group-title">Layoutvarianten</p>
@@ -1071,9 +1213,12 @@ export default function SelectionPage() {
                   <p className="template-detail__group-title">Felder geladen</p>
                   <TemplateFieldsList
                     template={selectedTemplate}
+                    product={selectedProduct}
                     layoutValues={layoutValues}
                     assetPreviews={assetPreviews}
+                    assetDetails={assetDetails}
                     assetErrors={assetErrors}
+                    validationIssues={validationIssues}
                     onTextChange={handleTextFieldChange}
                     onAssetChange={handleAssetFieldChange}
                     onAssetAdjustmentChange={handleAssetAdjustmentChange}

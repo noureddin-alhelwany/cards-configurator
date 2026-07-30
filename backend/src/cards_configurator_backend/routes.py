@@ -13,6 +13,7 @@ from .drafts import (
     save_template_selection,
     update_layout_state,
 )
+from .quality import validate_current_draft
 from .registries.loader import load_registry_bundle
 from .registries.service import build_proof_fixture
 from .rendering.service import render_proof_artifacts
@@ -49,6 +50,22 @@ def current_draft() -> DraftState:
     session = get_session_factory()()
     try:
         return get_current_draft(session)
+    finally:
+        session.close()
+
+
+@router.get("/drafts/current/validation")
+def current_draft_validation(request: Request) -> dict[str, object]:
+    settings = get_settings()
+    bundle = getattr(request.app.state, "registry_bundle", None)
+    if bundle is None:
+        bundle = load_registry_bundle(settings.registries_dir)
+
+    session = get_session_factory()()
+    try:
+        draft = get_current_draft(session)
+        report = validate_current_draft(settings.data_dir, bundle, draft)
+        return report.model_dump()
     finally:
         session.close()
 

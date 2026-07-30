@@ -49,6 +49,17 @@ export type ImageElementDefinition = {
   fit: 'contain' | 'cover';
   movement_mm: BoxMm | null;
   enhancement: 'none' | 'contrast' | 'sharpen';
+  min_scale: number;
+  max_scale: number;
+};
+
+export type ValidationIssue = {
+  code: string;
+  severity: 'info' | 'warning' | 'error';
+  path: string;
+  message: string;
+  blocking: boolean;
+  details: Record<string, unknown>;
 };
 
 export type QrElementDefinition = {

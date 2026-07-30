@@ -3,7 +3,7 @@ import DesignRenderer from '../design/DesignRenderer';
 import type { ProofFixture } from '../design/types';
 import './ProofPage.css';
 
-const EXPECTED_ASSETS = 2;
+const EXPECTED_ASSETS = 3;
 
 async function loadProofFixture(): Promise<ProofFixture> {
   const response = await fetch('/api/render/proof-fixture');

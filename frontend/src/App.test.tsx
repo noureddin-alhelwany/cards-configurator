@@ -10,6 +10,19 @@ afterEach(() => {
 test('renders the registry selection flow and filters matching products', async () => {
   let persistedTextValues: Record<string, string> = {};
   let persistedElementAdjustments: Record<string, { offset_x: number; offset_y: number; scale: number }> = {};
+  let persistedAssetValues: Record<string, string> = {};
+  const uploadedAssets: Record<
+    string,
+    {
+      id: string;
+      preview_data_url: string;
+      width_px: number;
+      height_px: number;
+      mime_type: string;
+      kind: 'logo' | 'image';
+      sha256: string;
+    }
+  > = {};
 
   function normalizeUrl(value: string) {
     const trimmed = value.trim();
@@ -89,6 +102,8 @@ test('renders the registry selection flow and filters matching products', async 
           width_mm: 4,
           height_mm: 4,
         },
+        min_scale: 0.8,
+        max_scale: 1.3,
       },
       {
         kind: 'image',
@@ -110,6 +125,8 @@ test('renders the registry selection flow and filters matching products', async 
           width_mm: 6,
           height_mm: 4,
         },
+        min_scale: 0.7,
+        max_scale: 1.2,
       },
       {
         kind: 'qr',
@@ -423,14 +440,24 @@ test('renders the registry selection flow and filters matching products', async 
               variant_id: '',
               element_adjustments: {},
               text_values: {},
-              asset_values: {},
+              asset_values: persistedAssetValues,
             },
+          }),
+        };
+      }
+      if (url.endsWith('/api/drafts/current/validation')) {
+        return {
+          ok: true,
+          json: async () => ({
+            issues: [],
+            blocking: false,
           }),
         };
       }
       if (url.endsWith('/api/drafts/current/template')) {
         const selection = JSON.parse(String(init?.body ?? '{}'));
         persistedTextValues = {};
+        persistedAssetValues = {};
         return {
           ok: true,
           json: async () => ({
@@ -466,6 +493,10 @@ test('renders the registry selection flow and filters matching products', async 
             nextTextValues[fieldId] = normalizeUrl(value as string);
           }
         });
+        persistedAssetValues = {
+          ...persistedAssetValues,
+          ...(body.asset_values ?? {}),
+        };
         persistedTextValues = nextTextValues;
         persistedElementAdjustments = nextElementAdjustments;
         return {
@@ -482,7 +513,7 @@ test('renders the registry selection flow and filters matching products', async 
               variant_id: nextVariantId,
               element_adjustments: nextElementAdjustments,
               text_values: nextTextValues,
-              asset_values: {},
+              asset_values: persistedAssetValues,
             },
           }),
         };
@@ -499,11 +530,47 @@ test('renders the registry selection flow and filters matching products', async 
         };
       }
       if (url.startsWith('/api/assets')) {
+        if (init?.method === 'POST') {
+          const assetId = 'asset-1';
+          const payload: {
+            id: string;
+            preview_data_url: string;
+            width_px: number;
+            height_px: number;
+            mime_type: string;
+            kind: 'logo' | 'image';
+            sha256: string;
+          } = {
+            id: assetId,
+            preview_data_url: 'data:image/png;base64,' + btoa('preview'),
+            width_px: 2000,
+            height_px: 1000,
+            mime_type: 'image/png',
+            kind: 'image',
+            sha256: 'test',
+          };
+          uploadedAssets[assetId] = payload;
+          return {
+            ok: true,
+            json: async () => payload,
+          };
+        }
+        const assetId = url.split('/').pop() ?? '';
+        const asset = uploadedAssets[assetId];
+        if (asset) {
+          return {
+            ok: true,
+            json: async () => asset,
+          };
+        }
         return {
           ok: true,
           json: async () => ({
             id: 'asset-1',
             preview_data_url: 'data:image/png;base64,' + btoa('preview'),
+            width_px: 2000,
+            height_px: 1000,
+            mime_type: 'image/png',
           }),
         };
       }
@@ -558,7 +625,7 @@ test('renders the registry selection flow and filters matching products', async 
     expect(screen.getByDisplayValue('https://example.com/review')).toBeInTheDocument();
   });
   await waitFor(() => {
-    expect(screen.getByTestId('proof-canvas')).toBeInTheDocument();
+    expect(screen.getAllByTestId('proof-canvas')).toHaveLength(2);
   });
   expect(within(livePreview as HTMLElement).getByText('Studio One')).toBeInTheDocument();
 
@@ -568,19 +635,20 @@ test('renders the registry selection flow and filters matching products', async 
   await waitFor(() => {
     expect(screen.getByAltText('logo Vorschau')).toBeInTheDocument();
   });
-  expect(screen.getByRole('img', { name: 'Studio logo' })).toBeInTheDocument();
-  expect(screen.getByRole('img', { name: 'QR: https://example.com/review' })).toBeInTheDocument();
+  const studioLogoImages = screen.getAllByRole('img', { name: 'Studio logo' });
+  expect(studioLogoImages).toHaveLength(2);
+  expect(screen.getAllByRole('img', { name: 'QR: https://example.com/review' })).toHaveLength(2);
   const logoOffsetX = screen.getByLabelText('logo verschiebung x');
   fireEvent.change(logoOffsetX, { target: { value: '0.25' } });
   await waitFor(() => {
     expect(screen.getByDisplayValue('0.25')).toBeInTheDocument();
   });
   await waitFor(() => {
-    expect(screen.getByRole('img', { name: 'Studio logo' })).toHaveStyle(
+    expect(studioLogoImages[0]).toHaveStyle(
       'transform: translate(1.5mm, 0mm) scale(1);',
     );
   });
-  expect(screen.getByRole('img', { name: 'Studio logo' })).toHaveStyle(
+  expect(studioLogoImages[0]).toHaveStyle(
     'filter: contrast(1.06) saturate(1.01);',
   );
 
@@ -590,10 +658,12 @@ test('renders the registry selection flow and filters matching products', async 
   await waitFor(() => {
     expect(screen.getByAltText('heroImage Vorschau')).toBeInTheDocument();
   });
+  const heroImages = screen.getAllByRole('img', { name: 'Review hero image' });
+  expect(heroImages).toHaveLength(2);
   const heroOffsetY = screen.getByLabelText('heroImage verschiebung y');
   fireEvent.change(heroOffsetY, { target: { value: '-0.2' } });
   await waitFor(() => {
-    expect(screen.getByRole('img', { name: 'Review hero image' })).toHaveStyle(
+    expect(heroImages[0]).toHaveStyle(
       'transform: translate(0mm, -0.8mm) scale(1);',
     );
   });
@@ -603,9 +673,7 @@ test('renders the registry selection flow and filters matching products', async 
     expect(screen.getByRole('tab', { name: 'Text im Fokus', selected: true })).toBeInTheDocument();
   });
   expect(screen.getByDisplayValue('Studio One')).toBeInTheDocument();
-  expect(
-    screen.getByRole('img', { name: 'Google Reviews Classic - Text im Fokus' }),
-  ).toBeInTheDocument();
+  expect(screen.getByRole('img', { name: 'Google Reviews Classic - Text im Fokus' })).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: /DL Card/i }));
 

@@ -42,7 +42,26 @@
   text-wrap: balance;
 }
 
+.design-element--text--reduced {
+  opacity: 0.98;
+  letter-spacing: -0.01em;
+}
+
 .design-element--image,
 .design-element--qr {
   object-fit: contain;
+}
+
+.design-element--issue {
+  outline: 0.8mm solid rgba(138, 59, 36, 0.52);
+  outline-offset: 0.3mm;
+  border-radius: 1mm;
+}
+
+.design-element--issue--warning {
+  outline-color: rgba(143, 90, 42, 0.46);
+}
+
+.design-element--issue--error {
+  outline-color: rgba(138, 59, 36, 0.6);
 }

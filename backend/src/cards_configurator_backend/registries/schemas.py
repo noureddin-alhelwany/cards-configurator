@@ -99,6 +99,8 @@ class ImageElementDefinition(ElementBase):
     fit: Literal["contain", "cover"] = "contain"
     movement_mm: BoxMm | None = None
     enhancement: Literal["none", "contrast", "sharpen"] = "none"
+    min_scale: float = 0.7
+    max_scale: float = 1.5
 
 
 class QrElementDefinition(ElementBase):
