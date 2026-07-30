@@ -80,6 +80,13 @@ const DEFAULT_ELEMENT_ADJUSTMENT: ElementAdjustment = {
 };
 
 const EMPTY_VALIDATION_ISSUES: ValidationIssue[] = [];
+const EMPTY_APPROVAL_CHECKLIST: ApprovalChecklist = {
+  texts_checked: false,
+  url_checked: false,
+  image_crop_checked: false,
+  preview_released: false,
+};
+
 function buildWizardSteps(includeProductStep: boolean): WizardStep[] {
   return [
     {
@@ -120,6 +127,30 @@ function layoutValuesFromState(layoutState: DraftState['layout_state']): DraftLa
     asset_values: layoutState.asset_values,
     element_adjustments: layoutState.element_adjustments,
   };
+}
+
+function emptyApprovalChecklist(): ApprovalChecklist {
+  return { ...EMPTY_APPROVAL_CHECKLIST };
+}
+
+function approvalChecklistFromDraft(draft: DraftState): ApprovalChecklist {
+  return {
+    texts_checked: draft.approval_checklist?.texts_checked ?? false,
+    url_checked: draft.approval_checklist?.url_checked ?? false,
+    image_crop_checked: draft.approval_checklist?.image_crop_checked ?? false,
+    preview_released: draft.approval_checklist?.preview_released ?? false,
+  };
+}
+
+function approvalChecklistFromAcknowledgement(checked: boolean): ApprovalChecklist {
+  return checked
+    ? {
+        texts_checked: true,
+        url_checked: true,
+        image_crop_checked: true,
+        preview_released: true,
+      }
+    : emptyApprovalChecklist();
 }
 
 function wizardStepIndexFromDraft(draft: DraftState, includeProductStep: boolean): number {
@@ -483,12 +514,7 @@ export default function SelectionPage() {
   const [assetErrors, setAssetErrors] = useState<Record<string, string | null>>({});
   const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
   const [qualityError, setQualityError] = useState<string | null>(null);
-  const [approvalChecklist, setApprovalChecklist] = useState<ApprovalChecklist>({
-    texts_checked: false,
-    url_checked: false,
-    image_crop_checked: false,
-    preview_released: false,
-  });
+  const [approvalChecklist, setApprovalChecklist] = useState<ApprovalChecklist>(emptyApprovalChecklist());
   const [approvalError, setApprovalError] = useState<string | null>(null);
   const [approvalSubmitting, setApprovalSubmitting] = useState(false);
   const [validationRevealAll, setValidationRevealAll] = useState(false);
@@ -506,14 +532,9 @@ export default function SelectionPage() {
 
   useEffect(() => {
     if (state.draft?.approved_at && state.draft.approval_checklist) {
-      setApprovalChecklist({
-        texts_checked: state.draft.approval_checklist.texts_checked ?? false,
-        url_checked: state.draft.approval_checklist.url_checked ?? false,
-        image_crop_checked: state.draft.approval_checklist.image_crop_checked ?? false,
-        preview_released: state.draft.approval_checklist.preview_released ?? false,
-      });
+      setApprovalChecklist(approvalChecklistFromDraft(state.draft));
     }
-  }, [state.draft?.approved_at, state.draft?.approval_checklist, state.draft?.id]);
+  }, [state.draft]);
 
   const isApproved = Boolean(state.draft?.approved_at);
   const approvalReady = Object.values(approvalChecklist).every(Boolean);
@@ -733,12 +754,7 @@ export default function SelectionPage() {
     setExpandedAssetFieldId(null);
     setPreviewExpanded(false);
     resetValidationRevealState();
-    setApprovalChecklist({
-      texts_checked: false,
-      url_checked: false,
-      image_crop_checked: false,
-      preview_released: false,
-    });
+    setApprovalChecklist(emptyApprovalChecklist());
     setApprovalError(null);
     setPendingProductId(null);
     setWizardStepIndex(designStepIndex);
@@ -804,12 +820,7 @@ export default function SelectionPage() {
       setLayoutValues(layoutValuesFromState(seededResponse.layout_state));
       setDraft(seededResponse);
     }
-    setApprovalChecklist({
-      texts_checked: false,
-      url_checked: false,
-      image_crop_checked: false,
-      preview_released: false,
-    });
+    setApprovalChecklist(emptyApprovalChecklist());
     setApprovalError(null);
   }
 
@@ -923,12 +934,7 @@ export default function SelectionPage() {
       const response = await approveDraft(approvalChecklist);
       setDraft(response);
       setWizardStepIndex(reviewStepIndex);
-      setApprovalChecklist({
-        texts_checked: response.approval_checklist?.texts_checked ?? false,
-        url_checked: response.approval_checklist?.url_checked ?? false,
-        image_crop_checked: response.approval_checklist?.image_crop_checked ?? false,
-        preview_released: response.approval_checklist?.preview_released ?? false,
-      });
+      setApprovalChecklist(approvalChecklistFromDraft(response));
     } catch (exception: unknown) {
       setApprovalError(exception instanceof Error ? exception.message : 'Freigabe fehlgeschlagen');
     } finally {
@@ -953,12 +959,7 @@ export default function SelectionPage() {
       setQualityError(null);
       setPendingProductId(null);
       setPreviewExpanded(false);
-      setApprovalChecklist({
-        texts_checked: false,
-        url_checked: false,
-        image_crop_checked: false,
-        preview_released: false,
-      });
+      setApprovalChecklist(emptyApprovalChecklist());
       setApprovalError(null);
       setValidationRevealAll(false);
       setTouchedValidationPaths({});
@@ -1341,14 +1342,7 @@ export default function SelectionPage() {
                           type="checkbox"
                           checked={approvalReady}
                           disabled={isApproved}
-                          onChange={(event) =>
-                            setApprovalChecklist({
-                              texts_checked: event.target.checked,
-                              url_checked: event.target.checked,
-                              image_crop_checked: event.target.checked,
-                              preview_released: event.target.checked,
-                            })
-                          }
+                          onChange={(event) => setApprovalChecklist(approvalChecklistFromAcknowledgement(event.target.checked))}
                         />
                         <span>Ich habe die Vorschau geprüft</span>
                       </label>
