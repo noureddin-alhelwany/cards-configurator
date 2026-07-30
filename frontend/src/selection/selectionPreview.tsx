@@ -165,10 +165,10 @@ export function TemplateLivePreview({
           setQrLoading(false);
         }
       })
-      .catch((exception: unknown) => {
+      .catch(() => {
         if (active) {
           setQrPreview(null);
-          setQrError(exception instanceof Error ? exception.message : 'QR konnte nicht geladen werden');
+          setQrError('Die QR-Vorschau konnte nicht geladen werden.');
           setQrLoading(false);
         }
       });

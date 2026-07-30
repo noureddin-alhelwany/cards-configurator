@@ -36,9 +36,9 @@ export default function OrderProductionPage({ orderId }: { orderId: string }) {
           setFixture(data);
         }
       })
-      .catch((exception: unknown) => {
+      .catch(() => {
         if (active) {
-          setError(exception instanceof Error ? exception.message : 'Unknown order fixture error');
+          setError('Die Produktionsansicht konnte nicht geladen werden.');
         }
       });
 

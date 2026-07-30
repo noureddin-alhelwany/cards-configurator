@@ -39,9 +39,9 @@ export default function OrderPage({ orderId }: { orderId: string }) {
           setOrder(data);
         }
       })
-      .catch((exception: unknown) => {
+      .catch(() => {
         if (active) {
-          setError(exception instanceof Error ? exception.message : 'Unknown order error');
+          setError('Der Auftrag konnte nicht geladen werden.');
         }
       });
 

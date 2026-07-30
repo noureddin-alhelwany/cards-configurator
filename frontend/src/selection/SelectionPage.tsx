@@ -249,8 +249,9 @@ export default function SelectionPage() {
                     <p className="product-detail__eyebrow">Ausgewähltes Produkt</p>
                     <h3>{selectedProduct.name}</h3>
                     <p className="product-detail__hint">
-                      {selectedProduct.trim_width_mm} × {selectedProduct.trim_height_mm} mm für{' '}
-                      {visibleProductUseCaseNames(bundle, selectedProduct.id).length} passende Use Cases.
+                      {selectedProduct.trim_width_mm} × {selectedProduct.trim_height_mm} mm ·{' '}
+                      {visibleProductUseCaseNames(bundle, selectedProduct.id).slice(0, 2).join(' · ') ||
+                        'Für den gewählten Einsatz verfügbar'}
                     </p>
                   </article>
                 ) : null}

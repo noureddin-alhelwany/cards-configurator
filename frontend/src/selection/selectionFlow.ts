@@ -329,13 +329,13 @@ export function useSelectionFlow() {
         setLayoutValues(layoutValuesFromState(draft.layout_state));
         setWizardStepIndex(wizardStepIndexFromDraft(draft, includeProductStep));
       })
-      .catch((exception: unknown) => {
+      .catch(() => {
         if (active) {
           setState({
             bundle: null,
             health: 'offline',
             draft: null,
-            error: exception instanceof Error ? exception.message : 'Unknown registry error',
+            error: 'Die Konfiguration ist derzeit nicht verfügbar.',
           });
         }
       });
@@ -564,10 +564,10 @@ export function useSelectionFlow() {
           setQualityError(null);
         }
       })
-      .catch((exception: unknown) => {
+      .catch(() => {
         if (active) {
           setQualityReport(null);
-          setQualityError(exception instanceof Error ? exception.message : 'Qualitätsprüfung fehlgeschlagen');
+          setQualityError('Die Qualitätsprüfung ist derzeit nicht verfügbar.');
         }
       });
 
@@ -724,10 +724,10 @@ export function useSelectionFlow() {
       }));
       setLayoutValues(layoutValuesFromState(response.layout_state));
       setDraft(response);
-    } catch (exception: unknown) {
+    } catch {
       setAssetErrors((current) => ({
         ...current,
-        [fieldId]: exception instanceof Error ? exception.message : 'Upload fehlgeschlagen',
+        [fieldId]: 'Die Datei konnte nicht verarbeitet werden.',
       }));
     }
   }
@@ -779,8 +779,8 @@ export function useSelectionFlow() {
       setDraft(response);
       setWizardStepIndex(reviewStepIndex);
       setApprovalChecklist(approvalChecklistFromDraft(response));
-    } catch (exception: unknown) {
-      setApprovalError(exception instanceof Error ? exception.message : 'Freigabe fehlgeschlagen');
+    } catch {
+      setApprovalError('Die Freigabe konnte nicht gespeichert werden.');
     } finally {
       setApprovalSubmitting(false);
     }
@@ -808,8 +808,8 @@ export function useSelectionFlow() {
       setValidationRevealAll(false);
       setTouchedValidationPaths({});
       setWizardStepIndex(0);
-    } catch (exception: unknown) {
-      setResetError(exception instanceof Error ? exception.message : 'Neuer Entwurf konnte nicht gestartet werden');
+    } catch {
+      setResetError('Der Entwurf konnte nicht zurückgesetzt werden.');
     } finally {
       setResetSubmitting(false);
     }
@@ -824,8 +824,8 @@ export function useSelectionFlow() {
       const order = await createOrder();
       window.history.pushState({}, '', `/render/orders/${order.id}`);
       window.dispatchEvent(new PopStateEvent('popstate'));
-    } catch (exception: unknown) {
-      setApprovalError(exception instanceof Error ? exception.message : 'Auftrag konnte nicht erstellt werden');
+    } catch {
+      setApprovalError('Der Auftrag konnte nicht erstellt werden.');
     } finally {
       setOrderSubmitting(false);
     }

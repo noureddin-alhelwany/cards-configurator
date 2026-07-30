@@ -7,7 +7,7 @@ a work-item move.
 
 - Todo: 2
 - In progress: 0
-- Done: 46
+- Done: 47
 - Blocked: 0
 
 ## Work items
@@ -41,6 +41,7 @@ a work-item move.
 | UI-20 | story | must | done | UI-19 | Responsive und Accessibility-Grundlage schaffen |
 | UI-21 | story | must | done | UI-20 | Komponentenarchitektur definieren |
 | UI-22 | story | must | done | UI-21 | Design-Token-Grundlage vorbereiten |
+| UI-23 | story | should | done | UI-22 | Debug- und Backendinformationen aus dem Nutzer-Frontend entfernen |
 | US-09 | story | must | done | TECH-01, US-06 | Logo hochladen |
 | US-10 | story | must | done | TECH-01, US-06 | Bild hochladen |
 | US-11 | story | should | done | US-10 | Bild automatisch optimieren |

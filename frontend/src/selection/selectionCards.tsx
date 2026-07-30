@@ -119,7 +119,7 @@ export function ProductCard({
         <p className="product-card__format">
           {product.trim_width_mm} × {product.trim_height_mm} mm
         </p>
-        <p className="product-card__meta">{useCaseNames.length} passende Use Cases</p>
+        <p className="product-card__meta">{useCaseNames.length > 0 ? useCaseNames.slice(0, 2).join(' · ') : 'Für den gewählten Einsatz verfügbar'}</p>
       </div>
     </button>
   );

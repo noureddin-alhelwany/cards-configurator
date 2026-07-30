@@ -178,16 +178,14 @@ export function SelectionContentPanel({
       <article className="template-detail">
         <p className="template-detail__eyebrow">Inhalte</p>
         <h3>
-          {selectedTemplate.name ?? selectedTemplate.id} <span>@{selectedTemplate.version}</span>
+          {selectedTemplate.name ?? 'Vorlage'}
         </h3>
         <div className="template-detail__actions">
           <button type="button" className="template-field__reset" disabled={isApproved} onClick={onLayoutReset}>
             Layout zurücksetzen
           </button>
         </div>
-        <p className="template-detail__meta">
-          Produkt {selectedTemplate.product_id}, {selectedTemplate.use_case_ids.length} Use Cases, {selectedTemplate.fields.length} Felder
-        </p>
+        <p className="template-detail__meta">Vorlage für den gewählten Einsatzbereich</p>
         <p className="template-detail__hint">Passe Varianten und Felder an. Die Vorschau bleibt separat sichtbar.</p>
         <div className="template-detail__group">
           <p className="template-detail__group-title">Layoutvarianten</p>
@@ -264,7 +262,7 @@ export function SelectionReviewPanel({
       <article className="template-detail">
         <p className="template-detail__eyebrow">Freigabe</p>
         <h3>
-          {selectedTemplate.name ?? selectedTemplate.id} <span>@{selectedTemplate.version}</span>
+          {selectedTemplate.name ?? 'Vorlage'}
         </h3>
         <div className="template-detail__actions">
           <button type="button" className="template-field__reset" disabled={isApproved} onClick={onBack}>
@@ -280,9 +278,7 @@ export function SelectionReviewPanel({
           </button>
         </div>
         {isApproved ? <p className="template-detail__approved">Freigegeben am {new Date(approvedAt ?? '').toLocaleString('de-DE')}</p> : null}
-        <p className="template-detail__meta">
-          Produkt {selectedTemplate.product_id}, {selectedTemplate.use_case_ids.length} Use Cases, {selectedTemplate.fields.length} Felder
-        </p>
+        <p className="template-detail__meta">Vorlage für den gewählten Einsatzbereich</p>
         <p className="template-detail__hint">
           Ausgewähltes Produkt: {selectedProduct.name}
         </p>

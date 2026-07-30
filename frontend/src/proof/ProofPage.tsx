@@ -29,9 +29,9 @@ export default function ProofPage() {
           setFixture(data);
         }
       })
-      .catch((exception: unknown) => {
+      .catch(() => {
         if (active) {
-          setError(exception instanceof Error ? exception.message : 'Unknown proof fixture error');
+          setError('Die Renderer-Proofansicht konnte nicht geladen werden.');
         }
       });
 
@@ -88,7 +88,7 @@ export default function ProofPage() {
           <p className="proof-kicker">Renderer proof</p>
           <h1>DesignRenderer</h1>
           <p className="proof-summary">
-            {fixture.use_case.name} · {fixture.product.name} · {fixture.template.id}@{fixture.template.version}
+            {fixture.use_case.name} · {fixture.product.name} · {fixture.template.name ?? 'Vorlage'}
           </p>
         </header>
         <DesignRenderer
