@@ -21,6 +21,12 @@ class RenderArtifacts(BaseModel):
     page_height_mm: float
 
 
+class PreviewArtifacts(BaseModel):
+    preview_path: str
+    page_width_mm: float
+    page_height_mm: float
+
+
 def _mm_to_pt(mm: float) -> float:
     return mm * PT_PER_MM
 
@@ -112,6 +118,44 @@ async def render_proof_artifacts(
     return RenderArtifacts(
         preview_path=str(preview_path),
         pdf_path=str(pdf_path),
+        page_width_mm=template.page_width_mm,
+        page_height_mm=template.page_height_mm,
+    )
+
+
+async def render_order_preview_artifacts(
+    *,
+    page_url: str,
+    template: TemplateDefinition,
+    layout_state: LayoutState,
+    assets: dict[str, AssetDataUrl],
+    output_dir: Path,
+) -> PreviewArtifacts:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    temp_dir = Path(tempfile.mkdtemp(prefix="render-order-", dir=str(output_dir.parent)))
+    preview_tmp = temp_dir / "preview.png"
+
+    browser_binary = _find_browser_binary()
+
+    async with async_playwright() as playwright:
+        browser = await playwright.chromium.launch(
+            headless=True,
+            executable_path=browser_binary,
+            args=["--disable-dev-shm-usage"],
+        )
+        page = await browser.new_page(viewport={"width": 1800, "height": 2400}, device_scale_factor=1)
+        await page.goto(page_url, wait_until="networkidle")
+        await page.wait_for_function("document.documentElement.dataset.renderReady === 'true'")
+        await page.emulate_media(media="screen")
+        await page.locator('[data-testid="proof-canvas"]').screenshot(path=str(preview_tmp))
+        await browser.close()
+
+    preview_path = output_dir / "preview.png"
+    preview_path.write_bytes(preview_tmp.read_bytes())
+    shutil.rmtree(temp_dir, ignore_errors=True)
+
+    return PreviewArtifacts(
+        preview_path=str(preview_path),
         page_width_mm=template.page_width_mm,
         page_height_mm=template.page_height_mm,
     )

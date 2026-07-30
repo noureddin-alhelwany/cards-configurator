@@ -9,6 +9,7 @@ import type {
 import type { DraftState, TemplateSelectionRequest } from '../drafts/types';
 import type { ElementAdjustment, ProofFixture, ValidationIssue } from '../design/types';
 import DesignRenderer from '../design/DesignRenderer';
+import type { OrderDetail, OrderSummary } from '../orders/types';
 import {
   assetElementForField,
   clamp,
@@ -140,6 +141,25 @@ async function approveDraft(body: ApprovalChecklist): Promise<DraftState> {
     throw new Error(detail || `Failed to approve draft: ${response.status}`);
   }
   return (await response.json()) as DraftState;
+}
+
+async function loadOrders(): Promise<OrderSummary[]> {
+  const response = await fetch('/api/orders');
+  if (!response.ok) {
+    throw new Error(`Failed to load orders: ${response.status}`);
+  }
+  return (await response.json()) as OrderSummary[];
+}
+
+async function createOrder(): Promise<OrderDetail> {
+  const response = await fetch('/api/orders', {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `Failed to create order: ${response.status}`);
+  }
+  return (await response.json()) as OrderDetail;
 }
 
 type AssetResponse = {
@@ -825,6 +845,9 @@ export default function SelectionPage() {
   });
   const [approvalError, setApprovalError] = useState<string | null>(null);
   const [approvalSubmitting, setApprovalSubmitting] = useState(false);
+  const [orders, setOrders] = useState<OrderSummary[]>([]);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [orderSubmitting, setOrderSubmitting] = useState(false);
 
   useEffect(() => {
     if (state.draft?.approved_at && state.draft.approval_checklist) {
@@ -950,6 +973,27 @@ export default function SelectionPage() {
       active = false;
     };
   }, [selectedTemplateKey, layoutValues, selectedVariantId]);
+
+  useEffect(() => {
+    let active = true;
+
+    loadOrders()
+      .then((response) => {
+        if (active) {
+          setOrders(response);
+          setOrdersError(null);
+        }
+      })
+      .catch((exception: unknown) => {
+        if (active) {
+          setOrdersError(exception instanceof Error ? exception.message : 'Aufträge konnten nicht geladen werden');
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function handleTemplateSelect(template: TemplateDefinition) {
     if (!selectedUseCaseId || !selectedProductId || isApproved) {
@@ -1079,6 +1123,24 @@ export default function SelectionPage() {
       setApprovalError(exception instanceof Error ? exception.message : 'Freigabe fehlgeschlagen');
     } finally {
       setApprovalSubmitting(false);
+    }
+  }
+
+  async function handleOrderCreate() {
+    if (!isApproved || orderSubmitting) {
+      return;
+    }
+    setOrderSubmitting(true);
+    setOrdersError(null);
+    try {
+      const order = await createOrder();
+      setOrders((current) => [order, ...current.filter((entry) => entry.id !== order.id)]);
+      window.history.pushState({}, '', `/render/orders/${order.id}`);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    } catch (exception: unknown) {
+      setOrdersError(exception instanceof Error ? exception.message : 'Auftrag konnte nicht erstellt werden');
+    } finally {
+      setOrderSubmitting(false);
     }
   }
 
@@ -1253,6 +1315,9 @@ export default function SelectionPage() {
                   >
                     {isApproved ? 'Freigegeben' : approvalSubmitting ? 'Freigabe läuft...' : 'Design freigeben'}
                   </button>
+                  <button type="button" className="template-field__reset" disabled={!isApproved || orderSubmitting} onClick={handleOrderCreate}>
+                    {orderSubmitting ? 'Auftrag wird erstellt...' : 'Auftrag erstellen'}
+                  </button>
                 </div>
                 {isApproved ? (
                   <p className="template-detail__approved">
@@ -1310,6 +1375,7 @@ export default function SelectionPage() {
                 </div>
                 {qualityError ? <p className="template-field__error">{qualityError}</p> : null}
                 {approvalError ? <p className="template-field__error">{approvalError}</p> : null}
+                {ordersError ? <p className="template-field__error">{ordersError}</p> : null}
                 {validationIssues.length > 0 ? (
                   <div className="template-quality">
                     <p className="template-detail__group-title">Qualitätsprüfung</p>
@@ -1368,6 +1434,36 @@ export default function SelectionPage() {
             ) : null}
           </section>
         </div>
+
+        <section className="selection-section">
+          <div className="selection-section__heading">
+            <h2>Aufträge</h2>
+            <p>{orders.length} gespeicherte Aufträge</p>
+          </div>
+          <div className="order-grid">
+            {orders.length > 0 ? (
+              orders.map((order) => (
+                <button
+                  key={order.id}
+                  type="button"
+                  className="selection-order-card"
+                  onClick={() => {
+                    window.history.pushState({}, '', `/render/orders/${order.id}`);
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                  }}
+                >
+                  <span className="selection-order-card__badge">{order.order_number}</span>
+                  <h3>{order.display_name ?? order.template_id}</h3>
+                  <p>
+                    {order.product_id} · {new Date(order.created_at).toLocaleDateString('de-DE')}
+                  </p>
+                </button>
+              ))
+            ) : (
+              <p className="order-grid__empty">Noch keine Aufträge erstellt.</p>
+            )}
+          </div>
+        </section>
       </section>
     </main>
   );

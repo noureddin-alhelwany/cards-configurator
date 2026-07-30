@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import FileResponse
 
 from .assets import load_asset, store_uploaded_asset
 from .config import get_settings
@@ -14,6 +15,14 @@ from .drafts import (
     get_current_draft,
     save_template_selection,
     update_layout_state,
+)
+from .orders import (
+    OrderDetail,
+    OrderSummary,
+    create_order,
+    get_order,
+    get_order_fixture,
+    list_orders,
 )
 from .quality import validate_current_draft
 from .registries.loader import load_registry_bundle
@@ -100,6 +109,60 @@ def approve_current_draft(request: Request, body: ApprovalRequest) -> DraftState
         if report.blocking:
             raise HTTPException(status_code=400, detail="Blocking issues must be resolved before approval")
         return approve_draft(session, bundle, body)
+    finally:
+        session.close()
+
+
+@router.get("/orders", response_model=list[OrderSummary])
+def orders_list() -> list[OrderSummary]:
+    session = get_session_factory()()
+    try:
+        return list_orders(session)
+    finally:
+        session.close()
+
+
+@router.get("/orders/{order_id}", response_model=OrderDetail)
+def order_detail(order_id: str) -> OrderDetail:
+    session = get_session_factory()()
+    try:
+        return get_order(session, order_id)
+    finally:
+        session.close()
+
+
+@router.get("/orders/{order_id}/preview")
+def order_preview(order_id: str) -> FileResponse:
+    session = get_session_factory()()
+    try:
+        order = get_order(session, order_id)
+        if order.preview_path is None:
+            raise HTTPException(status_code=404, detail="Order preview not available")
+        return FileResponse(order.preview_path, media_type="image/png", filename=f"{order.order_number}-preview.png")
+    finally:
+        session.close()
+
+
+@router.get("/orders/{order_id}/fixture")
+def order_fixture(order_id: str) -> dict[str, object]:
+    settings = get_settings()
+    session = get_session_factory()()
+    try:
+        return get_order_fixture(session, settings.data_dir, order_id).model_dump()
+    finally:
+        session.close()
+
+
+@router.post("/orders", response_model=OrderDetail)
+async def create_order_from_current_draft(request: Request) -> OrderDetail:
+    settings = get_settings()
+    bundle = getattr(request.app.state, "registry_bundle", None)
+    if bundle is None:
+        bundle = load_registry_bundle(settings.registries_dir)
+
+    session = get_session_factory()()
+    try:
+        return await create_order(session, bundle, settings.data_dir, str(request.base_url).rstrip("/"))
     finally:
         session.close()
 

@@ -470,6 +470,12 @@ test('renders the registry selection flow and filters matching products', async 
           }),
         };
       }
+      if (url.endsWith('/api/orders')) {
+        return {
+          ok: true,
+          json: async () => [],
+        };
+      }
       if (url.endsWith('/api/drafts/current/template')) {
         const selection = JSON.parse(String(init?.body ?? '{}'));
         persistedTextValues = {};
@@ -822,7 +828,7 @@ test('approves a draft and locks editing afterward', async () => {
 
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (input: RequestInfo | URL) => {
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url.endsWith('/api/healthz')) {
         return { ok: true, json: async () => ({ status: 'ok' }) };
@@ -864,6 +870,12 @@ test('approves a draft and locks editing afterward', async () => {
             issues: [],
             blocking: false,
           }),
+        };
+      }
+      if (url.endsWith('/api/orders') && init?.method !== 'POST') {
+        return {
+          ok: true,
+          json: async () => [],
         };
       }
       if (url.endsWith('/api/drafts/current/approval')) {
@@ -912,6 +924,84 @@ test('approves a draft and locks editing afterward', async () => {
           }),
         };
       }
+      if (url.endsWith('/api/orders') && init?.method === 'POST') {
+        return {
+          ok: true,
+          json: async () => ({
+            id: 'order-1',
+            order_number: 'ORD-20260730-ABC123',
+            display_name: null,
+            use_case_id: 'google_reviews',
+            product_id: 'a6_card',
+            template_id: 'proof_a6_card',
+            template_version: '1.0.0',
+            variant_id: 'logo-focused',
+            approved_at: '2026-07-30T12:05:00.000Z',
+            created_at: '2026-07-30T12:06:00.000Z',
+            preview_path: '/tmp/order-1/preview.png',
+            use_case_snapshot: {},
+            product_snapshot: {},
+            template_snapshot: {},
+            layout_snapshot: {
+              variant_id: 'logo-focused',
+              element_adjustments: {},
+              text_values: {
+                businessName: 'Studio One',
+                headline: 'Leave a Google review',
+                qrTarget: 'https://example.com/review',
+              },
+              asset_values: {},
+            },
+            validation_snapshot: {
+              issues: [],
+              blocking: false,
+            },
+            mockup_path: '/tmp/order-1/preview.png',
+            pdf_path: null,
+            render_engine_version: '1',
+            assets: [],
+          }),
+        };
+      }
+      if (url.endsWith('/api/orders/order-1')) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: 'order-1',
+            order_number: 'ORD-20260730-ABC123',
+            display_name: null,
+            use_case_id: 'google_reviews',
+            product_id: 'a6_card',
+            template_id: 'proof_a6_card',
+            template_version: '1.0.0',
+            variant_id: 'logo-focused',
+            approved_at: '2026-07-30T12:05:00.000Z',
+            created_at: '2026-07-30T12:06:00.000Z',
+            preview_path: '/tmp/order-1/preview.png',
+            use_case_snapshot: {},
+            product_snapshot: {},
+            template_snapshot: {},
+            layout_snapshot: {
+              variant_id: 'logo-focused',
+              element_adjustments: {},
+              text_values: {
+                businessName: 'Studio One',
+                headline: 'Leave a Google review',
+                qrTarget: 'https://example.com/review',
+              },
+              asset_values: {},
+            },
+            validation_snapshot: {
+              issues: [],
+              blocking: false,
+            },
+            mockup_path: '/tmp/order-1/preview.png',
+            pdf_path: null,
+            render_engine_version: '1',
+            assets: [],
+          }),
+        };
+      }
       return {
         ok: false,
         json: async () => ({}),
@@ -938,4 +1028,16 @@ test('approves a draft and locks editing afterward', async () => {
   expect(screen.getByRole('textbox', { name: 'businessName' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Layout zurücksetzen' })).toBeDisabled();
   expect(screen.getByRole('checkbox', { name: 'Texte geprüft' })).toBeDisabled();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Auftrag erstellen' }));
+
+  await waitFor(() => {
+    expect(screen.getByRole('heading', { name: 'ORD-20260730-ABC123' })).toBeInTheDocument();
+  });
+  expect(window.location.pathname).toBe('/render/orders/order-1');
+  const previewImage = screen.getByAltText('Auftragsvorschau ORD-20260730-ABC123');
+  fireEvent.load(previewImage);
+  await waitFor(() => {
+    expect(document.documentElement.dataset.renderReady).toBe('true');
+  });
 });

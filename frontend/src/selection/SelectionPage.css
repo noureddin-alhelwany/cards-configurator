@@ -258,6 +258,46 @@
   min-height: 100%;
 }
 
+.order-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.selection-order-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid rgba(33, 26, 21, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.88);
+  text-align: left;
+  cursor: pointer;
+}
+
+.selection-order-card__badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(143, 90, 42, 0.12);
+  color: #5c3a1b;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.selection-order-card h3 {
+  margin: 0;
+  font-size: 1.02rem;
+}
+
+.selection-order-card p,
+.order-grid__empty {
+  margin: 0;
+  color: #514236;
+}
+
 .template-list {
   display: grid;
   gap: 16px;

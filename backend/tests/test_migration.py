@@ -5,7 +5,7 @@ from alembic.config import Config
 from sqlalchemy import create_engine, inspect
 
 
-def test_initial_migration_creates_drafts_table(tmp_path, monkeypatch) -> None:
+def test_initial_migration_creates_core_tables(tmp_path, monkeypatch) -> None:
     db_path = tmp_path / "bootstrap.sqlite3"
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_path}")
 
@@ -16,4 +16,7 @@ def test_initial_migration_creates_drafts_table(tmp_path, monkeypatch) -> None:
     command.upgrade(config, "head")
 
     engine = create_engine(f"sqlite:///{db_path}")
-    assert "drafts" in inspect(engine).get_table_names()
+    tables = inspect(engine).get_table_names()
+    assert "drafts" in tables
+    assert "orders" in tables
+    assert "order_assets" in tables
