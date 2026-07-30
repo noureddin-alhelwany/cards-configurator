@@ -676,6 +676,15 @@ test('renders the registry selection flow and filters matching products', async 
   expect(studioLogoImages[0]).toHaveStyle(
     'filter: contrast(1.06) saturate(1.01);',
   );
+  const logoField = logoOffsetX.closest('.template-field');
+  expect(logoField).not.toBeNull();
+  fireEvent.click(within(logoField as HTMLElement).getByRole('button', { name: 'Zurücksetzen' }));
+  await waitFor(() => {
+    expect(studioLogoImages[0]).toHaveStyle(
+      'transform: translate(0mm, 0mm) scale(1);',
+    );
+  });
+  expect(screen.getByAltText('logo Vorschau')).toBeInTheDocument();
 
   const heroFile = new File([new Uint8Array([4, 5, 6])], 'hero.png', { type: 'image/png' });
   const heroInput = screen.getByLabelText('heroImage');
@@ -708,6 +717,15 @@ test('renders the registry selection flow and filters matching products', async 
   await waitFor(() => {
     expect(screen.getAllByText(/Bildqualität: grenzwertig/)).toHaveLength(2);
   });
+  fireEvent.click(screen.getByRole('button', { name: 'Layout zurücksetzen' }));
+  await waitFor(() => {
+    expect(heroImages[0]).toHaveStyle(
+      'transform: translate(0mm, 0mm) scale(1);',
+    );
+  });
+  expect(screen.getByDisplayValue('Studio One')).toBeInTheDocument();
+  expect(screen.getByAltText('logo Vorschau')).toBeInTheDocument();
+  expect(screen.getByAltText('heroImage Vorschau')).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('tab', { name: 'Text im Fokus' }));
   await waitFor(() => {
