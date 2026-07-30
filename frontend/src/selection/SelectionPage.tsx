@@ -20,16 +20,15 @@ import {
   demoTextForRole,
   fieldRole,
   fieldLabel,
-  friendlyValidationMessage,
   templateKey,
   TemplateCard,
   TemplateFieldsList,
-  TemplateLivePreview,
   TemplateVariantButtons,
   templateRecommendationIndex,
   trimSuggestion,
   validationDisplayPath,
 } from './selectionUi';
+import { SelectionFeedbackPanel, SelectionPreviewPanel } from './selectionPanels';
 import './SelectionPage.css';
 import StateMessage from '../ui/StateMessage';
 
@@ -1378,61 +1377,29 @@ export default function SelectionPage() {
           </main>
 
           <aside className="selection-sidebar">
-            <section className="selection-sidecard">
-              <div className="selection-section__heading">
-                <h2>{previewShowsMockup ? 'Freigabevorschau' : 'Live-Vorschau'}</h2>
-                <p>{previewVisible ? 'Vorschau und Mockup getrennt dargestellt' : 'Wird nach Auswahl eingeblendet'}</p>
-              </div>
-              {previewVisible && selectedTemplate && selectedProduct && selectedUseCase ? (
-                <TemplateLivePreview
-                  template={selectedTemplate}
-                  product={selectedProduct}
-                  useCase={selectedUseCase}
-                  selectedVariantId={selectedVariantId}
-                  layoutValues={layoutValues}
-                  assetPreviews={assetPreviews}
-                  validationIssues={visibleValidationIssues}
-                  showLivePreview={!previewShowsMockup}
-                  showMockup={previewShowsMockup}
-                  expanded={previewExpanded}
-                  onToggleExpanded={() => setPreviewExpanded((current) => !current)}
-                />
-              ) : (
-                <p className="selection-sidecard__empty">Sobald ein Design gewählt ist, erscheint hier die Vorschau.</p>
-              )}
-            </section>
+            <SelectionPreviewPanel
+              previewShowsMockup={previewShowsMockup}
+              previewVisible={previewVisible}
+              selectedTemplate={selectedTemplate}
+              selectedProduct={selectedProduct}
+              selectedUseCase={selectedUseCase}
+              selectedVariantId={selectedVariantId}
+              layoutValues={layoutValues}
+              assetPreviews={assetPreviews}
+              validationIssues={visibleValidationIssues}
+              previewExpanded={previewExpanded}
+              onToggleExpanded={() => setPreviewExpanded((current) => !current)}
+            />
 
-            <section className="selection-sidecard">
-              <div className="selection-section__heading">
-                <h2>Rückmeldungen</h2>
-                <p>{visibleValidationIssues.length} Hinweise</p>
-              </div>
-              <div className="selection-feedback">
-                {qualityError ? <p className="template-field__error">{qualityError}</p> : null}
-                {approvalError ? <p className="template-field__error">{approvalError}</p> : null}
-                {resetError ? <p className="template-field__error">{resetError}</p> : null}
-                {showBlockingSummary ? (
-                  <p className="selection-feedback__summary">
-                    {visibleBlockingIssues.length} Probleme verhindern den Abschluss. Prüfe die markierten Felder.
-                  </p>
-                ) : null}
-                {visibleValidationIssues.length > 0 ? (
-                  <div className="template-quality">
-                    <p className="template-detail__group-title">Qualitätsprüfung</p>
-                    <ul className="template-quality__list">
-                      {visibleValidationIssues.map((issue) => (
-                        <li key={`${issue.path}-${issue.code}`} className={`template-quality__item template-quality__item--${issue.severity}`}>
-                          <strong>{issue.severity === 'warning' ? 'Hinweis' : 'Fehler'}</strong>
-                          <span>{friendlyValidationMessage(issue, issueLabel(issue))}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : (
-                  <p className="selection-sidecard__empty">Noch keine kritischen Rückmeldungen.</p>
-                )}
-              </div>
-            </section>
+            <SelectionFeedbackPanel
+              qualityError={qualityError}
+              approvalError={approvalError}
+              resetError={resetError}
+              visibleValidationIssues={visibleValidationIssues}
+              visibleBlockingIssues={visibleBlockingIssues}
+              showBlockingSummary={showBlockingSummary}
+              issueLabel={issueLabel}
+            />
           </aside>
         </div>
       </section>
