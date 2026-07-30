@@ -1,11 +1,14 @@
 import type {
   ProductDefinition,
   TemplateDefinition,
+  TemplateVariantDefinition,
   UseCaseDefinition,
 } from '../registries/types';
 import type { ElementAdjustment, ValidationIssue } from '../design/types';
-import { TemplateLivePreview } from './selectionUi';
+import type { AssetMetadata } from './selectionHelpers';
+import { TemplateFieldsList, TemplateLivePreview, TemplateVariantButtons } from './selectionUi';
 import { friendlyValidationMessage } from './selectionUi';
+import type { DraftLayoutValues } from './selectionTypes';
 
 type SelectionPreviewPanelProps = {
   previewShowsMockup: boolean;
@@ -114,6 +117,195 @@ export function SelectionFeedbackPanel({
         ) : (
           <p className="selection-sidecard__empty">Noch keine kritischen Rückmeldungen.</p>
         )}
+      </div>
+    </section>
+  );
+}
+
+type SelectionContentPanelProps = {
+  showProductStep: boolean;
+  selectedTemplate: TemplateDefinition;
+  selectedProduct: ProductDefinition;
+  selectedVariantId: string | null;
+  layoutValues: DraftLayoutValues;
+  assetPreviews: Record<string, string>;
+  assetDetails: Record<string, AssetMetadata>;
+  assetErrors: Record<string, string | null>;
+  validationIssues: ValidationIssue[];
+  expandedAssetFieldId: string | null;
+  isApproved: boolean;
+  onLayoutReset: () => void;
+  onVariantSelect: (variant: TemplateVariantDefinition) => Promise<void> | void;
+  onTextFieldChange: (fieldId: string, value: string) => Promise<void> | void;
+  onAssetFieldChange: (fieldId: string, kind: 'logo' | 'image', file: File | null) => Promise<void> | void;
+  onAssetAdjustmentChange: (fieldId: string, adjustment: ElementAdjustment) => Promise<void> | void;
+  onAssetAdjustmentReset: (fieldId: string) => Promise<void> | void;
+  onToggleAssetEditor: (fieldId: string | null) => void;
+  onFieldInteract: (fieldId: string) => void;
+  onBack: () => void;
+  onNext: () => void;
+};
+
+export function SelectionContentPanel({
+  showProductStep,
+  selectedTemplate,
+  selectedProduct,
+  selectedVariantId,
+  layoutValues,
+  assetPreviews,
+  assetDetails,
+  assetErrors,
+  validationIssues,
+  expandedAssetFieldId,
+  isApproved,
+  onLayoutReset,
+  onVariantSelect,
+  onTextFieldChange,
+  onAssetFieldChange,
+  onAssetAdjustmentChange,
+  onAssetAdjustmentReset,
+  onToggleAssetEditor,
+  onFieldInteract,
+  onBack,
+  onNext,
+}: SelectionContentPanelProps) {
+  return (
+    <section className="selection-section selection-section--wizard selection-step-panel">
+      <div className="selection-section__heading">
+        <h2>{showProductStep ? '4. Inhalte' : '3. Inhalte'}</h2>
+        <p>Texte, Varianten und Medien</p>
+      </div>
+      <article className="template-detail">
+        <p className="template-detail__eyebrow">Inhalte</p>
+        <h3>
+          {selectedTemplate.name ?? selectedTemplate.id} <span>@{selectedTemplate.version}</span>
+        </h3>
+        <div className="template-detail__actions">
+          <button type="button" className="template-field__reset" disabled={isApproved} onClick={onLayoutReset}>
+            Layout zurücksetzen
+          </button>
+        </div>
+        <p className="template-detail__meta">
+          Produkt {selectedTemplate.product_id}, {selectedTemplate.use_case_ids.length} Use Cases, {selectedTemplate.fields.length} Felder
+        </p>
+        <p className="template-detail__hint">Passe Varianten und Felder an. Die Vorschau bleibt separat sichtbar.</p>
+        <div className="template-detail__group">
+          <p className="template-detail__group-title">Layoutvarianten</p>
+          <TemplateVariantButtons template={selectedTemplate} selectedVariantId={selectedVariantId} onSelect={onVariantSelect} disabled={isApproved} />
+        </div>
+        <div className="template-detail__group">
+          <p className="template-detail__group-title">Felder</p>
+          <TemplateFieldsList
+            template={selectedTemplate}
+            product={selectedProduct}
+            layoutValues={layoutValues}
+            assetPreviews={assetPreviews}
+            assetDetails={assetDetails}
+            assetErrors={assetErrors}
+            validationIssues={validationIssues}
+            onTextChange={onTextFieldChange}
+            onAssetChange={onAssetFieldChange}
+            onAssetAdjustmentChange={onAssetAdjustmentChange}
+            onAssetAdjustmentReset={onAssetAdjustmentReset}
+            expandedAssetFieldId={expandedAssetFieldId}
+            onToggleAssetEditor={onToggleAssetEditor}
+            onFieldInteract={onFieldInteract}
+            disabled={isApproved}
+          />
+        </div>
+      </article>
+      <div className="wizard-step-nav">
+        <button type="button" className="wizard-step-nav__button" onClick={onBack}>
+          Zurück
+        </button>
+        <button type="button" className="wizard-step-nav__button wizard-step-nav__button--primary" onClick={onNext}>
+          Zur Prüfung
+        </button>
+      </div>
+    </section>
+  );
+}
+
+type SelectionReviewPanelProps = {
+  showProductStep: boolean;
+  selectedTemplate: TemplateDefinition;
+  selectedProduct: ProductDefinition;
+  isApproved: boolean;
+  blockingIssuesCount: number;
+  approvalReady: boolean;
+  approvalSubmitting: boolean;
+  orderSubmitting: boolean;
+  approvedAt: string | null | undefined;
+  onBack: () => void;
+  onSubmit: () => void;
+  onApprovalChange: (checked: boolean) => void;
+};
+
+export function SelectionReviewPanel({
+  showProductStep,
+  selectedTemplate,
+  selectedProduct,
+  isApproved,
+  blockingIssuesCount,
+  approvalReady,
+  approvalSubmitting,
+  orderSubmitting,
+  approvedAt,
+  onBack,
+  onSubmit,
+  onApprovalChange,
+}: SelectionReviewPanelProps) {
+  return (
+    <section className="selection-section selection-section--wizard selection-step-panel">
+      <div className="selection-section__heading">
+        <h2>{showProductStep ? '5. Prüfen' : '4. Prüfen'}</h2>
+        <p>{isApproved ? 'Freigabe abgeschlossen' : 'Freigabe und Auftragserstellung'}</p>
+      </div>
+      <article className="template-detail">
+        <p className="template-detail__eyebrow">Freigabe</p>
+        <h3>
+          {selectedTemplate.name ?? selectedTemplate.id} <span>@{selectedTemplate.version}</span>
+        </h3>
+        <div className="template-detail__actions">
+          <button type="button" className="template-field__reset" disabled={isApproved} onClick={onBack}>
+            Zur Inhalte
+          </button>
+          <button
+            type="button"
+            className="template-field__reset"
+            disabled={blockingIssuesCount > 0 || (!isApproved && (!approvalReady || approvalSubmitting)) || (isApproved && orderSubmitting)}
+            onClick={onSubmit}
+          >
+            {isApproved ? (orderSubmitting ? 'Auftrag wird erstellt...' : 'Auftrag erstellen') : approvalSubmitting ? 'Freigabe läuft...' : 'Design freigeben'}
+          </button>
+        </div>
+        {isApproved ? <p className="template-detail__approved">Freigegeben am {new Date(approvedAt ?? '').toLocaleString('de-DE')}</p> : null}
+        <p className="template-detail__meta">
+          Produkt {selectedTemplate.product_id}, {selectedTemplate.use_case_ids.length} Use Cases, {selectedTemplate.fields.length} Felder
+        </p>
+        <p className="template-detail__hint">
+          Ausgewähltes Produkt: {selectedProduct.name}
+        </p>
+        <div className="template-approval">
+          <p className="template-detail__group-title">Prüfung bestätigt</p>
+          <div className="template-approval__list">
+            <label className="template-approval__item">
+              <input
+                type="checkbox"
+                checked={approvalReady}
+                disabled={isApproved}
+                onChange={(event) => onApprovalChange(event.target.checked)}
+              />
+              <span>Ich habe die Vorschau geprüft</span>
+            </label>
+          </div>
+        </div>
+        <p className="template-detail__hint">Der finale Zustand wird jetzt geprüft. Nach der Freigabe kann der Auftrag erstellt werden.</p>
+      </article>
+      <div className="wizard-step-nav">
+        <button type="button" className="wizard-step-nav__button" onClick={onBack}>
+          Zur Inhalte
+        </button>
       </div>
     </section>
   );

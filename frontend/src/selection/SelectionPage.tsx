@@ -22,13 +22,11 @@ import {
   fieldLabel,
   templateKey,
   TemplateCard,
-  TemplateFieldsList,
-  TemplateVariantButtons,
   templateRecommendationIndex,
   trimSuggestion,
   validationDisplayPath,
 } from './selectionUi';
-import { SelectionFeedbackPanel, SelectionPreviewPanel } from './selectionPanels';
+import { SelectionContentPanel, SelectionFeedbackPanel, SelectionPreviewPanel, SelectionReviewPanel } from './selectionPanels';
 import './SelectionPage.css';
 import StateMessage from '../ui/StateMessage';
 
@@ -1255,124 +1253,46 @@ export default function SelectionPage() {
             ) : null}
 
             {activeStep.id === 'content' && selectedTemplate && selectedProduct && selectedUseCase ? (
-              <section className="selection-section selection-section--wizard selection-step-panel">
-                <div className="selection-section__heading">
-                  <h2>{showProductStep ? '4. Inhalte' : '3. Inhalte'}</h2>
-                  <p>Texte, Varianten und Medien</p>
-                </div>
-                <article className="template-detail">
-                  <p className="template-detail__eyebrow">Inhalte</p>
-                  <h3>
-                    {selectedTemplate.name ?? selectedTemplate.id} <span>@{selectedTemplate.version}</span>
-                  </h3>
-                  <div className="template-detail__actions">
-                    <button type="button" className="template-field__reset" disabled={isApproved} onClick={handleLayoutReset}>
-                      Layout zurücksetzen
-                    </button>
-                  </div>
-                  <p className="template-detail__meta">
-                    Produkt {selectedTemplate.product_id}, {selectedTemplate.use_case_ids.length} Use Cases, {selectedTemplate.fields.length} Felder
-                  </p>
-                  <p className="template-detail__hint">Passe Varianten und Felder an. Die Vorschau bleibt separat sichtbar.</p>
-                  <div className="template-detail__group">
-                    <p className="template-detail__group-title">Layoutvarianten</p>
-                    <TemplateVariantButtons
-                      template={selectedTemplate}
-                      selectedVariantId={selectedVariantId}
-                      onSelect={handleVariantSelect}
-                      disabled={isApproved}
-                    />
-                  </div>
-                  <div className="template-detail__group">
-                    <p className="template-detail__group-title">Felder</p>
-                    <TemplateFieldsList
-                      template={selectedTemplate}
-                      product={selectedProduct}
-                      layoutValues={layoutValues}
-                      assetPreviews={assetPreviews}
-                      assetDetails={assetDetails}
-                      assetErrors={assetErrors}
-                      validationIssues={visibleValidationIssues}
-                      onTextChange={handleTextFieldChange}
-                      onAssetChange={handleAssetFieldChange}
-                      onAssetAdjustmentChange={handleAssetAdjustmentChange}
-                      onAssetAdjustmentReset={handleAssetAdjustmentReset}
-                      expandedAssetFieldId={expandedAssetFieldId}
-                      onToggleAssetEditor={setExpandedAssetFieldId}
-                      onFieldInteract={markValidationPathTouched}
-                      disabled={isApproved}
-                    />
-                  </div>
-                </article>
-                <div className="wizard-step-nav">
-                  <button type="button" className="wizard-step-nav__button" onClick={goToPreviousWizardStep}>
-                    Zurück
-                  </button>
-                  <button
-                    type="button"
-                    className="wizard-step-nav__button wizard-step-nav__button--primary"
-                    onClick={() => setWizardStepIndex(reviewStepIndex)}
-                  >
-                    Zur Prüfung
-                  </button>
-                </div>
-              </section>
+              <SelectionContentPanel
+                showProductStep={showProductStep}
+                selectedTemplate={selectedTemplate}
+                selectedProduct={selectedProduct}
+                selectedVariantId={selectedVariantId}
+                layoutValues={layoutValues}
+                assetPreviews={assetPreviews}
+                assetDetails={assetDetails}
+                assetErrors={assetErrors}
+                validationIssues={visibleValidationIssues}
+                expandedAssetFieldId={expandedAssetFieldId}
+                isApproved={isApproved}
+                onLayoutReset={handleLayoutReset}
+                onVariantSelect={handleVariantSelect}
+                onTextFieldChange={handleTextFieldChange}
+                onAssetFieldChange={handleAssetFieldChange}
+                onAssetAdjustmentChange={handleAssetAdjustmentChange}
+                onAssetAdjustmentReset={handleAssetAdjustmentReset}
+                onToggleAssetEditor={setExpandedAssetFieldId}
+                onFieldInteract={markValidationPathTouched}
+                onBack={goToPreviousWizardStep}
+                onNext={() => setWizardStepIndex(reviewStepIndex)}
+              />
             ) : null}
 
             {activeStep.id === 'review' && selectedTemplate && selectedProduct && selectedUseCase ? (
-              <section className="selection-section selection-section--wizard selection-step-panel">
-                <div className="selection-section__heading">
-                  <h2>{showProductStep ? '5. Prüfen' : '4. Prüfen'}</h2>
-                  <p>{isApproved ? 'Freigabe abgeschlossen' : 'Freigabe und Auftragserstellung'}</p>
-                </div>
-                <article className="template-detail">
-                  <p className="template-detail__eyebrow">Freigabe</p>
-                  <h3>
-                    {selectedTemplate.name ?? selectedTemplate.id} <span>@{selectedTemplate.version}</span>
-                  </h3>
-                  <div className="template-detail__actions">
-                    <button type="button" className="template-field__reset" disabled={isApproved} onClick={goToPreviousWizardStep}>
-                      Zur Inhalte
-                    </button>
-                    <button
-                      type="button"
-                      className="template-field__reset"
-                      disabled={blockingIssues.length > 0 || (!isApproved && (!approvalReady || approvalSubmitting)) || (isApproved && orderSubmitting)}
-                      onClick={isApproved ? handleOrderCreate : handleApprovalSubmit}
-                    >
-                      {isApproved ? (orderSubmitting ? 'Auftrag wird erstellt...' : 'Auftrag erstellen') : approvalSubmitting ? 'Freigabe läuft...' : 'Design freigeben'}
-                    </button>
-                  </div>
-                  {isApproved ? (
-                    <p className="template-detail__approved">
-                      Freigegeben am {new Date(state.draft?.approved_at ?? '').toLocaleString('de-DE')}
-                    </p>
-                  ) : null}
-                  <p className="template-detail__meta">
-                    Produkt {selectedTemplate.product_id}, {selectedTemplate.use_case_ids.length} Use Cases, {selectedTemplate.fields.length} Felder
-                  </p>
-                  <div className="template-approval">
-                    <p className="template-detail__group-title">Prüfung bestätigt</p>
-                    <div className="template-approval__list">
-                      <label className="template-approval__item">
-                        <input
-                          type="checkbox"
-                          checked={approvalReady}
-                          disabled={isApproved}
-                          onChange={(event) => setApprovalChecklist(approvalChecklistFromAcknowledgement(event.target.checked))}
-                        />
-                        <span>Ich habe die Vorschau geprüft</span>
-                      </label>
-                    </div>
-                  </div>
-                  <p className="template-detail__hint">Der finale Zustand wird jetzt geprüft. Nach der Freigabe kann der Auftrag erstellt werden.</p>
-                </article>
-                <div className="wizard-step-nav">
-                  <button type="button" className="wizard-step-nav__button" onClick={goToPreviousWizardStep}>
-                    Zur Inhalte
-                  </button>
-                </div>
-              </section>
+              <SelectionReviewPanel
+                showProductStep={showProductStep}
+                selectedTemplate={selectedTemplate}
+                selectedProduct={selectedProduct}
+                isApproved={isApproved}
+                blockingIssuesCount={blockingIssues.length}
+                approvalReady={approvalReady}
+                approvalSubmitting={approvalSubmitting}
+                orderSubmitting={orderSubmitting}
+                approvedAt={state.draft?.approved_at}
+                onBack={goToPreviousWizardStep}
+                onSubmit={isApproved ? handleOrderCreate : handleApprovalSubmit}
+                onApprovalChange={(checked) => setApprovalChecklist(approvalChecklistFromAcknowledgement(checked))}
+              />
             ) : null}
           </main>
 
