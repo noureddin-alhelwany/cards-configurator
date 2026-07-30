@@ -5,9 +5,9 @@ a work-item move.
 
 ## Summary
 
-- Todo: 5
+- Todo: 3
 - In progress: 0
-- Done: 27
+- Done: 29
 - Blocked: 0
 
 ## Work items
@@ -41,7 +41,7 @@ a work-item move.
 | US-21 | story | must | done | US-08, US-16 | QR-Mindestgröße prüfen |
 | US-22 | story | must | done | US-18, US-19, US-20, US-21 | Design freigeben |
 | US-23 | story | must | done | TECH-01, US-22 | Auftrag erstellen |
-| US-24 | story | must | todo | TECH-04, US-23 | Produktions-PDF erzeugen |
+| US-24 | story | must | done | TECH-04, US-23 | Produktions-PDF erzeugen |
 | US-25 | story | should | todo | US-24 | Rendering wiederholen |
 | US-26 | story | must | todo | US-23 | Aufträge anzeigen |
 | US-27 | story | must | todo | US-23, US-24 | Auftrag öffnen |

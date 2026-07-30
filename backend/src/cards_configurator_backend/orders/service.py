@@ -21,7 +21,8 @@ from ..registries.schemas import (
     TemplateDefinition,
     UseCaseDefinition,
 )
-from ..rendering.service import render_order_preview_artifacts
+from ..rendering.service import render_order_artifacts
+from ..urls import build_qr_data_url
 from .schemas import OrderAssetState, OrderDetail, OrderSummary
 
 ORDER_RENDER_ENGINE_VERSION = "1"
@@ -118,6 +119,13 @@ def get_order_fixture(session: Session, data_dir: Path, order_id: str) -> ProofF
     use_case = UseCaseDefinition.model_validate(record.use_case_snapshot)
     layout_state = LayoutState.model_validate(record.layout_snapshot)
     assets = _order_assets_from_storage(data_dir, session, record.id)
+    qr_field = next((field for field in template.fields if field.type == "url"), None)
+    qr_value = layout_state.text_values.get(qr_field.id, "") if qr_field is not None else ""
+    if not qr_value:
+        qr_element = next((element for element in template.elements if element.kind == "qr"), None)
+        qr_value = qr_element.value if qr_element is not None else ""
+    if qr_value:
+        assets["qr"] = AssetDataUrl(mime_type="image/svg+xml", data_url=build_qr_data_url(qr_value))
     return ProofFixture(template=template, product=product, use_case=use_case, layout_state=layout_state, assets=assets)
 
 
@@ -177,8 +185,8 @@ async def create_order(
     session.refresh(record)
 
     output_dir = data_dir / "orders" / record.id
-    artifacts = await render_order_preview_artifacts(
-        page_url=f"{base_url}/render/orders/{record.id}",
+    artifacts = await render_order_artifacts(
+        page_url=f"{base_url}/render/orders/{record.id}/production",
         template=template,
         layout_state=draft.layout_state,
         assets=_order_assets_from_storage(data_dir, session, record.id),
@@ -186,6 +194,7 @@ async def create_order(
     )
     record.preview_path = artifacts.preview_path
     record.mockup_path = artifacts.preview_path
+    record.pdf_path = artifacts.pdf_path
     session.add(record)
     session.commit()
     session.refresh(record)

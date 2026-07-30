@@ -143,6 +143,18 @@ def order_preview(order_id: str) -> FileResponse:
         session.close()
 
 
+@router.get("/orders/{order_id}/pdf")
+def order_pdf(order_id: str) -> FileResponse:
+    session = get_session_factory()()
+    try:
+        order = get_order(session, order_id)
+        if order.pdf_path is None:
+            raise HTTPException(status_code=404, detail="Order PDF not available")
+        return FileResponse(order.pdf_path, media_type="application/pdf", filename=f"{order.order_number}.pdf")
+    finally:
+        session.close()
+
+
 @router.get("/orders/{order_id}/fixture")
 def order_fixture(order_id: str) -> dict[str, object]:
     settings = get_settings()

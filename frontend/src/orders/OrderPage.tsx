@@ -125,6 +125,15 @@ export default function OrderPage({ orderId }: { orderId: string }) {
 
           <section className="order-snapshot">
             <p className="order-section-title">Snapshot</p>
+            <div className="order-actions">
+              {order.pdf_path ? (
+                <a className="order-download" href={`/api/orders/${encodeURIComponent(order.id)}/pdf`}>
+                  Produktions-PDF herunterladen
+                </a>
+              ) : (
+                <p className="order-download order-download--disabled">Produktions-PDF wird erzeugt</p>
+              )}
+            </div>
             <div className="order-snapshot__grid">
               <div>
                 <dt>Produkt</dt>

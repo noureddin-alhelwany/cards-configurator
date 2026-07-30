@@ -27,6 +27,13 @@ class PreviewArtifacts(BaseModel):
     page_height_mm: float
 
 
+class OrderArtifacts(BaseModel):
+    preview_path: str
+    pdf_path: str
+    page_width_mm: float
+    page_height_mm: float
+
+
 def _mm_to_pt(mm: float) -> float:
     return mm * PT_PER_MM
 
@@ -156,6 +163,58 @@ async def render_order_preview_artifacts(
 
     return PreviewArtifacts(
         preview_path=str(preview_path),
+        page_width_mm=template.page_width_mm,
+        page_height_mm=template.page_height_mm,
+    )
+
+
+async def render_order_artifacts(
+    *,
+    page_url: str,
+    template: TemplateDefinition,
+    layout_state: LayoutState,
+    assets: dict[str, AssetDataUrl],
+    output_dir: Path,
+) -> OrderArtifacts:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    temp_dir = Path(tempfile.mkdtemp(prefix="render-order-", dir=str(output_dir.parent)))
+    preview_tmp = temp_dir / "preview.png"
+    pdf_tmp = temp_dir / "order.pdf"
+
+    browser_binary = _find_browser_binary()
+
+    async with async_playwright() as playwright:
+        browser = await playwright.chromium.launch(
+            headless=True,
+            executable_path=browser_binary,
+            args=["--disable-dev-shm-usage"],
+        )
+        page = await browser.new_page(viewport={"width": 1800, "height": 2400}, device_scale_factor=1)
+        await page.goto(page_url, wait_until="networkidle")
+        await page.wait_for_function("document.documentElement.dataset.renderReady === 'true'")
+        await page.emulate_media(media="screen")
+        await page.locator('[data-testid="proof-canvas"]').screenshot(path=str(preview_tmp))
+        await page.emulate_media(media="print")
+        await page.pdf(
+            path=str(pdf_tmp),
+            print_background=True,
+            width=f"{template.page_width_mm}mm",
+            height=f"{template.page_height_mm}mm",
+            margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
+        )
+        await browser.close()
+
+    _validate_pdf_boxes(pdf_tmp, template)
+
+    preview_path = output_dir / "preview.png"
+    pdf_path = output_dir / "order.pdf"
+    preview_path.write_bytes(preview_tmp.read_bytes())
+    pdf_path.write_bytes(pdf_tmp.read_bytes())
+    shutil.rmtree(temp_dir, ignore_errors=True)
+
+    return OrderArtifacts(
+        preview_path=str(preview_path),
+        pdf_path=str(pdf_path),
         page_width_mm=template.page_width_mm,
         page_height_mm=template.page_height_mm,
     )

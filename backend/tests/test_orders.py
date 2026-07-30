@@ -11,15 +11,17 @@ def test_order_creation_persists_and_exposes_detail(tmp_path: Path, monkeypatch)
     db_path = tmp_path / 'orders.sqlite3'
     monkeypatch.setenv('DATABASE_URL', f'sqlite:///{db_path}')
 
-    async def fake_render_order_preview_artifacts(*, output_dir: Path, **_: object) -> SimpleNamespace:
+    async def fake_render_order_artifacts(*, output_dir: Path, **_: object) -> SimpleNamespace:
         output_dir.mkdir(parents=True, exist_ok=True)
         preview_path = output_dir / 'preview.png'
+        pdf_path = output_dir / 'order.pdf'
         preview_path.write_bytes(b'png')
-        return SimpleNamespace(preview_path=str(preview_path))
+        pdf_path.write_bytes(b'pdf')
+        return SimpleNamespace(preview_path=str(preview_path), pdf_path=str(pdf_path))
 
     monkeypatch.setattr(
-        'cards_configurator_backend.orders.service.render_order_preview_artifacts',
-        fake_render_order_preview_artifacts,
+        'cards_configurator_backend.orders.service.render_order_artifacts',
+        fake_render_order_artifacts,
     )
 
     with TestClient(create_app()) as client:
@@ -63,6 +65,7 @@ def test_order_creation_persists_and_exposes_detail(tmp_path: Path, monkeypatch)
         assert order_payload['order_number'].startswith('ORD-20260730-')
         assert order_payload['approved_at'] is not None
         assert order_payload['preview_path'].endswith('preview.png')
+        assert order_payload['pdf_path'].endswith('order.pdf')
 
         list_response = client.get('/api/orders')
         assert list_response.status_code == 200
@@ -78,3 +81,7 @@ def test_order_creation_persists_and_exposes_detail(tmp_path: Path, monkeypatch)
         preview_response = client.get(f"/api/orders/{order_payload['id']}/preview")
         assert preview_response.status_code == 200
         assert preview_response.headers['content-type'] == 'image/png'
+
+        pdf_response = client.get(f"/api/orders/{order_payload['id']}/pdf")
+        assert pdf_response.status_code == 200
+        assert pdf_response.headers['content-type'] == 'application/pdf'
