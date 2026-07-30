@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import type {
   ProductDefinition,
   RegistryBundle,
-  ImageElementDefinition,
   TemplateDefinition,
   TemplateVariantDefinition,
   UseCaseDefinition,
@@ -10,6 +9,13 @@ import type {
 import type { DraftState, TemplateSelectionRequest } from '../drafts/types';
 import type { ElementAdjustment, ProofFixture, ValidationIssue } from '../design/types';
 import DesignRenderer from '../design/DesignRenderer';
+import {
+  assetElementForField,
+  clamp,
+  defaultAdjustmentsForTemplate,
+  imageQualitySummary,
+  type AssetMetadata,
+} from './selectionHelpers';
 import './SelectionPage.css';
 
 type HealthState = 'loading' | 'ok' | 'offline';
@@ -61,52 +67,6 @@ function layoutValuesFromState(layoutState: DraftState['layout_state']): DraftLa
     asset_values: layoutState.asset_values,
     element_adjustments: layoutState.element_adjustments,
   };
-}
-
-function assetElementForField(template: TemplateDefinition, fieldId: string): ImageElementDefinition | null {
-  return (template.elements.find(
-    (element): element is ImageElementDefinition => element.kind === 'image' && element.asset_key === fieldId,
-  ) ?? null) as ImageElementDefinition | null;
-}
-
-function clamp(value: number, minimum: number, maximum: number) {
-  return Math.min(maximum, Math.max(minimum, value));
-}
-
-function imageQualitySummary(effectiveDpi: number, product: ProductDefinition) {
-  if (effectiveDpi < product.minimum_dpi) {
-    return {
-      className: 'error' as const,
-      text: `Bildqualität: ungeeignet · Effektive DPI ${effectiveDpi.toFixed(0)} unter Minimum ${product.minimum_dpi}`,
-    };
-  }
-
-  if (effectiveDpi < product.warning_dpi) {
-    return {
-      className: 'warning' as const,
-      text: `Bildqualität: grenzwertig · Effektive DPI ${effectiveDpi.toFixed(0)} unter Warnschwelle ${product.warning_dpi}`,
-    };
-  }
-
-  return {
-    className: 'success' as const,
-    text: `Bildqualität: ausreichend · Effektive DPI ${effectiveDpi.toFixed(0)} / empfohlen ${product.recommended_dpi}`,
-  };
-}
-
-function defaultAdjustmentsForTemplate(template: TemplateDefinition) {
-  return Object.fromEntries(
-    template.elements
-      .filter((element): element is ImageElementDefinition => element.kind === 'image')
-      .map((element) => [
-        element.id,
-        {
-          offset_x: 0,
-          offset_y: 0,
-          scale: 1,
-        } satisfies ElementAdjustment,
-      ]),
-  ) as Record<string, ElementAdjustment>;
 }
 
 async function loadRegistries(): Promise<RegistryBundle> {
@@ -809,9 +769,7 @@ export default function SelectionPage() {
     [selectedTemplate, selectedVariantId],
   );
   const [assetPreviews, setAssetPreviews] = useState<Record<string, string>>({});
-  const [assetDetails, setAssetDetails] = useState<
-    Record<string, { width_px: number | null; height_px: number | null; mime_type: string; preview_data_url: string }>
-  >({});
+  const [assetDetails, setAssetDetails] = useState<Record<string, AssetMetadata>>({});
   const [assetErrors, setAssetErrors] = useState<Record<string, string | null>>({});
   const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
   const [qualityError, setQualityError] = useState<string | null>(null);
