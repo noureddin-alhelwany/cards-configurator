@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "id": "proof_a6_card",
+  "version": "1.1.0",
+  "name": "Google Reviews Bold",
+  "preview_asset": "template_google_reviews_bold.png",
+  "product_id": "a6_card",
+  "use_case_ids": ["google_reviews"],
+  "active": true,
+  "page_width_mm": 111,
+  "page_height_mm": 154,
+  "bleed_mm": 3,
+  "fields": [
+    {
+      "id": "businessName",
+      "type": "text",
+      "required": true,
+      "max_length": 40,
+      "max_lines": 2
+    },
+    {
+      "id": "headline",
+      "type": "text",
+      "required": true,
+      "max_length": 60,
+      "max_lines": 3
+    },
+    {
+      "id": "logo",
+      "type": "logo",
+      "required": false,
+      "max_length": null,
+      "max_lines": null
+    },
+    {
+      "id": "qrTarget",
+      "type": "url",
+      "required": true,
+      "max_length": null,
+      "max_lines": null
+    }
+  ],
+  "font_family": "Proof Sans",
+  "fonts": [
+    {
+      "family": "Proof Sans",
+      "file": "/fonts/ProofSans.ttf",
+      "weight": 400,
+      "style": "normal"
+    }
+  ],
+  "elements": [
+    {
+      "kind": "text",
+      "id": "headline",
+      "box_mm": {
+        "x_mm": 14,
+        "y_mm": 14,
+        "width_mm": 72,
+        "height_mm": 18
+      },
+      "z_index": 1,
+      "text": "Tell us what you think",
+      "font_family": "Proof Sans",
+      "font_size_mm": 7.2,
+      "font_weight": 700,
+      "color": "#1f1a17",
+      "line_height": 1.0,
+      "align": "left"
+    },
+    {
+      "kind": "text",
+      "id": "body",
+      "box_mm": {
+        "x_mm": 14,
+        "y_mm": 34,
+        "width_mm": 58,
+        "height_mm": 26
+      },
+      "z_index": 1,
+      "text": "Scan the QR code to rate your visit and leave feedback in a few seconds.",
+      "font_family": "Proof Sans",
+      "font_size_mm": 3.0,
+      "font_weight": 400,
+      "color": "#4a3d31",
+      "line_height": 1.22,
+      "align": "left"
+    }
+  ],
+  "variants": [
+    {
+      "id": "logo-focused",
+      "name": "Logo im Fokus",
+      "active": true,
+      "preview_asset": "template_google_reviews_bold.png"
+    },
+    {
+      "id": "text-focused",
+      "name": "Text im Fokus",
+      "active": true,
+      "preview_asset": "template_google_reviews_minimal.png"
+    }
+  ]
+}

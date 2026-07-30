@@ -1,0 +1,15 @@
+pyproject.toml
+src/cards_configurator_backend/__init__.py
+src/cards_configurator_backend/app.py
+src/cards_configurator_backend/config.py
+src/cards_configurator_backend/db.py
+src/cards_configurator_backend/main.py
+src/cards_configurator_backend/models.py
+src/cards_configurator_backend/routes.py
+src/cards_configurator_backend.egg-info/PKG-INFO
+src/cards_configurator_backend.egg-info/SOURCES.txt
+src/cards_configurator_backend.egg-info/dependency_links.txt
+src/cards_configurator_backend.egg-info/requires.txt
+src/cards_configurator_backend.egg-info/top_level.txt
+tests/test_app.py
+tests/test_migration.py

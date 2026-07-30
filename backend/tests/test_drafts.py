@@ -1,0 +1,87 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from cards_configurator_backend.app import create_app
+from fastapi.testclient import TestClient
+
+
+def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
+    db_path = tmp_path / 'drafts.sqlite3'
+    monkeypatch.setenv('DATABASE_URL', f'sqlite:///{db_path}')
+
+    with TestClient(create_app()) as client:
+        draft_response = client.get('/api/drafts/current')
+        assert draft_response.status_code == 200
+        draft = draft_response.json()
+        assert draft['template_id'] is None
+        assert draft['variant_id'] is None
+
+        response = client.post(
+            '/api/drafts/current/template',
+            json={
+                'use_case_id': 'google_reviews',
+                'product_id': 'a6_card',
+                'template_id': 'proof_a6_card',
+                'template_version': '1.0.0',
+            },
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload['template_id'] == 'proof_a6_card'
+        assert payload['template_version'] == '1.0.0'
+        assert payload['variant_id'] == 'logo-focused'
+        assert payload['layout_state']['variant_id'] == 'logo-focused'
+
+        layout_response = client.patch(
+            '/api/drafts/current/layout',
+            json={
+                'variant_id': 'text-focused',
+                'text_values': {'businessName': 'Studio One'},
+            },
+        )
+        assert layout_response.status_code == 200
+        layout_payload = layout_response.json()
+        assert layout_payload['variant_id'] == 'text-focused'
+        assert layout_payload['layout_state']['variant_id'] == 'text-focused'
+        assert layout_payload['layout_state']['text_values']['businessName'] == 'Studio One'
+
+        refreshed = client.get('/api/drafts/current')
+        assert refreshed.status_code == 200
+        refreshed_payload = refreshed.json()
+        assert refreshed_payload['template_id'] == 'proof_a6_card'
+        assert refreshed_payload['template_version'] == '1.0.0'
+        assert refreshed_payload['variant_id'] == 'text-focused'
+        assert refreshed_payload['layout_state']['text_values']['businessName'] == 'Studio One'
+
+
+def test_url_values_are_normalized_and_qr_preview_is_generated(tmp_path: Path, monkeypatch) -> None:
+    db_path = tmp_path / 'drafts.sqlite3'
+    monkeypatch.setenv('DATABASE_URL', f'sqlite:///{db_path}')
+
+    with TestClient(create_app()) as client:
+        client.post(
+            '/api/drafts/current/template',
+            json={
+                'use_case_id': 'google_reviews',
+                'product_id': 'a6_card',
+                'template_id': 'proof_a6_card',
+                'template_version': '1.0.0',
+            },
+        )
+
+        response = client.patch(
+            '/api/drafts/current/layout',
+            json={
+                'text_values': {'qrTarget': 'example.com/review'},
+            },
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload['layout_state']['text_values']['qrTarget'] == 'https://example.com/review'
+
+        qr_response = client.get('/api/qr', params={'value': 'example.com/review'})
+        assert qr_response.status_code == 200
+        qr_payload = qr_response.json()
+        assert qr_payload['value'] == 'https://example.com/review'
+        assert qr_payload['data_url'].startswith('data:image/svg+xml;base64,')

@@ -1,0 +1,53 @@
+.proof-shell {
+  min-height: 100vh;
+  padding: 32px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at top, rgba(201, 170, 116, 0.22), transparent 28%),
+    linear-gradient(135deg, #f6efe7 0%, #ece2d7 56%, #e3d6c4 100%);
+  color: #211a15;
+}
+
+.proof-card {
+  width: min(1320px, 100%);
+  padding: 28px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 24px 80px rgba(72, 48, 28, 0.16);
+  backdrop-filter: blur(16px);
+}
+
+.proof-card--stacked {
+  display: grid;
+  gap: 24px;
+}
+
+.proof-header {
+  display: grid;
+  gap: 8px;
+}
+
+.proof-kicker {
+  margin: 0;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: #8f5a2a;
+}
+
+.proof-header h1 {
+  margin: 0;
+  font-size: clamp(2.3rem, 5vw, 4rem);
+  line-height: 1;
+}
+
+.proof-summary {
+  margin: 0;
+  color: #514236;
+  font-size: 0.98rem;
+}
+
+.proof-shell--error {
+  align-items: start;
+}

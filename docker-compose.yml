@@ -1,0 +1,15 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: sqlite:////app/data/cards-configurator.sqlite3
+      FRONTEND_DIST_DIR: /app/frontend/dist
+    volumes:
+      - cards-configurator-data:/app/data
+
+volumes:
+  cards-configurator-data:

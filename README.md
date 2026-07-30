@@ -1,28 +1,31 @@
 # Intelligent Print & Design Configurator
 
-Dieses Repository-Paket enthält die abgestimmte Produkt-, MVP- und
-Architekturgrundlage für die Implementierung mit Codex.
+Dieses Repository enthält die Produkt-, MVP- und Architekturgrundlage für die
+Implementierung mit Codex.
 
-## Ziel
-
-Eine interne Einzelnutzer-Anwendung für ein Print-Studio, mit der vorbereitete
-QR-Produkte aus kuratierten Templates konfiguriert, geprüft, gespeichert und
-als Produktions-PDF ausgegeben werden.
-
-## Einstieg
+## Start
 
 1. `START_HERE.md` lesen.
-2. `AGENTS.md` nicht durch `/init` überschreiben.
-3. Technisches Work Item `TECH-01` starten.
-4. Immer nur ein Work Item gleichzeitig in `backlog/in-progress/` halten.
+2. `TECH-01` im Status `in-progress` halten, bis der Bootstrap abgeschlossen ist.
+3. Immer nur ein Work Item gleichzeitig in `backlog/in-progress/` halten.
 
-## Dokument-Routing
+## Lokale Startbefehle
 
-- Dauerregeln: `AGENTS.md`
-- knapper Fachkontext: `PROJECT_CONTEXT.md`
-- Dokumentübersicht: `docs/DOCUMENT_MAP.md`
-- Status und Reihenfolge: `backlog/PROGRESS.md`
-- vollständige Originalquelle: `sources/MVP_ORIGINAL.md`
+- Backend entwickeln: `make backend-dev`
+- Frontend entwickeln: `make frontend-dev`
+- Frontend bauen: `make build`
+- Vollständige Prüfungen: `make lint`, `make typecheck`, `make test`
 
-Die Dateien sind bewusst modular aufgebaut. Codex soll nicht bei jeder Aufgabe
-die gesamte Dokumentation lesen.
+## Laufzeitlayout
+
+- Persistente lokale Daten liegen in `.data/` bzw. im Compose-Volume
+  `cards-configurator-data`.
+- Generierte Artefakte, Build-Ausgaben und lokale Caches sind in `.gitignore`
+  erfasst.
+
+
+## Bootstrap-Install
+
+- Python-Abhängigkeiten installieren: `make backend-install`
+- Node-Abhängigkeiten installieren: `make frontend-install`
+- Lokale Datenbank liegt standardmäßig unter `data/` oder im Compose-Volume.

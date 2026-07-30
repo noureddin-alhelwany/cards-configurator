@@ -1,0 +1,14 @@
+{
+  "name": "cards-configurator-codex-spec",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "pnpm --dir frontend dev",
+    "build": "pnpm --dir frontend build",
+    "preview": "pnpm --dir frontend preview",
+    "lint": "pnpm --dir frontend lint",
+    "typecheck": "pnpm --dir frontend typecheck",
+    "test": "pnpm --dir frontend test",
+    "test:e2e": "pnpm --dir frontend test:e2e"
+  }
+}

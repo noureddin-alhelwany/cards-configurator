@@ -1,0 +1,14 @@
+{
+  "id": "a6_card",
+  "name": "A6 Card with Bleed",
+  "trim_width_mm": 105,
+  "trim_height_mm": 148,
+  "bleed_mm": 3,
+  "recommended_dpi": 450,
+  "warning_dpi": 300,
+  "minimum_dpi": 225,
+  "qr_min_width_mm": 18,
+  "qr_min_module_mm": 0.42,
+  "preview_asset": "a6_preview.png",
+  "active": true
+}

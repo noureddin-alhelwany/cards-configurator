@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "id": "proof_a6_card",
+  "version": "1.2.0",
+  "name": "Google Reviews Minimal",
+  "preview_asset": "template_google_reviews_minimal.png",
+  "product_id": "a6_card",
+  "use_case_ids": ["google_reviews"],
+  "active": true,
+  "page_width_mm": 111,
+  "page_height_mm": 154,
+  "bleed_mm": 3,
+  "fields": [
+    {
+      "id": "businessName",
+      "type": "text",
+      "required": true,
+      "max_length": 40,
+      "max_lines": 2
+    },
+    {
+      "id": "headline",
+      "type": "text",
+      "required": true,
+      "max_length": 60,
+      "max_lines": 3
+    },
+    {
+      "id": "logo",
+      "type": "logo",
+      "required": false,
+      "max_length": null,
+      "max_lines": null
+    },
+    {
+      "id": "qrTarget",
+      "type": "url",
+      "required": true,
+      "max_length": null,
+      "max_lines": null
+    }
+  ],
+  "font_family": "Proof Sans",
+  "fonts": [
+    {
+      "family": "Proof Sans",
+      "file": "/fonts/ProofSans.ttf",
+      "weight": 400,
+      "style": "normal"
+    }
+  ],
+  "elements": [
+    {
+      "kind": "text",
+      "id": "headline",
+      "box_mm": {
+        "x_mm": 16,
+        "y_mm": 16,
+        "width_mm": 66,
+        "height_mm": 16
+      },
+      "z_index": 1,
+      "text": "Review us online",
+      "font_family": "Proof Sans",
+      "font_size_mm": 6.4,
+      "font_weight": 700,
+      "color": "#1f1a17",
+      "line_height": 1.0,
+      "align": "left"
+    },
+    {
+      "kind": "qr",
+      "id": "proof-qr",
+      "box_mm": {
+        "x_mm": 72,
+        "y_mm": 72,
+        "width_mm": 20,
+        "height_mm": 20
+      },
+      "z_index": 2,
+      "value": "https://example.com/review",
+      "color": "#1f1a17",
+      "background": "transparent",
+      "quiet_zone_mm": 2
+    }
+  ],
+  "variants": [
+    {
+      "id": "logo-focused",
+      "name": "Logo im Fokus",
+      "active": true,
+      "preview_asset": "template_google_reviews_minimal.png"
+    },
+    {
+      "id": "text-focused",
+      "name": "Text im Fokus",
+      "active": true,
+      "preview_asset": "template_google_reviews_classic.png"
+    }
+  ]
+}
