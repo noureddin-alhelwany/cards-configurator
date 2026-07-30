@@ -5,6 +5,7 @@ import App from './App';
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  window.history.pushState({}, '', '/');
 });
 
 test('renders the registry selection flow and filters matching products', async () => {
@@ -608,68 +609,84 @@ test('renders the registry selection flow and filters matching products', async 
 
   render(<App />);
 
-  expect(await screen.findByRole('button', { name: /A6 Card/i, pressed: true })).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: /Google Reviews/i, pressed: true })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
+
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: /A6 Card/i, pressed: true })).toBeInTheDocument();
+  });
   expect(screen.getByRole('button', { name: /DL Card/i })).toBeInTheDocument();
   expect(screen.queryByText('Hidden Card')).not.toBeInTheDocument();
-  const initialDetail = screen.getByText('Selected product').closest('article');
+  const initialDetail = screen.getByText('Ausgewähltes Produkt').closest('article');
   expect(initialDetail).not.toBeNull();
   expect(within(initialDetail as HTMLElement).getByText('105 × 148 mm')).toBeInTheDocument();
   expect(within(initialDetail as HTMLElement).getByText('DPI')).toBeInTheDocument();
-  expect(screen.getByRole('img', { name: 'Google Reviews Classic' })).toBeInTheDocument();
-  expect(screen.getByRole('img', { name: 'Google Reviews Bold' })).toBeInTheDocument();
-  expect(screen.getByRole('img', { name: 'Google Reviews Minimal' })).toBeInTheDocument();
-  expect(screen.queryByRole('img', { name: 'Wedding Reviews' })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
+
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: /Google Reviews Classic/i })).toBeInTheDocument();
+  });
+  expect(screen.getByRole('button', { name: /Google Reviews Bold/i })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Google Reviews Minimal/i })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /Wedding Reviews/i })).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: /Google Reviews Classic/i }));
 
   await waitFor(() => {
-    expect(screen.getByRole('button', { name: /Google Reviews Classic/i, pressed: true })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '4. Inhalte' })).toBeInTheDocument();
   });
-  expect(screen.getByText('Felder geladen')).toBeInTheDocument();
-  expect(screen.getByText('Layoutvarianten')).toBeInTheDocument();
-  expect(screen.getByRole('textbox', { name: 'businessName' })).toBeInTheDocument();
-  expect(screen.getByRole('textbox', { name: 'headline' })).toBeInTheDocument();
-  expect(screen.getByRole('textbox', { name: 'qrTarget' })).toBeInTheDocument();
-  expect(screen.getByText('Logo im Fokus')).toBeInTheDocument();
-  expect(screen.getByText('Text im Fokus')).toBeInTheDocument();
-  await waitFor(() => {
-    expect(screen.getByText(/QR code 'proof-qr' is below the minimum size/)).toBeInTheDocument();
-  });
-  expect(screen.getByRole('button', { name: 'Design freigeben' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Zur Prüfung' })).toBeEnabled();
+  expect(screen.getByRole('textbox', { name: 'Unternehmensname' })).toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: 'Überschrift' })).toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: 'QR-Ziel' })).toBeInTheDocument();
+  expect(screen.getByRole('tab', { name: 'Logo im Fokus' })).toBeInTheDocument();
+  expect(screen.getByRole('tab', { name: 'Text im Fokus' })).toBeInTheDocument();
+  expect(screen.queryByText(/zu klein für dieses Produkt/)).not.toBeInTheDocument();
 
-  const businessNameInput = screen.getByRole('textbox', { name: 'businessName' });
-  fireEvent.change(businessNameInput, { target: { value: 'Studio One' } });
+  const headlineInput = screen.getByRole('textbox', { name: 'Überschrift' });
+  fireEvent.change(headlineInput, { target: { value: 'Studio One' } });
   await waitFor(() => {
     expect(screen.getByDisplayValue('Studio One')).toBeInTheDocument();
   });
-  expect(screen.getByText('Max. 40 Zeichen · 30 Zeichen verbleibend')).toBeInTheDocument();
-  const livePreview = screen.getByText('Live-Vorschau').closest('.template-live-preview');
+  expect(screen.getByText('Maximal 60 Zeichen · 50 verbleibend')).toBeInTheDocument();
+  const livePreview = screen.getByRole('heading', { name: 'Live-Vorschau' }).closest('.selection-sidecard');
   expect(livePreview).not.toBeNull();
   expect(within(livePreview as HTMLElement).getByText('Studio One')).toBeInTheDocument();
 
-  const qrTargetInput = screen.getByRole('textbox', { name: 'qrTarget' });
+  const qrTargetInput = screen.getByRole('textbox', { name: 'QR-Ziel' });
   fireEvent.change(qrTargetInput, { target: { value: 'example.com/review' } });
   await waitFor(() => {
     expect(screen.getByDisplayValue('https://example.com/review')).toBeInTheDocument();
   });
   await waitFor(() => {
-    expect(screen.getAllByTestId('proof-canvas')).toHaveLength(2);
+    expect(screen.getAllByTestId('proof-canvas')).toHaveLength(1);
+  });
+  await waitFor(() => {
+    expect(screen.getByText(/QR-Ziel ist zu klein für dieses Produkt/)).toBeInTheDocument();
   });
   expect(within(livePreview as HTMLElement).getByText('Studio One')).toBeInTheDocument();
 
   const logoFile = new File([new Uint8Array([1, 2, 3])], 'logo.png', { type: 'image/png' });
-  const logoInput = screen.getByLabelText('logo');
+  const logoInput = screen.getByLabelText('Logo');
   fireEvent.change(logoInput, { target: { files: [logoFile] } });
   await waitFor(() => {
-    expect(screen.getByAltText('logo Vorschau')).toBeInTheDocument();
+    expect(screen.getByAltText('Logo Vorschau')).toBeInTheDocument();
   });
   await waitFor(() => {
     expect(screen.getByText(/Bildqualität: grenzwertig/)).toBeInTheDocument();
   });
   const studioLogoImages = screen.getAllByRole('img', { name: 'Studio logo' });
-  expect(studioLogoImages).toHaveLength(2);
-  expect(screen.getAllByRole('img', { name: 'QR: https://example.com/review' })).toHaveLength(2);
-  const logoOffsetX = screen.getByLabelText('logo verschiebung x');
+  expect(studioLogoImages).toHaveLength(1);
+  expect(screen.getAllByRole('img', { name: 'QR: https://example.com/review' })).toHaveLength(1);
+  expect(screen.getByLabelText('Logo verschiebung x')).not.toBeVisible();
+  const logoField = logoInput.closest('.template-field');
+  expect(logoField).not.toBeNull();
+  fireEvent.click(within(logoField as HTMLElement).getByRole('button', { name: 'Bild anpassen' }));
+  await waitFor(() => {
+    expect(screen.getByLabelText('Logo verschiebung x')).toBeInTheDocument();
+  });
+  const logoOffsetX = screen.getByLabelText('Logo verschiebung x');
   fireEvent.change(logoOffsetX, { target: { value: '0.25' } });
   await waitFor(() => {
     expect(screen.getByDisplayValue('0.25')).toBeInTheDocument();
@@ -682,32 +699,36 @@ test('renders the registry selection flow and filters matching products', async 
   expect(studioLogoImages[0]).toHaveStyle(
     'filter: contrast(1.06) saturate(1.01);',
   );
-  const logoField = logoOffsetX.closest('.template-field');
-  expect(logoField).not.toBeNull();
   fireEvent.click(within(logoField as HTMLElement).getByRole('button', { name: 'Zurücksetzen' }));
   await waitFor(() => {
     expect(studioLogoImages[0]).toHaveStyle(
       'transform: translate(0mm, 0mm) scale(1);',
     );
   });
-  expect(screen.getByAltText('logo Vorschau')).toBeInTheDocument();
+  expect(screen.getByAltText('Logo Vorschau')).toBeInTheDocument();
 
   const heroFile = new File([new Uint8Array([4, 5, 6])], 'hero.png', { type: 'image/png' });
-  const heroInput = screen.getByLabelText('heroImage');
+  const heroInput = screen.getByLabelText('Foto');
   fireEvent.change(heroInput, { target: { files: [heroFile] } });
   await waitFor(() => {
-    expect(screen.getByAltText('heroImage Vorschau')).toBeInTheDocument();
+    expect(screen.getByAltText('Foto Vorschau')).toBeInTheDocument();
   });
   await waitFor(() => {
     expect(screen.getByText(/Bildqualität: ausreichend/)).toBeInTheDocument();
   });
-  const heroScale = screen.getByLabelText('heroImage skalierung');
+  const heroField = heroInput.closest('.template-field');
+  expect(heroField).not.toBeNull();
+  fireEvent.click(within(heroField as HTMLElement).getByRole('button', { name: 'Bild anpassen' }));
+  await waitFor(() => {
+    expect(screen.getByLabelText('Foto skalierung')).toBeInTheDocument();
+  });
+  const heroScale = screen.getByLabelText('Foto skalierung');
   expect(heroScale).toHaveAttribute('min', '0.8');
   expect(heroScale).toHaveAttribute('max', '1.3');
   const heroImages = screen.getAllByRole('img', { name: 'Review hero image' });
-  expect(heroImages).toHaveLength(2);
+  expect(heroImages).toHaveLength(1);
   expect(screen.getAllByText(/Bildqualität: grenzwertig/)).toHaveLength(1);
-  const heroOffsetY = screen.getByLabelText('heroImage verschiebung y');
+  const heroOffsetY = screen.getByLabelText('Foto verschiebung y');
   fireEvent.change(heroOffsetY, { target: { value: '-0.2' } });
   await waitFor(() => {
     expect(heroImages[0]).toHaveStyle(
@@ -730,22 +751,17 @@ test('renders the registry selection flow and filters matching products', async 
     );
   });
   expect(screen.getByDisplayValue('Studio One')).toBeInTheDocument();
-  expect(screen.getByAltText('logo Vorschau')).toBeInTheDocument();
-  expect(screen.getByAltText('heroImage Vorschau')).toBeInTheDocument();
+  expect(screen.getByAltText('Logo Vorschau')).toBeInTheDocument();
+  expect(screen.getByAltText('Foto Vorschau')).toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole('tab', { name: 'Text im Fokus' }));
+  expect(screen.getByRole('button', { name: 'Zur Prüfung' })).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Zur Prüfung' }));
   await waitFor(() => {
-    expect(screen.getByRole('tab', { name: 'Text im Fokus', selected: true })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Design freigeben' })).toBeInTheDocument();
   });
-  expect(screen.getByDisplayValue('Studio One')).toBeInTheDocument();
-  expect(screen.getByRole('img', { name: 'Google Reviews Classic - Text im Fokus' })).toBeInTheDocument();
-
-  fireEvent.click(screen.getByRole('button', { name: /DL Card/i }));
-
-  expect(screen.getByRole('button', { name: /DL Card/i, pressed: true })).toBeInTheDocument();
-  const updatedDetail = screen.getByText('Selected product').closest('article');
-  expect(updatedDetail).not.toBeNull();
-  expect(within(updatedDetail as HTMLElement).getByText('99 × 210 mm')).toBeInTheDocument();
+  expect(screen.getByText('Freigabevorschau')).toBeInTheDocument();
+  expect(screen.getAllByTestId('proof-canvas')).toHaveLength(1);
+  expect(screen.getByRole('button', { name: 'Design freigeben' })).toBeDisabled();
 });
 
 test('approves a draft and locks editing afterward', async () => {
@@ -872,6 +888,34 @@ test('approves a draft and locks editing afterward', async () => {
           }),
         };
       }
+      if (url.endsWith('/api/drafts/current/template')) {
+        const selection = JSON.parse(String(init?.body ?? '{}'));
+        return {
+          ok: true,
+          json: async () => ({
+            id: 1,
+            name: 'Current draft',
+            use_case_id: selection.use_case_id,
+            product_id: selection.product_id,
+            template_id: selection.template_id,
+            template_version: selection.template_version,
+            variant_id: selection.variant_id ?? 'logo-focused',
+            approved_at: null,
+            approval_snapshot: null,
+            approval_checklist: null,
+            layout_state: {
+              variant_id: selection.variant_id ?? 'logo-focused',
+              element_adjustments: {},
+              text_values: {
+                businessName: 'Studio One',
+                headline: 'Leave a Google review',
+                qrTarget: 'https://example.com/review',
+              },
+              asset_values: {},
+            },
+          }),
+        };
+      }
       if (url.endsWith('/api/orders') && init?.method !== 'POST') {
         return {
           ok: true,
@@ -924,13 +968,36 @@ test('approves a draft and locks editing afterward', async () => {
           }),
         };
       }
+      if (url.endsWith('/api/drafts/current/reset')) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: 1,
+            name: 'Current draft',
+            use_case_id: null,
+            product_id: null,
+            template_id: null,
+            template_version: null,
+            variant_id: null,
+            approved_at: null,
+            approval_snapshot: null,
+            approval_checklist: null,
+            layout_state: {
+              variant_id: '',
+              element_adjustments: {},
+              text_values: {},
+              asset_values: {},
+            },
+          }),
+        };
+      }
       if (url.endsWith('/api/orders') && init?.method === 'POST') {
         return {
           ok: true,
           json: async () => ({
             id: 'order-1',
             order_number: 'ORD-20260730-ABC123',
-            display_name: null,
+            display_name: 'Studio One',
             use_case_id: 'google_reviews',
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
@@ -969,7 +1036,7 @@ test('approves a draft and locks editing afterward', async () => {
           json: async () => ({
             id: 'order-1',
             order_number: 'ORD-20260730-ABC123',
-            display_name: null,
+            display_name: 'Studio One',
             use_case_id: 'google_reviews',
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
@@ -1012,8 +1079,17 @@ test('approves a draft and locks editing afterward', async () => {
 
   render(<App />);
 
-  expect(await screen.findByRole('button', { name: /Google Reviews Classic/i, pressed: true })).toBeInTheDocument();
+  expect(screen.queryByText('Backend')).not.toBeInTheDocument();
 
+  await waitFor(() => {
+    expect(screen.getByRole('heading', { name: '3. Inhalte' })).toBeInTheDocument();
+  });
+  expect(screen.getByRole('button', { name: 'Zur Prüfung' })).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Zur Prüfung' }));
+
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: 'Design freigeben' })).toBeInTheDocument();
+  });
   fireEvent.click(screen.getByLabelText('Texte geprüft'));
   fireEvent.click(screen.getByLabelText('URL geprüft'));
   fireEvent.click(screen.getByLabelText('Bildausschnitt geprüft'));
@@ -1025,19 +1101,16 @@ test('approves a draft and locks editing afterward', async () => {
     expect(screen.getByRole('button', { name: 'Freigegeben' })).toBeDisabled();
   });
   expect(screen.getByText(/Freigegeben am/)).toBeInTheDocument();
-  expect(screen.getByRole('textbox', { name: 'businessName' })).toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Layout zurücksetzen' })).toBeDisabled();
-  expect(screen.getByRole('checkbox', { name: 'Texte geprüft' })).toBeDisabled();
-
-  fireEvent.click(screen.getByRole('button', { name: 'Auftrag erstellen' }));
+  expect(screen.getByRole('button', { name: 'Neue Konfiguration starten' })).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Neue Konfiguration starten' }));
 
   await waitFor(() => {
-    expect(screen.getByRole('heading', { name: 'ORD-20260730-ABC123' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Konfiguration zurücksetzen' })).toBeEnabled();
   });
-  expect(window.location.pathname).toBe('/render/orders/order-1');
-  const previewImage = screen.getByAltText('Auftragsvorschau ORD-20260730-ABC123');
-  fireEvent.load(previewImage);
+  expect(screen.getByRole('button', { name: 'Weiter' })).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
+
   await waitFor(() => {
-    expect(document.documentElement.dataset.renderReady).toBe('true');
+    expect(screen.getByRole('heading', { name: '2. Design' })).toBeInTheDocument();
   });
 });
