@@ -515,6 +515,18 @@
   font-size: 0.9rem;
 }
 
+.template-field__hint--success {
+  color: #4f7a2b;
+}
+
+.template-field__hint--warning {
+  color: #8f5a2a;
+}
+
+.template-field__hint--error {
+  color: #8a3b24;
+}
+
 .template-field__preview {
   overflow: hidden;
   border-radius: 14px;

@@ -5,9 +5,9 @@ a work-item move.
 
 ## Summary
 
-- Todo: 8
+- Todo: 10
 - In progress: 0
-- Done: 21
+- Done: 22
 - Blocked: 0
 
 ## Work items
@@ -37,7 +37,7 @@ a work-item move.
 | US-17 | story | should | done | US-16, TECH-04 | Produkt-Mockup anzeigen |
 | US-18 | story | must | done | US-06 | Pflichtfelder prüfen |
 | US-19 | story | must | done | US-07, US-16 | Textüberlauf prüfen |
-| US-20 | story | must | todo | US-10, US-16 | Bildqualität prüfen |
+| US-20 | story | must | done | US-10, US-16 | Bildqualität prüfen |
 | US-21 | story | must | todo | US-08, US-16 | QR-Mindestgröße prüfen |
 | US-22 | story | must | todo | US-18, US-19, US-20, US-21 | Design freigeben |
 | US-23 | story | must | todo | TECH-01, US-22 | Auftrag erstellen |

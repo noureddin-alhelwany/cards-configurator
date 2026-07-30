@@ -73,6 +73,27 @@ function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
+function imageQualitySummary(effectiveDpi: number, product: ProductDefinition) {
+  if (effectiveDpi < product.minimum_dpi) {
+    return {
+      className: 'error' as const,
+      text: `Bildqualität: ungeeignet · Effektive DPI ${effectiveDpi.toFixed(0)} unter Minimum ${product.minimum_dpi}`,
+    };
+  }
+
+  if (effectiveDpi < product.warning_dpi) {
+    return {
+      className: 'warning' as const,
+      text: `Bildqualität: grenzwertig · Effektive DPI ${effectiveDpi.toFixed(0)} unter Warnschwelle ${product.warning_dpi}`,
+    };
+  }
+
+  return {
+    className: 'success' as const,
+    text: `Bildqualität: ausreichend · Effektive DPI ${effectiveDpi.toFixed(0)} / empfohlen ${product.recommended_dpi}`,
+  };
+}
+
 function defaultAdjustmentsForTemplate(template: TemplateDefinition) {
   return Object.fromEntries(
     template.elements
@@ -508,14 +529,7 @@ function TemplateFieldsList({
           assetElement && assetDetail?.width_px
             ? assetDetail.width_px / ((assetElement.box_mm.width_mm * assetAdjustment.scale) / 25.4)
             : null;
-        const dpiLabel =
-          effectiveDpi === null
-            ? null
-            : effectiveDpi < product.minimum_dpi
-              ? `Effektive DPI ${effectiveDpi.toFixed(0)} unter Minimum ${product.minimum_dpi}`
-              : effectiveDpi < product.warning_dpi
-                ? `Effektive DPI ${effectiveDpi.toFixed(0)} unter Warnschwelle ${product.warning_dpi}`
-                : `Effektive DPI ${effectiveDpi.toFixed(0)} / empfohlen ${product.recommended_dpi}`;
+        const dpiSummary = effectiveDpi === null ? null : imageQualitySummary(effectiveDpi, product);
         return (
           <div key={field.id} className={`template-field${fieldIssue ? ` template-field--issue template-field--issue--${fieldIssue.severity}` : ''}`}>
             <div className="template-field__header">
@@ -537,7 +551,9 @@ function TemplateFieldsList({
             ) : (
               <p className="template-field__hint">Datei noch nicht gewählt</p>
             )}
-            {dpiLabel ? <p className="template-field__hint">{dpiLabel}</p> : null}
+            {dpiSummary ? (
+              <p className={`template-field__hint template-field__hint--${dpiSummary.className}`}>{dpiSummary.text}</p>
+            ) : null}
             {assetErrors[field.id] ? <p className="template-field__error">{assetErrors[field.id]}</p> : null}
             {fieldIssue ? <p className="template-field__error">{fieldIssue.message}</p> : null}
             {assetElement ? (

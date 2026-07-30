@@ -531,7 +531,9 @@ test('renders the registry selection flow and filters matching products', async 
       }
       if (url.startsWith('/api/assets')) {
         if (init?.method === 'POST') {
-          const assetId = 'asset-1';
+          const parsed = new URL(url, 'http://localhost');
+          const kind = (parsed.searchParams.get('kind') ?? 'image') as 'logo' | 'image';
+          const assetId = kind === 'logo' ? 'logo-asset' : 'hero-asset';
           const payload: {
             id: string;
             preview_data_url: string;
@@ -543,10 +545,10 @@ test('renders the registry selection flow and filters matching products', async 
           } = {
             id: assetId,
             preview_data_url: 'data:image/png;base64,' + btoa('preview'),
-            width_px: 2000,
-            height_px: 1000,
+            width_px: kind === 'logo' ? 300 : 2000,
+            height_px: kind === 'logo' ? 150 : 1000,
             mime_type: 'image/png',
-            kind: 'image',
+            kind,
             sha256: 'test',
           };
           uploadedAssets[assetId] = payload;
@@ -635,6 +637,9 @@ test('renders the registry selection flow and filters matching products', async 
   await waitFor(() => {
     expect(screen.getByAltText('logo Vorschau')).toBeInTheDocument();
   });
+  await waitFor(() => {
+    expect(screen.getByText(/Bildqualität: grenzwertig/)).toBeInTheDocument();
+  });
   const studioLogoImages = screen.getAllByRole('img', { name: 'Studio logo' });
   expect(studioLogoImages).toHaveLength(2);
   expect(screen.getAllByRole('img', { name: 'QR: https://example.com/review' })).toHaveLength(2);
@@ -657,6 +662,9 @@ test('renders the registry selection flow and filters matching products', async 
   fireEvent.change(heroInput, { target: { files: [heroFile] } });
   await waitFor(() => {
     expect(screen.getByAltText('heroImage Vorschau')).toBeInTheDocument();
+  });
+  await waitFor(() => {
+    expect(screen.getByText(/Bildqualität: ausreichend/)).toBeInTheDocument();
   });
   const heroImages = screen.getAllByRole('img', { name: 'Review hero image' });
   expect(heroImages).toHaveLength(2);
