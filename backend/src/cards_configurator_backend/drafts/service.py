@@ -44,6 +44,7 @@ def _draft_state_from_record(record: DraftRecord) -> DraftState:
     return DraftState(
         id=record.id,
         name=record.name,
+        updated_at=record.updated_at.isoformat() if record.updated_at else None,
         use_case_id=payload.get("use_case_id") if isinstance(payload.get("use_case_id"), str) else None,
         product_id=payload.get("product_id") if isinstance(payload.get("product_id"), str) else None,
         template_id=payload.get("template_id") if isinstance(payload.get("template_id"), str) else None,
@@ -80,6 +81,20 @@ def get_current_draft(session: Session) -> DraftState:
         session.add(draft)
         session.commit()
         session.refresh(draft)
+    return _draft_state_from_record(draft)
+
+
+def reset_current_draft(session: Session) -> DraftState:
+    draft = _get_first_draft(session)
+    if draft is None:
+        draft = DraftRecord(name=DEFAULT_DRAFT_NAME, payload=_default_payload())
+        session.add(draft)
+        session.flush()
+
+    draft.payload = _default_payload()
+    draft.updated_at = datetime.now(timezone.utc)
+    session.commit()
+    session.refresh(draft)
     return _draft_state_from_record(draft)
 
 

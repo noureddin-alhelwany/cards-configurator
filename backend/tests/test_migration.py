@@ -20,3 +20,4 @@ def test_initial_migration_creates_core_tables(tmp_path, monkeypatch) -> None:
     assert "drafts" in tables
     assert "orders" in tables
     assert "order_assets" in tables
+    assert "render_jobs" in tables

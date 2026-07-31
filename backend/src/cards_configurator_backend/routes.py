@@ -13,20 +13,16 @@ from .drafts import (
     TemplateSelectionRequest,
     approve_draft,
     get_current_draft,
+    reset_current_draft,
     save_template_selection,
     update_layout_state,
 )
-from .orders import (
-    OrderDetail,
-    OrderSummary,
-    create_order,
-    get_order,
-    get_order_fixture,
-    list_orders,
-)
+from .orders import OrderDetail, OrderSummary, create_order, get_order, get_order_fixture, list_orders
+from .orders.schemas import RenderJobState
 from .quality import validate_current_draft
 from .registries.loader import load_registry_bundle
 from .registries.service import build_proof_fixture
+from .rendering import list_render_jobs, retry_order_render_job
 from .rendering.service import render_proof_artifacts
 from .urls import build_qr_data_url, normalize_url
 
@@ -113,6 +109,15 @@ def approve_current_draft(request: Request, body: ApprovalRequest) -> DraftState
         session.close()
 
 
+@router.post("/drafts/current/reset", response_model=DraftState)
+def reset_current_draft_route() -> DraftState:
+    session = get_session_factory()()
+    try:
+        return reset_current_draft(session)
+    finally:
+        session.close()
+
+
 @router.get("/orders", response_model=list[OrderSummary])
 def orders_list() -> list[OrderSummary]:
     session = get_session_factory()()
@@ -139,6 +144,37 @@ def order_preview(order_id: str) -> FileResponse:
         if order.preview_path is None:
             raise HTTPException(status_code=404, detail="Order preview not available")
         return FileResponse(order.preview_path, media_type="image/png", filename=f"{order.order_number}-preview.png")
+    finally:
+        session.close()
+
+
+@router.get("/orders/{order_id}/mockup")
+def order_mockup(order_id: str) -> FileResponse:
+    session = get_session_factory()()
+    try:
+        order = get_order(session, order_id)
+        if order.mockup_path is None:
+            raise HTTPException(status_code=404, detail="Order mockup not available")
+        return FileResponse(order.mockup_path, media_type="image/png", filename=f"{order.order_number}-mockup.png")
+    finally:
+        session.close()
+
+
+@router.get("/orders/{order_id}/render-jobs", response_model=list[RenderJobState])
+def order_render_jobs(order_id: str) -> list[RenderJobState]:
+    session = get_session_factory()()
+    try:
+        return list_render_jobs(session, order_id)
+    finally:
+        session.close()
+
+
+@router.post("/orders/{order_id}/render-jobs/retry", response_model=RenderJobState)
+async def retry_order_render(order_id: str, request: Request) -> RenderJobState:
+    settings = get_settings()
+    session = get_session_factory()()
+    try:
+        return await retry_order_render_job(session, settings.data_dir, str(request.base_url).rstrip("/"), order_id)
     finally:
         session.close()
 

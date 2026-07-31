@@ -30,6 +30,7 @@ class ApprovalRequest(BaseModel):
 class DraftState(BaseModel):
     id: int
     name: str
+    updated_at: str | None = None
     use_case_id: str | None = None
     product_id: str | None = None
     template_id: str | None = None

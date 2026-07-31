@@ -15,6 +15,7 @@ import {
   trimSuggestion,
   validationDisplayPath,
 } from './selectionRules';
+import { uiText } from '../ui/text';
 
 export type DraftLayoutValues = {
   text_values: Record<string, string>;
@@ -35,6 +36,7 @@ export type QualityReport = {
 };
 
 type HealthState = 'loading' | 'ok' | 'offline';
+type PreviewMode = 'hidden' | 'live' | 'mockup';
 
 type LoadedState = {
   bundle: RegistryBundle | null;
@@ -335,7 +337,7 @@ export function useSelectionFlow() {
             bundle: null,
             health: 'offline',
             draft: null,
-            error: 'Die Konfiguration ist derzeit nicht verfügbar.',
+            error: uiText.selection.errors.bootstrapUnavailable,
           });
         }
       });
@@ -458,8 +460,7 @@ export function useSelectionFlow() {
   const showBlockingSummary = validationRevealAll && visibleBlockingIssues.length > 1;
   const recommendedTemplateKey = matchingTemplates[0] ? templateKey(matchingTemplates[0]) : null;
   const recommendedProductId = matchingProducts[0]?.id ?? null;
-  const previewVisible = selectionState.previewState.live || selectionState.previewState.mockup;
-  const previewShowsMockup = selectionState.previewState.mockup;
+  const previewMode: PreviewMode = selectionState.previewState.live ? 'live' : selectionState.previewState.mockup ? 'mockup' : 'hidden';
 
   function syncSelectionFromDraft(draft: DraftState) {
     const firstUseCase = bundle?.use_cases.find((useCase) => useCase.active);
@@ -567,7 +568,7 @@ export function useSelectionFlow() {
       .catch(() => {
         if (active) {
           setQualityReport(null);
-          setQualityError('Die Qualitätsprüfung ist derzeit nicht verfügbar.');
+          setQualityError(uiText.selection.errors.validationUnavailable);
         }
       });
 
@@ -727,7 +728,7 @@ export function useSelectionFlow() {
     } catch {
       setAssetErrors((current) => ({
         ...current,
-        [fieldId]: 'Die Datei konnte nicht verarbeitet werden.',
+        [fieldId]: uiText.selection.errors.fileUnavailable,
       }));
     }
   }
@@ -780,7 +781,7 @@ export function useSelectionFlow() {
       setWizardStepIndex(reviewStepIndex);
       setApprovalChecklist(approvalChecklistFromDraft(response));
     } catch {
-      setApprovalError('Die Freigabe konnte nicht gespeichert werden.');
+      setApprovalError(uiText.selection.errors.approvalUnavailable);
     } finally {
       setApprovalSubmitting(false);
     }
@@ -809,7 +810,7 @@ export function useSelectionFlow() {
       setTouchedValidationPaths({});
       setWizardStepIndex(0);
     } catch {
-      setResetError('Der Entwurf konnte nicht zurückgesetzt werden.');
+      setResetError(uiText.selection.errors.resetUnavailable);
     } finally {
       setResetSubmitting(false);
     }
@@ -825,7 +826,7 @@ export function useSelectionFlow() {
       window.history.pushState({}, '', `/render/orders/${order.id}`);
       window.dispatchEvent(new PopStateEvent('popstate'));
     } catch {
-      setApprovalError('Der Auftrag konnte nicht erstellt werden.');
+      setApprovalError(uiText.selection.errors.orderUnavailable);
     } finally {
       setOrderSubmitting(false);
     }
@@ -886,8 +887,7 @@ export function useSelectionFlow() {
     showBlockingSummary,
     recommendedTemplateKey,
     recommendedProductId,
-    previewVisible,
-    previewShowsMockup,
+    previewMode,
     isApproved,
     approvalReady,
     handleUseCaseSelect,

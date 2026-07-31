@@ -3,7 +3,7 @@
     type: user-story
     title: "Rendering wiederholen"
     epic: "9 — Produktionsdatei"
-    status: todo
+status: done
     priority: should
     depends_on: [US-24]
     verification: backend
@@ -39,9 +39,7 @@
 
     ## Result
 
-    _Fill only when work starts or completes._
-
-    - Changed:
-    - Decisions:
-    - Verification:
-    - Remaining risks:
+    - Changed: Added persistent `render_jobs`, backend retry endpoint for order renderings, and job status/error tracking.
+    - Decisions: Kept the retry flow synchronous-first and reused the existing order snapshot/render pipeline; failed retries preserve the last successful order files.
+    - Verification: `backend/.venv/bin/pytest backend/tests`; `backend/.venv/bin/pytest backend/tests/test_orders.py backend/tests/test_migration.py`; `backend/.venv/bin/python -m compileall backend/src/cards_configurator_backend`
+    - Remaining risks: The UI does not surface render-job state yet; retrying is currently backend/API driven.

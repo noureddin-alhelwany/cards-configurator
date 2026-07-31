@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import DesignRenderer from '../design/DesignRenderer';
 import type { ProofFixture } from '../design/types';
 import './ProofPage.css';
+import { uiText } from '../ui/text';
 
 const EXPECTED_ASSETS = 3;
 
@@ -31,7 +32,7 @@ export default function ProofPage() {
       })
       .catch(() => {
         if (active) {
-          setError('Die Renderer-Proofansicht konnte nicht geladen werden.');
+          setError(uiText.errors.proofLoad);
         }
       });
 
@@ -63,7 +64,7 @@ export default function ProofPage() {
     return (
       <main className="proof-shell proof-shell--error">
         <section className="proof-card">
-          <h1>Proof render unavailable</h1>
+          <h1>{uiText.proof.error.title}</h1>
           <p>{error}</p>
         </section>
       </main>
@@ -74,8 +75,8 @@ export default function ProofPage() {
     return (
       <main className="proof-shell">
         <section className="proof-card">
-          <p className="proof-kicker">Loading proof fixture</p>
-          <h1>DesignRenderer</h1>
+          <p className="proof-kicker">{uiText.proof.loading.kicker}</p>
+          <h1>{uiText.proof.loading.title}</h1>
         </section>
       </main>
     );
@@ -85,10 +86,10 @@ export default function ProofPage() {
     <main className="proof-shell">
       <section className="proof-card proof-card--stacked">
         <header className="proof-header">
-          <p className="proof-kicker">Renderer proof</p>
-          <h1>DesignRenderer</h1>
+          <p className="proof-kicker">{uiText.proof.header.kicker}</p>
+          <h1>{uiText.proof.header.title}</h1>
           <p className="proof-summary">
-            {fixture.use_case.name} · {fixture.product.name} · {fixture.template.name ?? 'Vorlage'}
+            {fixture.use_case.name} · {fixture.product.name} · {fixture.template.name ?? uiText.common.templateFallback}
           </p>
         </header>
         <DesignRenderer

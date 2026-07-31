@@ -4,6 +4,7 @@ import type { ElementAdjustment, ProofFixture, ValidationIssue } from '../design
 import DesignRenderer from '../design/DesignRenderer';
 import { defaultAdjustmentsForTemplate } from './selectionHelpers';
 import { demoTextForRole, fieldLabel, fieldRole, trimSuggestion } from './selectionRules';
+import { uiText } from '../ui/text';
 
 function emptyPreviewAsset(label: string) {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
@@ -168,7 +169,7 @@ export function TemplateLivePreview({
       .catch(() => {
         if (active) {
           setQrPreview(null);
-          setQrError('Die QR-Vorschau konnte nicht geladen werden.');
+          setQrError(uiText.errors.qrPreview);
           setQrLoading(false);
         }
       });
@@ -226,35 +227,35 @@ export function TemplateLivePreview({
       {showLivePreview ? (
         <>
           <div className="template-live-preview__header">
-            <p className="template-detail__group-title">Live-Vorschau</p>
+            <p className="template-detail__group-title">{uiText.selection.preview.liveTitle}</p>
             {onToggleExpanded ? (
               <button type="button" className="template-field__reset" onClick={onToggleExpanded}>
-                {expanded ? 'Verkleinern' : 'Vorschau vergrößern'}
+                {expanded ? uiText.selection.preview.collapse : uiText.selection.preview.expand}
               </button>
             ) : null}
           </div>
           {proofFixture ? (
             <div className={`template-live-preview__stage${expanded ? ' template-live-preview__stage--expanded' : ''}`}>
-              {qrLoading ? <p className="template-live-preview__loading">Vorschau wird geladen…</p> : null}
+              {qrLoading ? <p className="template-live-preview__loading">{uiText.selection.preview.loading}</p> : null}
               <DesignRenderer fixture={proofFixture} validationIssues={validationIssues} />
             </div>
           ) : (
-            <p className="template-field__hint">Live-Vorschau nutzt gerenderte Template-Elemente, sobald sie verfügbar sind.</p>
+            <p className="template-field__hint">{uiText.selection.preview.liveHint}</p>
           )}
           <p className="template-live-preview__note">
-            Änderungen an Texten, Medien und Varianten erscheinen direkt in derselben Vorschau wie später im Druck.
+            {uiText.selection.preview.note}
           </p>
         </>
       ) : null}
       {showMockup && proofFixture ? (
         <div className="template-mockup">
-          <p className="template-detail__group-title">Produkt-Mockup</p>
+          <p className="template-detail__group-title">{uiText.selection.preview.mockupTitle}</p>
           <div className="template-mockup__frame">
             <DesignRenderer fixture={proofFixture} validationIssues={validationIssues} />
           </div>
         </div>
       ) : null}
-      {qrField && !qrPreview ? <p className="template-field__hint">{qrError ?? 'QR-Platzhalter wird angezeigt, bis eine URL eingegeben wurde'}</p> : null}
+      {qrField && !qrPreview ? <p className="template-field__hint">{qrError ?? uiText.selection.preview.qrPlaceholder}</p> : null}
     </div>
   );
 }

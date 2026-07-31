@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import './App.css';
 import OrderProductionPage from './orders/OrderProductionPage';
 import OrderPage from './orders/OrderPage';
 import ProofPage from './proof/ProofPage';

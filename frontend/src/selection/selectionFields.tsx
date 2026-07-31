@@ -13,6 +13,7 @@ import {
   validationDisplayPath,
   type TemplateFieldRole,
 } from './selectionRules';
+import { uiText } from '../ui/text';
 
 type TemplateFieldsListProps = {
   template: TemplateDefinition;
@@ -381,7 +382,7 @@ export function TemplateFieldsList({
                           <output>{assetAdjustment.scale.toFixed(2)}</output>
                         </label>
                         <button type="button" className="template-field__reset" disabled={disabled} onClick={() => onAssetAdjustmentReset(field.id)}>
-                          Zurücksetzen
+                          {field.type === 'logo' ? uiText.selection.content.assetReset : uiText.selection.content.layoutReset}
                         </button>
                       </div>
                     ) : null}

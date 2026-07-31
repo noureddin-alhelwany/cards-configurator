@@ -5,9 +5,9 @@ a work-item move.
 
 ## Summary
 
-- Todo: 2
+- Todo: 0
 - In progress: 0
-- Done: 47
+- Done: 51
 - Blocked: 0
 
 ## Work items
@@ -42,6 +42,8 @@ a work-item move.
 | UI-21 | story | must | done | UI-20 | Komponentenarchitektur definieren |
 | UI-22 | story | must | done | UI-21 | Design-Token-Grundlage vorbereiten |
 | UI-23 | story | should | done | UI-22 | Debug- und Backendinformationen aus dem Nutzer-Frontend entfernen |
+| UI-24 | story | should | done | UI-22 | UI-Textsystem zentralisieren |
+| UI-25 | story | should | done | US-06 | Bestehende Backendfunktionen vollständig anbinden |
 | US-09 | story | must | done | TECH-01, US-06 | Logo hochladen |
 | US-10 | story | must | done | TECH-01, US-06 | Bild hochladen |
 | US-11 | story | should | done | US-10 | Bild automatisch optimieren |
@@ -60,8 +62,8 @@ a work-item move.
 | US-24 | story | must | done | TECH-04, US-23 | Produktions-PDF erzeugen |
 | US-25 | story | should | done | US-24 | Rendering wiederholen |
 | US-26 | story | must | done | US-23 | Aufträge anzeigen |
-| US-27 | story | must | todo | US-23, US-24 | Auftrag öffnen |
-| US-28 | story | should | todo | US-06 | Entwurf automatisch speichern |
+| US-27 | story | must | done | US-23, US-24 | Auftrag öffnen |
+| US-28 | story | should | done | US-06 | Entwurf automatisch speichern |
 
 ## Update rules
 

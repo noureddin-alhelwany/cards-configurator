@@ -4,6 +4,8 @@ import { SelectionContentPanel, SelectionFeedbackPanel, SelectionPreviewPanel, S
 import { ProductCard, TemplateCard, UseCaseCard } from './selectionUi';
 import { useSelectionFlow, visibleProductUseCaseNames } from './selectionFlow';
 import { templateKey } from './selectionRules';
+import { uiText } from '../ui/text';
+import { formatLocalizedDate } from '../ui/viewHelpers';
 
 export default function SelectionPage() {
   const {
@@ -42,8 +44,7 @@ export default function SelectionPage() {
     showBlockingSummary,
     recommendedTemplateKey,
     recommendedProductId,
-    previewVisible,
-    previewShowsMockup,
+    previewMode,
     isApproved,
     approvalReady,
     handleUseCaseSelect,
@@ -70,7 +71,7 @@ export default function SelectionPage() {
   if (state.error) {
     return (
       <main className="selection-shell selection-shell--error">
-        <StateMessage tone="error" kicker="Internal bootstrap" title="Cards Configurator" description={state.error} />
+        <StateMessage tone="error" kicker={uiText.appName} title={uiText.appName} description={state.error} />
       </main>
     );
   }
@@ -80,9 +81,9 @@ export default function SelectionPage() {
       <main className="selection-shell">
         <StateMessage
           tone="loading"
-          kicker="Loading registries"
-          title="Cards Configurator"
-          description="Die Konfigurationen werden geladen."
+          kicker={uiText.selection.loading.kicker}
+          title={uiText.selection.loading.title}
+          description={uiText.selection.loading.description}
         />
       </main>
     );
@@ -90,28 +91,25 @@ export default function SelectionPage() {
 
   const activeStepIndex = Math.min(wizardStepIndex, wizardSteps.length - 1);
   const activeStep = wizardSteps[activeStepIndex] ?? wizardSteps[0];
-  const wizardHint =
-    activeStep.id === 'selection'
-      ? 'Wähle zuerst einen Anwendungsfall, damit die passenden Optionen erscheinen.'
-      : activeStep.id === 'product'
-        ? 'Jetzt das Produkt auswählen. Danach geht es direkt zum Design.'
-        : activeStep.id === 'design'
-          ? 'Ein Design auswählen, das zum Produkt und Use Case passt.'
-          : activeStep.id === 'content'
-            ? 'Texte und Medien prüfen, dann die finale Vorschau kontrollieren.'
-            : 'Alles prüfen und den Auftrag freigeben.';
+  const showSupplementaryPanels = activeStep.id === 'content' || activeStep.id === 'review';
+  const wizardHint = activeStep.id === 'selection'
+    ? uiText.selection.wizardSteps.selection.hint
+    : activeStep.id === 'product'
+      ? uiText.selection.wizardSteps.product.hint
+      : activeStep.id === 'design'
+        ? uiText.selection.wizardSteps.design.hint
+        : activeStep.id === 'content'
+          ? uiText.selection.wizardSteps.content.hint
+          : uiText.selection.wizardSteps.review.hint;
 
   return (
     <main className="selection-shell">
       <section className="selection-panel">
         <header className="selection-header">
           <div className="selection-header__copy">
-            <p className="selection-kicker">Cards Configurator</p>
-            <h1>Geführter Erstellungsprozess</h1>
-            <p className="selection-lede">
-              Wähle einen Anwendungsfall, ein Design und die Inhalte. Die Oberfläche führt dich Schritt für Schritt zu einer
-              druckfähigen Freigabe.
-            </p>
+            <p className="selection-kicker">{uiText.appName}</p>
+            <h1>{uiText.selection.header.title}</h1>
+            <p className="selection-lede">{uiText.selection.header.lead}</p>
             <p className="selection-summary" aria-live="polite">
               Schritt {activeStepIndex + 1} von {wizardSteps.length}: {activeStep.title}
             </p>
@@ -121,13 +119,20 @@ export default function SelectionPage() {
           </div>
           <div className="selection-header__actions">
             <button type="button" className="wizard-step-nav__button" disabled={resetSubmitting} onClick={handleDraftReset}>
-              {resetSubmitting ? 'Neustart...' : isApproved ? 'Neue Konfiguration starten' : 'Konfiguration zurücksetzen'}
+              {resetSubmitting ? uiText.selection.buttons.resetPending : isApproved ? uiText.selection.buttons.resetNew : uiText.selection.buttons.reset}
             </button>
             <p className="selection-header__hint">
-              {isApproved
-                ? 'Dieser Entwurf ist freigegeben und gesperrt. Starte eine neue Konfiguration, um Änderungen vorzunehmen.'
-                : 'Zurücksetzen entfernt die aktuelle Auswahl und startet mit einem leeren Entwurf.'}
+              {isApproved ? uiText.selection.buttons.resetLockedHint : uiText.selection.buttons.resetHint}
             </p>
+            {state.draft?.updated_at ? (
+              <p className="selection-header__autosave" aria-live="polite">
+                {uiText.selection.autosave.label}: {formatLocalizedDate(state.draft.updated_at)}
+              </p>
+            ) : (
+              <p className="selection-header__autosave" aria-live="polite">
+                {uiText.selection.autosave.fallback}
+              </p>
+            )}
           </div>
         </header>
 
@@ -158,12 +163,12 @@ export default function SelectionPage() {
           </ol>
         </nav>
 
-        <div className="selection-layout">
+        <div className={`selection-layout${showSupplementaryPanels ? '' : ' selection-layout--single'}`}>
           <main className="selection-main">
             {activeStep.id === 'selection' ? (
               <section className="selection-section selection-section--wizard selection-step-panel">
                 <div className="selection-section__heading">
-                  <h2>1. Auswahl</h2>
+                  <h2>{uiText.selection.sections.selection}</h2>
                   <p>{bundle.use_cases.filter((useCase) => useCase.active).length} aktive Auswahlmöglichkeiten</p>
                 </div>
                 {bundle.use_cases.some((useCase) => useCase.active) ? (
@@ -183,14 +188,14 @@ export default function SelectionPage() {
                 ) : (
                   <StateMessage
                     tone="empty"
-                    kicker="Auswahl"
-                    title="Keine aktiven Anwendungsfälle"
-                    description="Aktiviere mindestens einen Use Case in den Registries, damit der Konfigurator nutzbar ist."
+                    kicker={uiText.selection.emptyUseCases.kicker}
+                    title={uiText.selection.emptyUseCases.title}
+                    description={uiText.selection.emptyUseCases.description}
                   />
                 )}
                 <div className="wizard-step-nav">
                   <button type="button" className="wizard-step-nav__button" disabled>
-                    Zurück
+                    {uiText.common.back}
                   </button>
                   <button
                     type="button"
@@ -198,7 +203,7 @@ export default function SelectionPage() {
                     disabled={!selectedUseCase}
                     onClick={() => setWizardStepIndex(designStepIndex)}
                   >
-                    Weiter
+                    {uiText.common.next}
                   </button>
                 </div>
               </section>
@@ -207,26 +212,26 @@ export default function SelectionPage() {
             {activeStep.id === 'product' && showProductStep ? (
               <section className="selection-section selection-section--wizard selection-step-panel">
                 <div className="selection-section__heading">
-                  <h2>2. Produkt</h2>
+                  <h2>{uiText.selection.sections.product}</h2>
                   <p>{matchingProducts.length} Einträge</p>
                 </div>
                 {pendingProduct ? (
                   <div className="product-change-notice" role="alert">
-                    <p className="product-change-notice__title">Produktwechsel setzt die aktuelle Vorlage zurück.</p>
+                    <p className="product-change-notice__title">{uiText.selection.productChange.title}</p>
                     <p className="product-change-notice__body">
-                      Beim Wechsel auf <strong>{pendingProduct.name}</strong> gehen die gewählte Vorlage, Variante und lokale
-                      Eingaben für diesen Entwurf verloren.
+                      {uiText.selection.productChange.bodyPrefix} <strong>{pendingProduct.name}</strong>{' '}
+                      {uiText.selection.productChange.bodySuffix}
                     </p>
                     <div className="product-change-notice__actions">
                       <button type="button" className="wizard-step-nav__button" onClick={() => setPendingProductId(null)}>
-                        Abbrechen
+                        {uiText.selection.buttons.productCancel}
                       </button>
                       <button
                         type="button"
                         className="wizard-step-nav__button wizard-step-nav__button--primary"
                         onClick={() => handleProductSelect(pendingProduct.id)}
                       >
-                        Produkt wechseln
+                        {uiText.selection.buttons.productSwitch}
                       </button>
                     </div>
                   </div>
@@ -246,18 +251,18 @@ export default function SelectionPage() {
                 </div>
                 {selectedProduct ? (
                   <article className="product-detail">
-                    <p className="product-detail__eyebrow">Ausgewähltes Produkt</p>
+                    <p className="product-detail__eyebrow">{uiText.selection.productDetail.selected}</p>
                     <h3>{selectedProduct.name}</h3>
                     <p className="product-detail__hint">
                       {selectedProduct.trim_width_mm} × {selectedProduct.trim_height_mm} mm ·{' '}
                       {visibleProductUseCaseNames(bundle, selectedProduct.id).slice(0, 2).join(' · ') ||
-                        'Für den gewählten Einsatz verfügbar'}
+                        uiText.selection.productDetail.available}
                     </p>
                   </article>
                 ) : null}
                 <div className="wizard-step-nav">
                   <button type="button" className="wizard-step-nav__button" onClick={goToPreviousWizardStep}>
-                    Zurück
+                    {uiText.common.back}
                   </button>
                   <button
                     type="button"
@@ -265,7 +270,7 @@ export default function SelectionPage() {
                     disabled={!selectedProduct}
                     onClick={() => setWizardStepIndex(contentStepIndex)}
                   >
-                    Weiter
+                    {uiText.common.next}
                   </button>
                 </div>
               </section>
@@ -274,7 +279,7 @@ export default function SelectionPage() {
             {activeStep.id === 'design' ? (
               <section className="selection-section selection-section--wizard selection-step-panel">
                 <div className="selection-section__heading">
-                  <h2>{showProductStep ? '3. Design' : '2. Design'}</h2>
+                  <h2>{showProductStep ? uiText.selection.sections.design : uiText.selection.sections.designWithoutProduct}</h2>
                   <p>{matchingTemplates.length} Einträge</p>
                 </div>
                 <div className="template-grid">
@@ -294,15 +299,15 @@ export default function SelectionPage() {
                   ) : (
                     <StateMessage
                       tone="empty"
-                      kicker="Design"
-                      title="Keine passenden Templates"
-                      description="Wähle einen anderen Use Case oder ein anderes Produkt, damit wieder Vorlagen erscheinen."
+                      kicker={uiText.selection.emptyTemplates.kicker}
+                      title={uiText.selection.emptyTemplates.title}
+                      description={uiText.selection.emptyTemplates.description}
                     />
                   )}
                 </div>
                 <div className="wizard-step-nav">
                   <button type="button" className="wizard-step-nav__button" onClick={goToPreviousWizardStep}>
-                    Zurück
+                    {uiText.common.back}
                   </button>
                   <button
                     type="button"
@@ -310,7 +315,7 @@ export default function SelectionPage() {
                     disabled={!selectedTemplate}
                     onClick={() => setWizardStepIndex(contentStepIndex)}
                   >
-                    Weiter
+                    {uiText.common.next}
                   </button>
                 </div>
               </section>
@@ -376,31 +381,32 @@ export default function SelectionPage() {
             ) : null}
           </main>
 
-          <aside className="selection-sidebar">
-            <SelectionPreviewPanel
-              previewShowsMockup={previewShowsMockup}
-              previewVisible={previewVisible}
-              selectedTemplate={selectedTemplate}
-              selectedProduct={selectedProduct}
-              selectedUseCase={selectedUseCase}
-              selectedVariantId={selectedVariantId}
-              layoutValues={layoutValues}
-              assetPreviews={assetPreviews}
-              validationIssues={visibleValidationIssues}
-              previewExpanded={previewExpanded}
-              onToggleExpanded={() => setPreviewExpanded((current) => !current)}
-            />
+          {showSupplementaryPanels ? (
+            <aside className="selection-sidebar">
+              <SelectionPreviewPanel
+                previewMode={previewMode}
+                selectedTemplate={selectedTemplate}
+                selectedProduct={selectedProduct}
+                selectedUseCase={selectedUseCase}
+                selectedVariantId={selectedVariantId}
+                layoutValues={layoutValues}
+                assetPreviews={assetPreviews}
+                validationIssues={visibleValidationIssues}
+                previewExpanded={previewExpanded}
+                onToggleExpanded={() => setPreviewExpanded((current) => !current)}
+              />
 
-            <SelectionFeedbackPanel
-              qualityError={qualityError}
-              approvalError={approvalError}
-              resetError={resetError}
-              visibleValidationIssues={visibleValidationIssues}
-              visibleBlockingIssues={visibleBlockingIssues}
-              showBlockingSummary={showBlockingSummary}
-              issueLabel={issueLabel}
-            />
-          </aside>
+              <SelectionFeedbackPanel
+                qualityError={qualityError}
+                approvalError={approvalError}
+                resetError={resetError}
+                visibleValidationIssues={visibleValidationIssues}
+                visibleBlockingIssues={visibleBlockingIssues}
+                showBlockingSummary={showBlockingSummary}
+                issueLabel={issueLabel}
+              />
+            </aside>
+          ) : null}
         </div>
       </section>
     </main>

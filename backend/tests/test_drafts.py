@@ -16,6 +16,7 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
         draft = draft_response.json()
         assert draft['template_id'] is None
         assert draft['variant_id'] is None
+        assert draft['updated_at'] is not None
 
         response = client.post(
             '/api/drafts/current/template',
@@ -59,6 +60,39 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
         assert refreshed_payload['variant_id'] == 'text-focused'
         assert refreshed_payload['layout_state']['text_values']['businessName'] == 'Studio One'
         assert refreshed_payload['layout_state']['element_adjustments']['proof-logo']['offset_y'] == -0.1
+        assert refreshed_payload['updated_at'] is not None
+
+
+def test_current_draft_survives_reload(tmp_path: Path, monkeypatch) -> None:
+    db_path = tmp_path / 'drafts.sqlite3'
+    monkeypatch.setenv('DATABASE_URL', f'sqlite:///{db_path}')
+
+    with TestClient(create_app()) as client:
+        client.post(
+            '/api/drafts/current/template',
+            json={
+                'use_case_id': 'google_reviews',
+                'product_id': 'a6_card',
+                'template_id': 'proof_a6_card',
+                'template_version': '1.0.0',
+            },
+        )
+        client.patch(
+            '/api/drafts/current/layout',
+            json={
+                'text_values': {
+                    'businessName': 'Studio One',
+                },
+            },
+        )
+
+    with TestClient(create_app()) as reloaded_client:
+        refreshed = reloaded_client.get('/api/drafts/current')
+        assert refreshed.status_code == 200
+        refreshed_payload = refreshed.json()
+        assert refreshed_payload['template_id'] == 'proof_a6_card'
+        assert refreshed_payload['layout_state']['text_values']['businessName'] == 'Studio One'
+        assert refreshed_payload['updated_at'] is not None
 
 
 def test_url_values_are_normalized_and_qr_preview_is_generated(tmp_path: Path, monkeypatch) -> None:
@@ -161,3 +195,24 @@ def test_design_approval_locks_the_draft(tmp_path: Path, monkeypatch) -> None:
             },
         )
         assert locked_template_response.status_code == 409
+
+        reset_response = client.post('/api/drafts/current/reset')
+        assert reset_response.status_code == 200
+        reset_payload = reset_response.json()
+        assert reset_payload['approved_at'] is None
+        assert reset_payload['approval_snapshot'] is None
+        assert reset_payload['approval_checklist'] is None
+        assert reset_payload['template_id'] is None
+        assert reset_payload['template_version'] is None
+        assert reset_payload['variant_id'] is None
+
+        unlocked_template_response = client.post(
+            '/api/drafts/current/template',
+            json={
+                'use_case_id': 'google_reviews',
+                'product_id': 'a6_card',
+                'template_id': 'proof_a6_card',
+                'template_version': '1.0.0',
+            },
+        )
+        assert unlocked_template_response.status_code == 200

@@ -8,7 +8,6 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..assets import load_asset
 from ..drafts import get_current_draft
 from ..models import OrderAssetRecord, OrderRecord
 from ..quality import QualityReport, validate_current_draft
@@ -21,7 +20,7 @@ from ..registries.schemas import (
     TemplateDefinition,
     UseCaseDefinition,
 )
-from ..rendering.service import render_order_artifacts
+from ..rendering.jobs import load_order_assets_from_storage, render_order_job
 from ..urls import build_qr_data_url
 from .schemas import OrderAssetState, OrderDetail, OrderSummary
 
@@ -49,6 +48,20 @@ def _find_use_case(bundle: RegistryBundle, use_case_id: str) -> UseCaseDefinitio
 
 def _order_assets(session: Session, order_id: str) -> list[OrderAssetRecord]:
     return list(session.scalars(select(OrderAssetRecord).where(OrderAssetRecord.order_id == order_id)).all())
+
+
+def _display_name_from_draft(draft: object) -> str | None:
+    layout_state = getattr(draft, "layout_state", None)
+    text_values = getattr(layout_state, "text_values", None)
+    if not isinstance(text_values, dict):
+        return None
+    for key in ("businessName", "customerName", "companyName"):
+        value = text_values.get(key)
+        if isinstance(value, str):
+            normalized = value.strip()
+            if normalized:
+                return normalized
+    return None
 
 
 def _order_summary_from_record(record: OrderRecord) -> OrderSummary:
@@ -97,18 +110,6 @@ def get_order(session: Session, order_id: str) -> OrderDetail:
     return _order_detail_from_record(session, record)
 
 
-def _order_assets_from_storage(data_dir: Path, session: Session, order_id: str) -> dict[str, AssetDataUrl]:
-    assets: dict[str, AssetDataUrl] = {}
-    for asset in _order_assets(session, order_id):
-        asset_data = load_asset(data_dir, asset.asset_id)
-        data_url = asset_data.get("render_data_url") or asset_data.get("preview_data_url")
-        mime_type = asset_data.get("mime_type")
-        if not isinstance(data_url, str) or not isinstance(mime_type, str):
-            raise HTTPException(status_code=500, detail="Stored asset metadata is incomplete")
-        assets[asset.semantic_role] = AssetDataUrl(mime_type=mime_type, data_url=data_url)
-    return assets
-
-
 def get_order_fixture(session: Session, data_dir: Path, order_id: str) -> ProofFixture:
     record = session.get(OrderRecord, order_id)
     if record is None:
@@ -118,7 +119,7 @@ def get_order_fixture(session: Session, data_dir: Path, order_id: str) -> ProofF
     product = ProductDefinition.model_validate(record.product_snapshot)
     use_case = UseCaseDefinition.model_validate(record.use_case_snapshot)
     layout_state = LayoutState.model_validate(record.layout_snapshot)
-    assets = _order_assets_from_storage(data_dir, session, record.id)
+    assets = load_order_assets_from_storage(data_dir, session, record.id)
     qr_field = next((field for field in template.fields if field.type == "url"), None)
     qr_value = layout_state.text_values.get(qr_field.id, "") if qr_field is not None else ""
     if not qr_value:
@@ -155,7 +156,7 @@ async def create_order(
     record = OrderRecord(
         id=order_id,
         order_number=order_number,
-        display_name=None,
+        display_name=_display_name_from_draft(draft),
         use_case_id=use_case.id,
         product_id=product.id,
         template_id=template.id,
@@ -184,18 +185,13 @@ async def create_order(
     session.commit()
     session.refresh(record)
 
-    output_dir = data_dir / "orders" / record.id
-    artifacts = await render_order_artifacts(
-        page_url=f"{base_url}/render/orders/{record.id}/production",
+    await render_order_job(
+        session,
+        order=record,
         template=template,
         layout_state=draft.layout_state,
-        assets=_order_assets_from_storage(data_dir, session, record.id),
-        output_dir=output_dir,
+        assets=load_order_assets_from_storage(data_dir, session, record.id),
+        base_url=base_url,
+        data_dir=data_dir,
     )
-    record.preview_path = artifacts.preview_path
-    record.mockup_path = artifacts.preview_path
-    record.pdf_path = artifacts.pdf_path
-    session.add(record)
-    session.commit()
-    session.refresh(record)
     return _order_detail_from_record(session, record)

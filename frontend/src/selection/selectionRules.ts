@@ -1,5 +1,6 @@
 import type { TemplateDefinition, UseCaseDefinition } from '../registries/types';
 import type { ValidationIssue } from '../design/types';
+import { uiText } from '../ui/text';
 
 export type TemplateFieldRole = 'business' | 'headline' | 'body' | 'qrTarget' | 'logo' | 'image' | 'generic';
 
@@ -7,32 +8,32 @@ export function buildWizardSteps(includeProductStep: boolean) {
   return [
     {
       id: 'selection',
-      title: 'Auswahl',
-      description: 'Zuerst den passenden Anwendungsfall wählen.',
+      title: uiText.selection.wizardSteps.selection.title,
+      description: uiText.selection.wizardSteps.selection.description,
     },
     ...(includeProductStep
       ? [
           {
             id: 'product',
-            title: 'Produkt',
-            description: 'Dann das passende Format auswählen.',
+            title: uiText.selection.wizardSteps.product.title,
+            description: uiText.selection.wizardSteps.product.description,
           },
         ]
       : []),
     {
       id: 'design',
-      title: 'Design',
-      description: 'Eine Vorlage für den gewählten Einsatz auswählen.',
+      title: uiText.selection.wizardSteps.design.title,
+      description: uiText.selection.wizardSteps.design.description,
     },
     {
       id: 'content',
-      title: 'Inhalte',
-      description: 'Texte, Medien und Anpassungen prüfen.',
+      title: uiText.selection.wizardSteps.content.title,
+      description: uiText.selection.wizardSteps.content.description,
     },
     {
       id: 'review',
-      title: 'Prüfen',
-      description: 'Freigeben und den Auftrag erstellen.',
+      title: uiText.selection.wizardSteps.review.title,
+      description: uiText.selection.wizardSteps.review.description,
     },
   ] as const;
 }

@@ -6,13 +6,13 @@ import type {
 } from '../registries/types';
 import type { ElementAdjustment, ValidationIssue } from '../design/types';
 import type { AssetMetadata } from './selectionHelpers';
+import { uiText } from '../ui/text';
 import { TemplateFieldsList, TemplateLivePreview, TemplateVariantButtons } from './selectionUi';
 import { friendlyValidationMessage } from './selectionUi';
 import type { DraftLayoutValues } from './selectionTypes';
 
 type SelectionPreviewPanelProps = {
-  previewShowsMockup: boolean;
-  previewVisible: boolean;
+  previewMode: 'hidden' | 'live' | 'mockup';
   selectedTemplate: TemplateDefinition | null;
   selectedProduct: ProductDefinition | null;
   selectedUseCase: UseCaseDefinition | null;
@@ -29,8 +29,7 @@ type SelectionPreviewPanelProps = {
 };
 
 export function SelectionPreviewPanel({
-  previewShowsMockup,
-  previewVisible,
+  previewMode,
   selectedTemplate,
   selectedProduct,
   selectedUseCase,
@@ -41,11 +40,18 @@ export function SelectionPreviewPanel({
   previewExpanded,
   onToggleExpanded,
 }: SelectionPreviewPanelProps) {
+  const previewVisible = previewMode !== 'hidden';
+  const previewStateText =
+    previewMode === 'mockup'
+      ? uiText.selection.preview.approvalVisible
+      : previewMode === 'live'
+        ? uiText.selection.preview.liveVisible
+        : uiText.selection.preview.previewHidden;
   return (
     <section className="selection-sidecard">
       <div className="selection-section__heading">
-        <h2>{previewShowsMockup ? 'Freigabevorschau' : 'Live-Vorschau'}</h2>
-        <p>{previewVisible ? 'Vorschau und Mockup getrennt dargestellt' : 'Wird nach Auswahl eingeblendet'}</p>
+        <h2>{previewMode === 'mockup' ? uiText.selection.preview.approvalTitle : uiText.selection.preview.liveTitle}</h2>
+        <p>{previewStateText}</p>
       </div>
       {previewVisible && selectedTemplate && selectedProduct && selectedUseCase ? (
         <TemplateLivePreview
@@ -56,13 +62,13 @@ export function SelectionPreviewPanel({
           layoutValues={layoutValues}
           assetPreviews={assetPreviews}
           validationIssues={validationIssues}
-          showLivePreview={!previewShowsMockup}
-          showMockup={previewShowsMockup}
+          showLivePreview={previewMode === 'live'}
+          showMockup={previewMode === 'mockup'}
           expanded={previewExpanded}
           onToggleExpanded={onToggleExpanded}
         />
       ) : (
-        <p className="selection-sidecard__empty">Sobald ein Design gewählt ist, erscheint hier die Vorschau.</p>
+        <p className="selection-sidecard__empty">{uiText.selection.preview.empty}</p>
       )}
     </section>
   );
@@ -90,8 +96,8 @@ export function SelectionFeedbackPanel({
   return (
     <section className="selection-sidecard">
       <div className="selection-section__heading">
-        <h2>Rückmeldungen</h2>
-        <p>{visibleValidationIssues.length} Hinweise</p>
+        <h2>{uiText.selection.feedback.title}</h2>
+        <p>{visibleValidationIssues.length} {uiText.selection.feedback.hint}</p>
       </div>
       <div className="selection-feedback">
         {qualityError ? <p className="template-field__error">{qualityError}</p> : null}
@@ -99,12 +105,12 @@ export function SelectionFeedbackPanel({
         {resetError ? <p className="template-field__error">{resetError}</p> : null}
         {showBlockingSummary ? (
           <p className="selection-feedback__summary">
-            {visibleBlockingIssues.length} Probleme verhindern den Abschluss. Prüfe die markierten Felder.
+            {visibleBlockingIssues.length} {uiText.selection.feedback.blockingSummary}
           </p>
         ) : null}
         {visibleValidationIssues.length > 0 ? (
           <div className="template-quality">
-            <p className="template-detail__group-title">Qualitätsprüfung</p>
+            <p className="template-detail__group-title">{uiText.selection.feedback.qualityTitle}</p>
             <ul className="template-quality__list">
               {visibleValidationIssues.map((issue) => (
                 <li key={`${issue.path}-${issue.code}`} className={`template-quality__item template-quality__item--${issue.severity}`}>
@@ -115,7 +121,7 @@ export function SelectionFeedbackPanel({
             </ul>
           </div>
         ) : (
-          <p className="selection-sidecard__empty">Noch keine kritischen Rückmeldungen.</p>
+          <p className="selection-sidecard__empty">{uiText.selection.feedback.empty}</p>
         )}
       </div>
     </section>
@@ -172,27 +178,25 @@ export function SelectionContentPanel({
   return (
     <section className="selection-section selection-section--wizard selection-step-panel">
       <div className="selection-section__heading">
-        <h2>{showProductStep ? '4. Inhalte' : '3. Inhalte'}</h2>
-        <p>Texte, Varianten und Medien</p>
+        <h2>{showProductStep ? uiText.selection.content.titleWithProduct : uiText.selection.content.titleWithoutProduct}</h2>
+        <p>{uiText.selection.content.summary}</p>
       </div>
       <article className="template-detail">
-        <p className="template-detail__eyebrow">Inhalte</p>
-        <h3>
-          {selectedTemplate.name ?? 'Vorlage'}
-        </h3>
+        <p className="template-detail__eyebrow">{uiText.selection.content.eyebrow}</p>
+        <h3>{selectedTemplate.name ?? uiText.common.templateFallback}</h3>
         <div className="template-detail__actions">
           <button type="button" className="template-field__reset" disabled={isApproved} onClick={onLayoutReset}>
-            Layout zurücksetzen
+            {uiText.selection.content.contentReset}
           </button>
         </div>
-        <p className="template-detail__meta">Vorlage für den gewählten Einsatzbereich</p>
-        <p className="template-detail__hint">Passe Varianten und Felder an. Die Vorschau bleibt separat sichtbar.</p>
+        <p className="template-detail__meta">{uiText.selection.content.meta}</p>
+        <p className="template-detail__hint">{uiText.selection.content.hint}</p>
         <div className="template-detail__group">
-          <p className="template-detail__group-title">Layoutvarianten</p>
+          <p className="template-detail__group-title">{uiText.selection.content.variants}</p>
           <TemplateVariantButtons template={selectedTemplate} selectedVariantId={selectedVariantId} onSelect={onVariantSelect} disabled={isApproved} />
         </div>
         <div className="template-detail__group">
-          <p className="template-detail__group-title">Felder</p>
+          <p className="template-detail__group-title">{uiText.selection.content.fields}</p>
           <TemplateFieldsList
             template={selectedTemplate}
             product={selectedProduct}
@@ -214,10 +218,10 @@ export function SelectionContentPanel({
       </article>
       <div className="wizard-step-nav">
         <button type="button" className="wizard-step-nav__button" onClick={onBack}>
-          Zurück
+          {uiText.common.back}
         </button>
         <button type="button" className="wizard-step-nav__button wizard-step-nav__button--primary" onClick={onNext}>
-          Zur Prüfung
+          {uiText.selection.buttons.toReview}
         </button>
       </div>
     </section>
@@ -256,17 +260,15 @@ export function SelectionReviewPanel({
   return (
     <section className="selection-section selection-section--wizard selection-step-panel">
       <div className="selection-section__heading">
-        <h2>{showProductStep ? '5. Prüfen' : '4. Prüfen'}</h2>
-        <p>{isApproved ? 'Freigabe abgeschlossen' : 'Freigabe und Auftragserstellung'}</p>
+        <h2>{showProductStep ? uiText.selection.sections.reviewWithProduct : uiText.selection.sections.reviewWithoutProduct}</h2>
+        <p>{isApproved ? uiText.selection.review.approvedStatus : uiText.selection.review.pendingStatus}</p>
       </div>
       <article className="template-detail">
-        <p className="template-detail__eyebrow">Freigabe</p>
-        <h3>
-          {selectedTemplate.name ?? 'Vorlage'}
-        </h3>
+        <p className="template-detail__eyebrow">{uiText.selection.review.eyebrow}</p>
+        <h3>{selectedTemplate.name ?? uiText.common.templateFallback}</h3>
         <div className="template-detail__actions">
           <button type="button" className="template-field__reset" disabled={isApproved} onClick={onBack}>
-            Zur Inhalte
+            {uiText.selection.buttons.backToContent}
           </button>
           <button
             type="button"
@@ -274,16 +276,20 @@ export function SelectionReviewPanel({
             disabled={blockingIssuesCount > 0 || (!isApproved && (!approvalReady || approvalSubmitting)) || (isApproved && orderSubmitting)}
             onClick={onSubmit}
           >
-            {isApproved ? (orderSubmitting ? 'Auftrag wird erstellt...' : 'Auftrag erstellen') : approvalSubmitting ? 'Freigabe läuft...' : 'Design freigeben'}
+            {isApproved
+              ? orderSubmitting
+                ? uiText.selection.buttons.createOrderLoading
+                : uiText.selection.buttons.createOrder
+              : approvalSubmitting
+                ? uiText.selection.buttons.releaseLoading
+                : uiText.selection.buttons.release}
           </button>
         </div>
-        {isApproved ? <p className="template-detail__approved">Freigegeben am {new Date(approvedAt ?? '').toLocaleString('de-DE')}</p> : null}
-        <p className="template-detail__meta">Vorlage für den gewählten Einsatzbereich</p>
-        <p className="template-detail__hint">
-          Ausgewähltes Produkt: {selectedProduct.name}
-        </p>
+        {isApproved ? <p className="template-detail__approved">{uiText.selection.review.approvedAtPrefix} {new Date(approvedAt ?? '').toLocaleString('de-DE')}</p> : null}
+        <p className="template-detail__meta">{uiText.selection.content.meta}</p>
+        <p className="template-detail__hint">{uiText.selection.productDetail.selected}: {selectedProduct.name}</p>
         <div className="template-approval">
-          <p className="template-detail__group-title">Prüfung bestätigt</p>
+          <p className="template-detail__group-title">{uiText.selection.review.confirmedTitle}</p>
           <div className="template-approval__list">
             <label className="template-approval__item">
               <input
@@ -292,15 +298,15 @@ export function SelectionReviewPanel({
                 disabled={isApproved}
                 onChange={(event) => onApprovalChange(event.target.checked)}
               />
-              <span>Ich habe die Vorschau geprüft</span>
+              <span>{uiText.selection.review.proofCheckbox}</span>
             </label>
           </div>
         </div>
-        <p className="template-detail__hint">Der finale Zustand wird jetzt geprüft. Nach der Freigabe kann der Auftrag erstellt werden.</p>
+        <p className="template-detail__hint">{uiText.selection.review.readyHint}</p>
       </article>
       <div className="wizard-step-nav">
         <button type="button" className="wizard-step-nav__button" onClick={onBack}>
-          Zur Inhalte
+          {uiText.selection.buttons.backToContent}
         </button>
       </div>
     </section>

@@ -631,6 +631,7 @@ test('renders the registry selection flow and filters matching products', async 
   await waitFor(() => {
     expect(screen.getByRole('heading', { name: '3. Inhalte' })).toBeInTheDocument();
   });
+  expect(screen.getByText(/Automatisch gespeichert/)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Zur Prüfung' })).toBeEnabled();
   expect(screen.getByRole('textbox', { name: 'Unternehmensname' })).toBeInTheDocument();
   expect(screen.getByRole('textbox', { name: 'Überschrift' })).toBeInTheDocument();
@@ -1127,6 +1128,10 @@ test('approves a draft and locks editing afterward', async () => {
   expect(screen.getByText('Dein Auftrag ist gespeichert und bereit für die Produktion.')).toBeInTheDocument();
   expect(screen.getByText('A6 Card')).toBeInTheDocument();
   expect(screen.getByText('Google Reviews')).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Gespeicherte Auftragsdaten' })).toBeInTheDocument();
+  expect(screen.getByText('Produkt-Mockup')).toBeInTheDocument();
+  expect(screen.getByText('Keine gespeicherten Assets vorhanden.')).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Zur Produktionsansicht' })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Mockup öffnen' })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Auftrag erneut öffnen' })).toBeInTheDocument();
 });

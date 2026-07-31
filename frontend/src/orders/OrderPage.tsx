@@ -3,11 +3,14 @@ import type { OrderDetail } from './types';
 import './OrderPage.css';
 import StateMessage from '../ui/StateMessage';
 import { snapshotString } from '../ui/viewHelpers';
+import { uiText } from '../ui/text';
 import {
   OrderActionLinks,
+  OrderAssetsSection,
+  OrderSnapshotSection,
   OrderNextStepSection,
   OrderPreviewSection,
-  OrderSummaryGrid,
+  variantLabelFromTemplateSnapshot,
 } from './orderUi';
 
 async function loadOrder(orderId: string): Promise<OrderDetail> {
@@ -23,7 +26,9 @@ export default function OrderPage({ orderId }: { orderId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [fontsReady, setFontsReady] = useState(false);
   const [previewReady, setPreviewReady] = useState(false);
+  const [mockupReady, setMockupReady] = useState(false);
   const [previewError, setPreviewError] = useState(false);
+  const [mockupError, setMockupError] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -31,7 +36,9 @@ export default function OrderPage({ orderId }: { orderId: string }) {
     setOrder(null);
     setError(null);
     setPreviewReady(false);
+    setMockupReady(false);
     setPreviewError(false);
+    setMockupError(false);
 
     loadOrder(orderId)
       .then((data) => {
@@ -65,17 +72,21 @@ export default function OrderPage({ orderId }: { orderId: string }) {
   }, []);
 
   useEffect(() => {
-    if (order && fontsReady && previewReady) {
+    if (order && fontsReady && previewReady && mockupReady) {
       document.documentElement.dataset.renderReady = 'true';
     }
-  }, [fontsReady, order, previewReady]);
+  }, [fontsReady, mockupReady, order, previewReady]);
 
   const previewSrc = useMemo(() => `/api/orders/${encodeURIComponent(orderId)}/preview`, [orderId]);
+  const mockupSrc = useMemo(() => `/api/orders/${encodeURIComponent(orderId)}/mockup`, [orderId]);
   const useCaseName = snapshotString(order?.use_case_snapshot, 'name') ?? 'Use Case';
   const productName = snapshotString(order?.product_snapshot, 'name') ?? 'Produkt';
+  const templateName = snapshotString(order?.template_snapshot, 'name') ?? 'Template';
+  const variantName = variantLabelFromTemplateSnapshot(order?.template_snapshot, order?.variant_id ?? null);
   const displayName = order?.display_name ?? productName;
   const pdfHref = `/api/orders/${encodeURIComponent(orderId)}/pdf`;
   const productionHref = `/render/orders/${orderId}/production`;
+  const mockupHref = `/api/orders/${encodeURIComponent(orderId)}/mockup`;
   const reopenHref = `/render/orders/${orderId}`;
 
   if (error) {
@@ -83,8 +94,8 @@ export default function OrderPage({ orderId }: { orderId: string }) {
       <main className="order-shell order-shell--error">
         <StateMessage
           tone="error"
-          kicker="Auftrag"
-          title="Auftrag konnte nicht geladen werden"
+          kicker={uiText.order.error.kicker}
+          title={uiText.order.error.title}
           description={error}
         />
       </main>
@@ -94,7 +105,12 @@ export default function OrderPage({ orderId }: { orderId: string }) {
   if (!order) {
     return (
       <main className="order-shell">
-        <StateMessage tone="loading" kicker="Auftrag wird geladen" title="Erfolgsansicht" description="Die Auftragsdaten werden vorbereitet." />
+        <StateMessage
+          tone="loading"
+          kicker={uiText.order.loading.kicker}
+          title={uiText.order.loading.title}
+          description={uiText.order.loading.description}
+        />
       </main>
     );
   }
@@ -104,28 +120,47 @@ export default function OrderPage({ orderId }: { orderId: string }) {
       <section className="order-card order-card--stacked">
         <header className="order-header">
           <div className="order-header__copy">
-            <p className="order-kicker">Auftrag erstellt</p>
+            <p className="order-kicker">{uiText.order.created.kicker}</p>
             <h1>{order.order_number}</h1>
-            <p className="order-summary">Dein Auftrag ist gespeichert und bereit für die Produktion.</p>
-            <OrderSummaryGrid
-              productName={productName}
-              useCaseName={useCaseName}
-              createdAt={order.created_at}
-              displayName={displayName}
-            />
+            <p className="order-summary">{uiText.order.created.summary}</p>
           </div>
-          <OrderActionLinks productionHref={productionHref} pdfHref={pdfHref} pdfAvailable={Boolean(order.pdf_path)} reopenHref={reopenHref} />
+          <OrderActionLinks
+            productionHref={productionHref}
+            pdfHref={pdfHref}
+            pdfAvailable={Boolean(order.pdf_path)}
+            mockupHref={mockupHref}
+            mockupAvailable={Boolean(order.mockup_path)}
+            reopenHref={reopenHref}
+          />
         </header>
+
+        <OrderSnapshotSection
+          displayName={displayName}
+          useCaseName={useCaseName}
+          productName={productName}
+          templateName={templateName}
+          variantName={variantName}
+          approvedAt={order.approved_at}
+          renderEngineVersion={order.render_engine_version}
+          layoutSnapshot={order.layout_snapshot}
+          validationSnapshot={order.validation_snapshot}
+        />
 
         <div className="order-layout">
           <OrderPreviewSection
             orderNumber={order.order_number}
             previewSrc={previewSrc}
             previewPath={order.preview_path}
+            mockupSrc={mockupSrc}
+            mockupPath={order.mockup_path}
             previewReady={previewReady}
+            mockupReady={mockupReady}
             previewError={previewError}
+            mockupError={mockupError}
             onPreviewLoad={() => setPreviewReady(true)}
             onPreviewError={() => setPreviewError(true)}
+            onMockupLoad={() => setMockupReady(true)}
+            onMockupError={() => setMockupError(true)}
           />
 
           <OrderNextStepSection
@@ -137,6 +172,8 @@ export default function OrderPage({ orderId }: { orderId: string }) {
             previewReady={previewReady}
           />
         </div>
+
+        <OrderAssetsSection assets={order.assets} />
       </section>
     </main>
   );

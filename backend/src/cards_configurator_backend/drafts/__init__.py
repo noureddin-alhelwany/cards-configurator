@@ -7,6 +7,7 @@ from .schemas import (
 from .service import (
     approve_draft,
     get_current_draft,
+    reset_current_draft,
     save_template_selection,
     update_layout_state,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "TemplateSelectionRequest",
     "approve_draft",
     "get_current_draft",
+    "reset_current_draft",
     "save_template_selection",
     "update_layout_state",
 ]

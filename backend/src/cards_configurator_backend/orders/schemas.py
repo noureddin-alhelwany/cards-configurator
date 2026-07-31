@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -39,3 +40,18 @@ class OrderDetail(OrderSummary):
 
 class OrderCreationRequest(BaseModel):
     display_name: str | None = None
+
+
+class RenderJobState(BaseModel):
+    id: str
+    order_id: str
+    kind: str
+    status: Literal["pending", "processing", "completed", "failed"]
+    attempts: int
+    error_code: str | None = None
+    error_message: str | None = None
+    output_path: str | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime

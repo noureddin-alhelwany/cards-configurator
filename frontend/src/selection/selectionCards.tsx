@@ -2,6 +2,7 @@ import type { ProductDefinition, TemplateDefinition, TemplateVariantDefinition, 
 import DesignRenderer from '../design/DesignRenderer';
 import { buildTemplatePreviewFixture } from './selectionPreview';
 import { templateStyleDescription } from './selectionRules';
+import { uiText } from '../ui/text';
 
 function assetPath(asset: string) {
   return `/preview-assets/${asset}`;
@@ -27,7 +28,7 @@ export function TemplateCard({ template, product, useCase, selected, recommended
       aria-pressed={selected}
       disabled={disabled}
       onClick={() => onSelect(template)}
-      aria-label={`${template.name ?? 'Vorlage'} auswählen`}
+      aria-label={`${template.name ?? uiText.common.templateFallback} auswählen`}
     >
       <div className="template-card__preview">
         {previewFixture ? (
@@ -43,8 +44,8 @@ export function TemplateCard({ template, product, useCase, selected, recommended
         </div>
       </div>
       <div className="template-card__body">
-        <p className="template-card__eyebrow">Vorlage</p>
-        <h3>{template.name ?? 'Vorlage'}</h3>
+        <p className="template-card__eyebrow">{uiText.common.templateFallback}</p>
+        <h3>{template.name ?? uiText.common.templateFallback}</h3>
         <p>{templateStyleDescription(template)}</p>
       </div>
     </button>

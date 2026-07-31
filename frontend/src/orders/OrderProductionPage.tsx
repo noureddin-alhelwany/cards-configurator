@@ -3,6 +3,7 @@ import DesignRenderer from '../design/DesignRenderer';
 import type { ProofFixture } from '../design/types';
 import './OrderProductionPage.css';
 import StateMessage from '../ui/StateMessage';
+import { uiText } from '../ui/text';
 
 async function loadOrderFixture(orderId: string): Promise<ProofFixture> {
   const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}/fixture`);
@@ -38,7 +39,7 @@ export default function OrderProductionPage({ orderId }: { orderId: string }) {
       })
       .catch(() => {
         if (active) {
-          setError('Die Produktionsansicht konnte nicht geladen werden.');
+          setError(uiText.errors.orderFixtureLoad);
         }
       });
 
@@ -70,7 +71,7 @@ export default function OrderProductionPage({ orderId }: { orderId: string }) {
   if (error) {
     return (
       <main className="order-render-shell order-render-shell--error">
-        <StateMessage tone="error" kicker="Order render" title="Produktion nicht verfügbar" description={error} />
+        <StateMessage tone="error" kicker={uiText.order.error.kicker} title="Produktion nicht verfügbar" description={error} />
       </main>
     );
   }
@@ -80,7 +81,7 @@ export default function OrderProductionPage({ orderId }: { orderId: string }) {
       <main className="order-render-shell">
         <StateMessage
           tone="loading"
-          kicker="Loading order fixture"
+          kicker={uiText.common.loading}
           title="DesignRenderer"
           description="Die Produktionsdaten werden geladen."
         />
