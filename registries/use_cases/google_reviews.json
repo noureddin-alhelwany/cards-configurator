@@ -1,7 +1,0 @@
-{
-  "id": "google_reviews",
-  "name": "Google Reviews",
-  "description": "Scan to leave a Google review after service.",
-  "preview_asset": "google_reviews_preview.png",
-  "active": true
-}

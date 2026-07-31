@@ -30,6 +30,7 @@ class UseCaseDefinition(BaseModel):
 class ProductDefinition(BaseModel):
     id: str
     name: str
+    description: str | None = None
     trim_width_mm: float
     trim_height_mm: float
     bleed_mm: float
@@ -130,6 +131,12 @@ class TemplateFieldDefinition(BaseModel):
     required: bool
     max_length: int | None = None
     max_lines: int | None = None
+    label: str | None = None
+    help_text: str | None = None
+    group: str | None = None
+    placeholder: str | None = None
+    suggestions: list[str] = Field(default_factory=list)
+    default_value: str | None = None
 
 
 class TemplateDefinition(BaseModel):
@@ -140,6 +147,7 @@ class TemplateDefinition(BaseModel):
     product_id: str
     use_case_ids: list[str]
     active: bool = True
+    description: str | None = None
     page_width_mm: float
     page_height_mm: float
     bleed_mm: float

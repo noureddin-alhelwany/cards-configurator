@@ -90,6 +90,7 @@ export type TemplateDefinition = {
   id: string;
   version: string;
   name: string | null;
+  description: string | null;
   product_id: string;
   use_case_ids: string[];
   active: boolean;
@@ -110,6 +111,12 @@ export type TemplateFieldDefinition = {
   required: boolean;
   max_length: number | null;
   max_lines: number | null;
+  label: string | null;
+  help_text: string | null;
+  group: string | null;
+  placeholder: string | null;
+  suggestions: string[];
+  default_value: string | null;
 };
 
 export type AssetDataUrl = {
@@ -128,6 +135,7 @@ export type UseCaseDefinition = {
 export type ProductDefinition = {
   id: string;
   name: string;
+  description: string | null;
   trim_width_mm: number;
   trim_height_mm: number;
   bleed_mm: number;

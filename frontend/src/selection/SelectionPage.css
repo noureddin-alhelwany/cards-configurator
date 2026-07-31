@@ -1,3 +1,4 @@
+/* Shell, header and wizard chrome */
 .selection-shell {
   min-height: 100vh;
   padding: var(--space-8);
@@ -259,6 +260,7 @@
   line-height: 1.35;
 }
 
+/* Layout and side panels */
 .selection-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.9fr);
@@ -367,6 +369,7 @@
   opacity: 0.58;
 }
 
+/* Shared cards */
 .use-case-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -538,6 +541,7 @@
   font-size: 1rem;
 }
 
+/* Notices and order cards */
 .product-change-notice {
   display: grid;
   gap: 10px;
@@ -672,6 +676,7 @@
   font-weight: 600;
 }
 
+/* Template selection and detail */
 @keyframes selection-step-fade {
   from {
     opacity: 0;
@@ -948,6 +953,7 @@
   height: 18px;
 }
 
+/* Template editing controls */
 .template-fields {
   display: grid;
   gap: 14px;
@@ -1229,6 +1235,7 @@
   font-size: 0.9rem;
 }
 
+/* Quality checks and approval */
 .template-quality {
   margin-top: 14px;
   padding: 14px 16px;
@@ -1284,6 +1291,7 @@
   border: 1px solid rgba(138, 59, 36, 0.22);
 }
 
+/* Live preview and mockup */
 .template-live-preview {
   margin-top: 18px;
   padding: 14px 16px;
@@ -1403,6 +1411,7 @@
   background: rgba(255, 255, 255, 0.8);
 }
 
+/* Responsive overrides */
 .selection-error {
   margin: 20px 0 0;
   color: #8a3b24;

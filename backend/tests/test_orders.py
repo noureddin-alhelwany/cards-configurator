@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -25,6 +26,7 @@ def test_order_creation_persists_and_exposes_detail(tmp_path: Path, monkeypatch)
     )
 
     with TestClient(create_app()) as client:
+        expected_prefix = datetime.now(timezone.utc).strftime('ORD-%Y%m%d-')
         template_response = client.post(
             '/api/drafts/current/template',
             json={
@@ -62,7 +64,7 @@ def test_order_creation_persists_and_exposes_detail(tmp_path: Path, monkeypatch)
         order_response = client.post('/api/orders')
         assert order_response.status_code == 200
         order_payload = order_response.json()
-        assert order_payload['order_number'].startswith('ORD-20260730-')
+        assert order_payload['order_number'].startswith(expected_prefix)
         assert order_payload['display_name'] == 'Studio One'
         assert order_payload['approved_at'] is not None
         assert order_payload['preview_path'].endswith('preview.png')

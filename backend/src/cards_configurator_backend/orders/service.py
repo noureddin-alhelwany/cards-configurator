@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..drafts import get_current_draft
+from ..assets import load_asset
 from ..models import OrderAssetRecord, OrderRecord
 from ..quality import QualityReport, validate_current_draft
 from ..registries.loader import RegistryBundle

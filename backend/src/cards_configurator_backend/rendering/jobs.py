@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Literal, cast
 from uuid import uuid4
 
 from fastapi import HTTPException
@@ -13,6 +14,8 @@ from ..models import OrderAssetRecord, OrderRecord, RenderJobRecord
 from ..registries.schemas import AssetDataUrl, LayoutState, TemplateDefinition
 from .service import render_order_artifacts
 from ..orders.schemas import RenderJobState
+
+RenderJobStatus = Literal["pending", "processing", "completed", "failed"]
 
 
 def _order_assets(session: Session, order_id: str) -> list[OrderAssetRecord]:
@@ -36,7 +39,7 @@ def _render_job_from_record(record: RenderJobRecord) -> RenderJobState:
         id=record.id,
         order_id=record.order_id,
         kind=record.kind,
-        status=record.status,
+        status=cast(RenderJobStatus, record.status),
         attempts=record.attempts,
         error_code=record.error_code,
         error_message=record.error_message,

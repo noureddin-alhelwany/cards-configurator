@@ -1,73 +1,23 @@
-# Progress Tracker
-
-Folder location is authoritative. This table must be updated in the same change as
-a work-item move.
+# Cards Designer Progress
 
 ## Summary
 
 - Todo: 0
 - In progress: 0
-- Done: 51
+- Done: 61
 - Blocked: 0
 
-## Work items
+## Backlog
 
 | ID | Type | Priority | Status | Depends on | Title |
 |---|---|---:|---|---|---|
-| TECH-01 | technical | must | done | — | Repository bootstrap |
-| TECH-02 | technical | must | done | TECH-01 | Configuration registries and schemas |
-| TECH-03 | technical | must | done | TECH-01, TECH-02 | Shared renderer proof |
-| TECH-04 | technical | must | done | TECH-03 | Production render pipeline proof |
-| US-01 | story | must | done | TECH-02 | Anwendungsfall auswählen |
-| US-02 | story | must | done | TECH-02, US-01 | Produkt auswählen |
-| US-03 | story | must | done | TECH-02, US-01, US-02 | Templates anzeigen |
-| US-04 | story | must | done | US-03 | Template auswählen |
-| US-05 | story | should | done | US-04 | Layoutvariante auswählen |
-| US-06 | story | must | done | US-04 | Template-Felder anzeigen |
-| UI-07 | story | should | done | UI-06 | Produktauswahl dynamisch anzeigen |
-| US-07 | story | must | done | US-06 | Text eingeben |
-| US-08 | story | must | done | US-06 | URL eingeben |
-| UI-09 | story | should | done | UI-08 | Dynamisches Personalisierungsformular erstellen |
-| UI-10 | story | should | done | UI-09 | Textvorschläge integrieren |
-| UI-11 | story | should | done | UI-09 | Logo- und Bildupload erstellen |
-| UI-12 | story | should | done | UI-11, US-16 | Einfaches Zuschneiden und Positionieren vorbereiten |
-| UI-13 | story | should | done | UI-12 | Live-Vorschau als eigenständige Komponente erstellen |
-| UI-14 | story | should | done | UI-13 | Layoutvarianten einfach auswählbar machen |
-| UI-15 | story | should | done | UI-13 | Validierung nutzerfreundlich darstellen |
-| UI-16 | story | must | done | UI-15 | Automatische Qualitätsprüfung darstellen |
-| UI-17 | story | must | done | UI-16 | Prüfen-und-Freigeben-Schritt erstellen |
-| UI-18 | story | must | done | US-23 | Erfolgsansicht nach Auftragserstellung erstellen |
-| UI-19 | story | must | done | UI-18 | Lade-, Leer-, Fehler- und Nicht-verfügbar-Zustände umsetzen |
-| UI-20 | story | must | done | UI-19 | Responsive und Accessibility-Grundlage schaffen |
-| UI-21 | story | must | done | UI-20 | Komponentenarchitektur definieren |
-| UI-22 | story | must | done | UI-21 | Design-Token-Grundlage vorbereiten |
-| UI-23 | story | should | done | UI-22 | Debug- und Backendinformationen aus dem Nutzer-Frontend entfernen |
-| UI-24 | story | should | done | UI-22 | UI-Textsystem zentralisieren |
-| UI-25 | story | should | done | US-06 | Bestehende Backendfunktionen vollständig anbinden |
-| US-09 | story | must | done | TECH-01, US-06 | Logo hochladen |
-| US-10 | story | must | done | TECH-01, US-06 | Bild hochladen |
-| US-11 | story | should | done | US-10 | Bild automatisch optimieren |
-| US-12 | story | must | done | US-10, US-16 | Bild verschieben |
-| US-13 | story | must | done | US-10, US-16, US-20 | Bild zoomen |
-| US-14 | story | must | done | US-09, US-16 | Logo anpassen |
-| US-15 | story | should | done | US-12, US-13, US-14 | Design zurücksetzen |
-| US-16 | story | must | done | TECH-03, US-04 | Live-Vorschau anzeigen |
-| US-17 | story | should | done | US-16, TECH-04 | Produkt-Mockup anzeigen |
-| US-18 | story | must | done | US-06 | Pflichtfelder prüfen |
-| US-19 | story | must | done | US-07, US-16 | Textüberlauf prüfen |
-| US-20 | story | must | done | US-10, US-16 | Bildqualität prüfen |
-| US-21 | story | must | done | US-08, US-16 | QR-Mindestgröße prüfen |
-| US-22 | story | must | done | US-18, US-19, US-20, US-21 | Design freigeben |
-| US-23 | story | must | done | TECH-01, US-22 | Auftrag erstellen |
-| US-24 | story | must | done | TECH-04, US-23 | Produktions-PDF erzeugen |
-| US-25 | story | should | done | US-24 | Rendering wiederholen |
-| US-26 | story | must | done | US-23 | Aufträge anzeigen |
-| US-27 | story | must | done | US-23, US-24 | Auftrag öffnen |
-| US-28 | story | should | done | US-06 | Entwurf automatisch speichern |
-
-## Update rules
-
-- Start: move file to `in-progress/`, update frontmatter and this table.
-- Complete: check all acceptance criteria, fill Result, move to `done/`, update table.
-- Blocked: keep it in `in-progress/` and record the blocker in Result.
-- Keep at most one item in progress unless the user explicitly approves parallel work.
+| UI-26 | story | must | done | US-02, UI-25 | Produkte als ersten sichtbaren Schritt anzeigen |
+| UI-27 | story | must | done | US-06, UI-25 | Felddefinitionen vollständig an Templates binden |
+| UI-28 | story | must | done | UI-27, US-18, US-19, US-20, US-21 | Validierungsregeln vollständig an Templates binden |
+| UI-29 | story | should | done | UI-20 | Prozesskopf und Schrittanzeige reduzieren |
+| UI-30 | story | should | done | US-28 | Reset und Autosave zurückhaltend darstellen |
+| UI-31 | story | must | done | UI-12, US-12, US-13, US-14 | Technische Mediensteuerung aus dem Hauptformular entfernen |
+| UI-32 | story | should | done | UI-09, UI-11 | Inhaltsformular vereinfachen |
+| UI-33 | story | should | done | UI-15, UI-16 | Leere Rückmeldungsbereiche ausblenden |
+| UI-34 | story | must | done | UI-16, UI-17 | Qualitätsprüfung im Prüfschritt zusammenfassen |
+| UI-35 | story | should | done | UI-08 | Designvorschauen stärker priorisieren |

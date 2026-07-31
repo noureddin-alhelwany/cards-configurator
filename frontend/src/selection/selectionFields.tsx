@@ -1,17 +1,16 @@
 import { useMemo } from 'react';
 import type { ProductDefinition, TemplateDefinition } from '../registries/types';
 import type { ElementAdjustment, ValidationIssue } from '../design/types';
-import { assetElementForField, clamp, imageQualitySummary, type AssetMetadata } from './selectionHelpers';
+import { assetElementForField, imageQualitySummary, type AssetMetadata } from './selectionHelpers';
 import {
   fieldGroupLabel,
   fieldHelperText,
   fieldLabel,
-  fieldRole,
+  fieldPlaceholder,
   fieldSuggestions,
   friendlyValidationMessage,
   trimSuggestion,
   validationDisplayPath,
-  type TemplateFieldRole,
 } from './selectionRules';
 import { uiText } from '../ui/text';
 
@@ -60,21 +59,20 @@ export function TemplateFieldsList({
       {
         title: string;
         description: string;
-        fields: Array<{ field: TemplateDefinition['fields'][number]; role: TemplateFieldRole }>;
+        fields: Array<{ field: TemplateDefinition['fields'][number] }>;
       }
     >();
 
     template.fields.forEach((field, index) => {
-      const role = fieldRole(field, index);
-      const title = fieldGroupLabel(role);
+      const title = fieldGroupLabel(field, index);
       const description =
-        title === 'Medien'
+        title === 'Bilder'
           ? 'Logo und Fotos für den Markenauftritt.'
           : title === 'Link und QR'
             ? 'Zieladresse und QR-Code verständlich ablegen.'
             : 'Texte mit klaren Beispielen und Zählern.';
       const current = groups.get(title);
-      const entry = { field, role };
+      const entry = { field };
       if (current) {
         current.fields.push(entry);
         return;
@@ -93,18 +91,18 @@ export function TemplateFieldsList({
     return validationIssues.find((issue) => validationDisplayPath(issue) === fieldId) ?? null;
   }
 
-  function renderSuggestions(field: TemplateDefinition['fields'][number], role: TemplateFieldRole) {
+  function renderSuggestions(field: TemplateDefinition['fields'][number], index: number) {
     if (field.type !== 'text' && field.type !== 'url') {
       return null;
     }
 
-    const suggestions = fieldSuggestions(role).map((suggestion) => trimSuggestion(suggestion, field.max_length));
+    const suggestions = fieldSuggestions(field, index).map((suggestion) => trimSuggestion(suggestion, field.max_length));
     if (suggestions.length === 0) {
       return null;
     }
 
     return (
-      <div className="template-suggestions" aria-label={`Vorschläge für ${fieldLabel(role)}`}>
+      <div className="template-suggestions" aria-label={`Vorschläge für ${fieldLabel(field, index)}`}>
         {suggestions.map((suggestion) => (
           <button
             key={suggestion}
@@ -134,10 +132,12 @@ export function TemplateFieldsList({
             </div>
           </div>
           <div className="template-field-group__fields">
-            {group.fields.map(({ field, role }) => {
-              const fieldName = fieldLabel(role);
+            {group.fields.map(({ field }) => {
+              const fieldIndex = template.fields.indexOf(field);
+              const fieldName = fieldLabel(field, fieldIndex);
               const fieldIssue = renderIssue(field.id);
               const isAssetField = field.type === 'logo' || field.type === 'image';
+              const isSingleLine = field.type === 'url' || (field.type === 'text' && (field.max_lines ?? 1) <= 1);
 
               if (field.type === 'text' || field.type === 'url') {
                 const value = layoutValues.text_values[field.id] ?? '';
@@ -147,26 +147,28 @@ export function TemplateFieldsList({
                 return (
                   <label
                     key={field.id}
+                    id={field.id}
                     className={`template-field${fieldIssue ? ` template-field--issue template-field--issue--${fieldIssue.severity}` : ''}`}
                   >
                     <div className="template-field__header">
                       <div>
                         <span className="template-field__label">{fieldName}</span>
-                        <p className="template-field__hint">{fieldHelperText(role)}</p>
+                        <p className="template-field__hint">{fieldHelperText(field, fieldIndex)}</p>
                       </div>
                       <div className="template-field__meta">
                         {field.required ? <span className="template-field__required">Pflicht</span> : <span className="template-field__optional">Optional</span>}
                       </div>
                     </div>
-                    {field.type === 'url' ? (
+                    {isSingleLine ? (
                       <input
-                        type="url"
-                        inputMode="url"
+                        type={field.type === 'url' ? 'url' : 'text'}
+                        inputMode={field.type === 'url' ? 'url' : undefined}
                         aria-label={fieldName}
                         aria-describedby={fieldIssue ? `${hintId} ${errorId}` : hintId}
                         aria-invalid={Boolean(fieldIssue?.blocking)}
                         value={value}
                         maxLength={field.max_length ?? undefined}
+                        placeholder={fieldPlaceholder(field, fieldIndex)}
                         disabled={disabled}
                         onFocus={() => onFieldInteract(field.id)}
                         onChange={(event) => {
@@ -182,6 +184,7 @@ export function TemplateFieldsList({
                         value={value}
                         rows={field.max_lines ?? 1}
                         maxLength={field.max_length ?? undefined}
+                        placeholder={fieldPlaceholder(field, fieldIndex)}
                         disabled={disabled}
                         onFocus={() => onFieldInteract(field.id)}
                         onChange={(event) => {
@@ -195,8 +198,8 @@ export function TemplateFieldsList({
                         ? `Maximal ${field.max_length} Zeichen${remainingCharacters !== null ? ` · ${remainingCharacters} verbleibend` : ''}`
                         : 'Kein Zeichenlimit gesetzt'}
                     </p>
-                    {field.max_lines !== null ? <p className="template-field__hint">Maximal {field.max_lines} Zeilen</p> : null}
-                    {renderSuggestions(field, role)}
+                    {field.max_lines !== null && field.max_lines > 1 ? <p className="template-field__hint">Maximal {field.max_lines} Zeilen</p> : null}
+                    {renderSuggestions(field, fieldIndex)}
                     {fieldIssue ? (
                       <p className="template-field__error" id={errorId} aria-live="polite">
                         {friendlyValidationMessage(fieldIssue, fieldName)}
@@ -227,12 +230,13 @@ export function TemplateFieldsList({
               return (
                 <div
                   key={field.id}
+                  id={field.id}
                   className={`template-field${fieldIssue ? ` template-field--issue template-field--issue--${fieldIssue.severity}` : ''}`}
                 >
                   <div className="template-field__header">
                     <div>
                       <span className="template-field__label">{fieldName}</span>
-                      <p className="template-field__hint">{fieldHelperText(role)}</p>
+                      <p className="template-field__hint">{fieldHelperText(field, fieldIndex)}</p>
                     </div>
                     <div className="template-field__meta">
                       {field.required ? <span className="template-field__required">Pflicht</span> : <span className="template-field__optional">Optional</span>}
@@ -320,71 +324,14 @@ export function TemplateFieldsList({
                       </p>
                     ) : null}
                     {assetElement ? (
-                      <div
-                        className={`template-field__transform${expandedAssetFieldId === field.id ? ' template-field__transform--open' : ''}`}
-                        hidden={expandedAssetFieldId !== field.id}
+                      <button
+                        type="button"
+                        className="template-field__reset"
+                        disabled={disabled}
+                        onClick={() => onToggleAssetEditor(expandedAssetFieldId === field.id ? null : field.id)}
                       >
-                        <label className="template-field__control">
-                          <span>Verschiebung X</span>
-                          <input
-                            type="range"
-                            min="-1"
-                            max="1"
-                            step="0.01"
-                            aria-label={`${fieldName} verschiebung x`}
-                            value={assetAdjustment.offset_x}
-                            disabled={disabled}
-                            onChange={(event) =>
-                              onAssetAdjustmentChange(field.id, {
-                                ...assetAdjustment,
-                                offset_x: clamp(Number(event.target.value), -1, 1),
-                              })
-                            }
-                          />
-                          <output>{assetAdjustment.offset_x.toFixed(2)}</output>
-                        </label>
-                        <label className="template-field__control">
-                          <span>Verschiebung Y</span>
-                          <input
-                            type="range"
-                            min="-1"
-                            max="1"
-                            step="0.01"
-                            aria-label={`${fieldName} verschiebung y`}
-                            value={assetAdjustment.offset_y}
-                            disabled={disabled}
-                            onChange={(event) =>
-                              onAssetAdjustmentChange(field.id, {
-                                ...assetAdjustment,
-                                offset_y: clamp(Number(event.target.value), -1, 1),
-                              })
-                            }
-                          />
-                          <output>{assetAdjustment.offset_y.toFixed(2)}</output>
-                        </label>
-                        <label className="template-field__control">
-                          <span>Skalierung</span>
-                          <input
-                            type="range"
-                            min={assetElement.min_scale}
-                            max={assetElement.max_scale}
-                            step="0.01"
-                            aria-label={`${fieldName} skalierung`}
-                            value={assetAdjustment.scale}
-                            disabled={disabled}
-                            onChange={(event) =>
-                              onAssetAdjustmentChange(field.id, {
-                                ...assetAdjustment,
-                                scale: clamp(Number(event.target.value), assetElement.min_scale, assetElement.max_scale),
-                              })
-                            }
-                          />
-                          <output>{assetAdjustment.scale.toFixed(2)}</output>
-                        </label>
-                        <button type="button" className="template-field__reset" disabled={disabled} onClick={() => onAssetAdjustmentReset(field.id)}>
-                          {field.type === 'logo' ? uiText.selection.content.assetReset : uiText.selection.content.layoutReset}
-                        </button>
-                      </div>
+                        {expandedAssetFieldId === field.id ? 'Bildansicht schließen' : 'Bild anpassen'}
+                      </button>
                     ) : null}
                   </div>
                 </div>

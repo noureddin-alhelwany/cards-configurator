@@ -8,7 +8,7 @@ afterEach(() => {
   window.history.pushState({}, '', '/');
 });
 
-test('renders the registry selection flow and filters matching products', async () => {
+test('renders the registry selection flow and keeps only available products visible', async () => {
   let persistedTextValues: Record<string, string> = {};
   let persistedElementAdjustments: Record<string, { offset_x: number; offset_y: number; scale: number }> = {};
   let persistedAssetValues: Record<string, string> = {};
@@ -153,14 +153,14 @@ test('renders the registry selection flow and filters matching products', async 
         id: 'google_reviews',
         name: 'Google Reviews',
         description: 'Scan to leave a Google review after service.',
-        preview_asset: 'google_reviews_preview.png',
+        preview_asset: 'review.png',
         active: true,
       },
       {
         id: 'wedding_reviews',
         name: 'Wedding Reviews',
         description: 'Collect a wedding guest review after the event.',
-        preview_asset: 'google_reviews_preview.png',
+        preview_asset: 'review.png',
         active: true,
       },
     ],
@@ -259,15 +259,15 @@ test('renders the registry selection flow and filters matching products', async 
         variants: [
           {
             id: 'logo-focused',
-            name: 'Logo im Fokus',
+            name: 'Logo',
             active: true,
             preview_asset: 'template_google_reviews_classic.png',
           },
           {
             id: 'text-focused',
-            name: 'Text im Fokus',
+            name: 'Text',
             active: true,
-            preview_asset: 'template_google_reviews_bold.png',
+            preview_asset: 'booking.png',
           },
         ],
       },
@@ -277,7 +277,7 @@ test('renders the registry selection flow and filters matching products', async 
         id: 'proof_a6_card',
         version: '1.1.0',
         name: 'Google Reviews Bold',
-        preview_asset: 'template_google_reviews_bold.png',
+        preview_asset: 'booking.png',
         product_id: 'a6_card',
         use_case_ids: ['google_reviews'],
         active: true,
@@ -321,13 +321,13 @@ test('renders the registry selection flow and filters matching products', async 
         variants: [
           {
             id: 'logo-focused',
-            name: 'Logo im Fokus',
+            name: 'Logo',
             active: true,
-            preview_asset: 'template_google_reviews_bold.png',
+            preview_asset: 'booking.png',
           },
           {
             id: 'text-focused',
-            name: 'Text im Fokus',
+            name: 'Text',
             active: true,
             preview_asset: 'template_google_reviews_minimal.png',
           },
@@ -383,13 +383,13 @@ test('renders the registry selection flow and filters matching products', async 
         variants: [
           {
             id: 'logo-focused',
-            name: 'Logo im Fokus',
+            name: 'Logo',
             active: true,
             preview_asset: 'template_google_reviews_minimal.png',
           },
           {
             id: 'text-focused',
-            name: 'Text im Fokus',
+            name: 'Text',
             active: true,
             preview_asset: 'template_google_reviews_classic.png',
           },
@@ -609,14 +609,13 @@ test('renders the registry selection flow and filters matching products', async 
 
   render(<App />);
 
-  expect(await screen.findByRole('button', { name: /Google Reviews/i, pressed: true })).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: /A6 Card/i, pressed: true })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Weiter' }));
 
   await waitFor(() => {
     expect(screen.getByRole('heading', { name: '2. Design' })).toBeInTheDocument();
   });
   expect(screen.queryByRole('button', { name: /A6 Card/i })).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: /DL Card/i })).not.toBeInTheDocument();
   expect(screen.queryByText('Hidden Card')).not.toBeInTheDocument();
 
   await waitFor(() => {
@@ -631,13 +630,13 @@ test('renders the registry selection flow and filters matching products', async 
   await waitFor(() => {
     expect(screen.getByRole('heading', { name: '3. Inhalte' })).toBeInTheDocument();
   });
-  expect(screen.getByText(/Automatisch gespeichert/)).toBeInTheDocument();
+  expect(screen.getByText(/Gespeichert/)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Zur Prüfung' })).toBeEnabled();
   expect(screen.getByRole('textbox', { name: 'Unternehmensname' })).toBeInTheDocument();
   expect(screen.getByRole('textbox', { name: 'Überschrift' })).toBeInTheDocument();
   expect(screen.getByRole('textbox', { name: 'QR-Ziel' })).toBeInTheDocument();
-  expect(screen.getByRole('tab', { name: 'Logo im Fokus' })).toBeInTheDocument();
-  expect(screen.getByRole('tab', { name: 'Text im Fokus' })).toBeInTheDocument();
+  expect(screen.getByRole('tab', { name: 'Logo' })).toBeInTheDocument();
+  expect(screen.getByRole('tab', { name: 'Text' })).toBeInTheDocument();
   expect(screen.queryByText(/zu klein für dieses Produkt/)).not.toBeInTheDocument();
 
   const headlineInput = screen.getByRole('textbox', { name: 'Überschrift' });
@@ -675,14 +674,13 @@ test('renders the registry selection flow and filters matching products', async 
   const studioLogoImages = screen.getAllByRole('img', { name: 'Studio logo' });
   expect(studioLogoImages).toHaveLength(1);
   expect(screen.getAllByRole('img', { name: 'QR: https://example.com/review' })).toHaveLength(1);
-  expect(screen.getByLabelText('Logo verschiebung x')).not.toBeVisible();
   const logoField = logoInput.closest('.template-field');
   expect(logoField).not.toBeNull();
-  fireEvent.click(within(logoField as HTMLElement).getByRole('button', { name: 'Bild anpassen' }));
+  fireEvent.click(within(logoField as HTMLElement).getAllByRole('button', { name: 'Bild anpassen' })[0]);
   await waitFor(() => {
-    expect(screen.getByLabelText('Logo verschiebung x')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Logo' })).toBeInTheDocument();
   });
-  const logoOffsetX = screen.getByLabelText('Logo verschiebung x');
+  const logoOffsetX = screen.getByLabelText('Verschieben X');
   fireEvent.change(logoOffsetX, { target: { value: '0.25' } });
   await waitFor(() => {
     expect(screen.getByDisplayValue('0.25')).toBeInTheDocument();
@@ -695,13 +693,13 @@ test('renders the registry selection flow and filters matching products', async 
   expect(studioLogoImages[0]).toHaveStyle(
     'filter: contrast(1.06) saturate(1.01);',
   );
-  fireEvent.click(within(logoField as HTMLElement).getByRole('button', { name: 'Zurücksetzen' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Zurücksetzen' }));
   await waitFor(() => {
     expect(studioLogoImages[0]).toHaveStyle(
       'transform: translate(0mm, 0mm) scale(1);',
     );
   });
-  expect(screen.getByAltText('Logo Vorschau')).toBeInTheDocument();
+  expect(within(logoField as HTMLElement).getByAltText('Logo Vorschau')).toBeInTheDocument();
 
   const heroFile = new File([new Uint8Array([4, 5, 6])], 'hero.png', { type: 'image/png' });
   const heroInput = screen.getByLabelText('Foto');
@@ -714,17 +712,17 @@ test('renders the registry selection flow and filters matching products', async 
   });
   const heroField = heroInput.closest('.template-field');
   expect(heroField).not.toBeNull();
-  fireEvent.click(within(heroField as HTMLElement).getByRole('button', { name: 'Bild anpassen' }));
+  fireEvent.click(within(heroField as HTMLElement).getAllByRole('button', { name: 'Bild anpassen' })[0]);
   await waitFor(() => {
-    expect(screen.getByLabelText('Foto skalierung')).toBeInTheDocument();
+    expect(screen.getByLabelText('Skalierung')).toBeInTheDocument();
   });
-  const heroScale = screen.getByLabelText('Foto skalierung');
+  const heroScale = screen.getByLabelText('Skalierung');
   expect(heroScale).toHaveAttribute('min', '0.8');
   expect(heroScale).toHaveAttribute('max', '1.3');
   const heroImages = screen.getAllByRole('img', { name: 'Review hero image' });
   expect(heroImages).toHaveLength(1);
   expect(screen.getAllByText(/Bildqualität: grenzwertig/)).toHaveLength(1);
-  const heroOffsetY = screen.getByLabelText('Foto verschiebung y');
+  const heroOffsetY = screen.getByLabelText('Verschieben Y');
   fireEvent.change(heroOffsetY, { target: { value: '-0.2' } });
   await waitFor(() => {
     expect(heroImages[0]).toHaveStyle(
@@ -740,15 +738,15 @@ test('renders the registry selection flow and filters matching products', async 
   await waitFor(() => {
     expect(screen.getAllByText(/Bildqualität: grenzwertig/)).toHaveLength(2);
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Layout zurücksetzen' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Inhalte zurücksetzen' }));
   await waitFor(() => {
     expect(heroImages[0]).toHaveStyle(
       'transform: translate(0mm, 0mm) scale(1);',
     );
   });
   expect(screen.getByDisplayValue('Studio One')).toBeInTheDocument();
-  expect(screen.getByAltText('Logo Vorschau')).toBeInTheDocument();
-  expect(screen.getByAltText('Foto Vorschau')).toBeInTheDocument();
+  expect(screen.getAllByAltText('Logo Vorschau').length).toBeGreaterThan(0);
+  expect(screen.getAllByAltText('Foto Vorschau').length).toBeGreaterThan(0);
 
   expect(screen.getByRole('button', { name: 'Zur Prüfung' })).toBeEnabled();
   fireEvent.click(screen.getByRole('button', { name: 'Zur Prüfung' }));
@@ -760,6 +758,224 @@ test('renders the registry selection flow and filters matching products', async 
   expect(screen.getByRole('button', { name: 'Design freigeben' })).toBeDisabled();
 });
 
+test('selecting a product advances directly to the design step', async () => {
+  const bundle = {
+    use_cases: [
+      {
+        id: 'google_reviews',
+        name: 'Google Reviews',
+        description: 'Scan to leave a Google review after service.',
+        preview_asset: 'review.png',
+        active: true,
+      },
+    ],
+    products: [
+      {
+        id: 'a6_card',
+        name: 'A6 Card',
+        trim_width_mm: 105,
+        trim_height_mm: 148,
+        bleed_mm: 3,
+        recommended_dpi: 450,
+        warning_dpi: 300,
+        minimum_dpi: 225,
+        qr_min_width_mm: 18,
+        qr_min_module_mm: 0.42,
+        preview_asset: 'a6_preview.png',
+        active: true,
+      },
+      {
+        id: 'dl_card',
+        name: 'DL Card',
+        trim_width_mm: 99,
+        trim_height_mm: 210,
+        bleed_mm: 3,
+        recommended_dpi: 450,
+        warning_dpi: 300,
+        minimum_dpi: 225,
+        qr_min_width_mm: 18,
+        qr_min_module_mm: 0.42,
+        preview_asset: 'a6_preview.png',
+        active: true,
+      },
+    ],
+    templates: [
+      {
+        schema_version: 1,
+        id: 'proof_a6_card',
+        version: '1.0.0',
+        name: 'Google Reviews Classic',
+        preview_asset: 'template_google_reviews_classic.png',
+        product_id: 'a6_card',
+        use_case_ids: ['google_reviews'],
+        active: true,
+        fields: [
+          {
+            id: 'businessName',
+            type: 'text',
+            required: true,
+            max_length: 40,
+            max_lines: 2,
+          },
+          {
+            id: 'qrTarget',
+            type: 'url',
+            required: true,
+            max_length: null,
+            max_lines: null,
+          },
+        ],
+        variants: [
+          {
+            id: 'logo-focused',
+            name: 'Logo',
+            active: true,
+            preview_asset: 'template_google_reviews_classic.png',
+          },
+        ],
+        elements: [],
+        page_width_mm: 111,
+        page_height_mm: 154,
+        bleed_mm: 3,
+        font_family: 'Proof Sans',
+        fonts: [],
+      },
+      {
+        schema_version: 1,
+        id: 'proof_dl_card',
+        version: '1.0.0',
+        name: 'Google Reviews Slim',
+        preview_asset: 'booking.png',
+        product_id: 'dl_card',
+        use_case_ids: ['google_reviews'],
+        active: true,
+        fields: [
+          {
+            id: 'businessName',
+            type: 'text',
+            required: true,
+            max_length: 40,
+            max_lines: 2,
+          },
+          {
+            id: 'qrTarget',
+            type: 'url',
+            required: true,
+            max_length: null,
+            max_lines: null,
+          },
+        ],
+        variants: [
+          {
+            id: 'logo-focused',
+            name: 'Logo',
+            active: true,
+            preview_asset: 'booking.png',
+          },
+        ],
+        elements: [],
+        page_width_mm: 99,
+        page_height_mm: 210,
+        bleed_mm: 3,
+        font_family: 'Proof Sans',
+        fonts: [],
+      },
+    ],
+  };
+
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/api/healthz')) {
+        return { ok: true, json: async () => ({ status: 'ok' }) };
+      }
+      if (url.endsWith('/api/registries')) {
+        return { ok: true, json: async () => bundle };
+      }
+      if (url.endsWith('/api/drafts/current')) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: 1,
+            name: 'Current draft',
+            use_case_id: null,
+            product_id: null,
+            template_id: null,
+            template_version: null,
+            variant_id: null,
+            layout_state: {
+              variant_id: '',
+              element_adjustments: {},
+              text_values: {},
+              asset_values: {},
+            },
+          }),
+        };
+      }
+      if (url.endsWith('/api/drafts/current/template')) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: 1,
+            name: 'Current draft',
+            use_case_id: 'google_reviews',
+            product_id: 'a6_card',
+            template_id: 'proof_a6_card',
+            template_version: '1.0.0',
+            variant_id: 'logo-focused',
+            layout_state: {
+              variant_id: 'logo-focused',
+              element_adjustments: {},
+              text_values: {},
+              asset_values: {},
+            },
+          }),
+        };
+      }
+      if (url.endsWith('/api/drafts/current/validation')) {
+        return {
+          ok: true,
+          json: async () => ({
+            issues: [],
+            blocking: false,
+          }),
+        };
+      }
+      if (url.startsWith('/api/qr')) {
+        const parsed = new URL(url, 'http://localhost');
+        const value = parsed.searchParams.get('value') ?? '';
+        return {
+          ok: true,
+          json: async () => ({
+            value,
+            data_url: `data:image/svg+xml;base64,${btoa(`<svg>${value}</svg>`)}`,
+          }),
+        };
+      }
+      return {
+        ok: false,
+        json: async () => ({}),
+        text: async () => 'not found',
+      };
+    }),
+  );
+
+  render(<App />);
+
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: /DL Card/i })).toBeInTheDocument();
+  });
+
+  fireEvent.click(screen.getByRole('button', { name: /DL Card/i }));
+
+  await waitFor(() => {
+    expect(screen.getByRole('heading', { name: '2. Design' })).toBeInTheDocument();
+  });
+  expect(screen.getByRole('heading', { name: 'Google Reviews Slim' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /DL Card/i })).not.toBeInTheDocument();
+});
+
 test('approves a draft and locks editing afterward', async () => {
   const bundle = {
     use_cases: [
@@ -767,7 +983,7 @@ test('approves a draft and locks editing afterward', async () => {
         id: 'google_reviews',
         name: 'Google Reviews',
         description: 'Scan to leave a Google review after service.',
-        preview_asset: 'google_reviews_preview.png',
+        preview_asset: 'review.png',
         active: true,
       },
     ],
@@ -823,7 +1039,7 @@ test('approves a draft and locks editing afterward', async () => {
         variants: [
           {
             id: 'logo-focused',
-            name: 'Logo im Fokus',
+            name: 'Logo',
             active: true,
             preview_asset: 'template_google_reviews_classic.png',
           },
@@ -1103,6 +1319,10 @@ test('approves a draft and locks editing afterward', async () => {
   await waitFor(() => {
     expect(screen.getByRole('heading', { name: '3. Inhalte' })).toBeInTheDocument();
   });
+  expect(screen.getByRole('heading', { name: 'Google Reviews Classic' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /A6 Card/i })).not.toBeInTheDocument();
+
+  expect(screen.getByText(/Gespeichert/)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Zur Prüfung' })).toBeEnabled();
   fireEvent.click(screen.getByRole('button', { name: 'Zur Prüfung' }));
 

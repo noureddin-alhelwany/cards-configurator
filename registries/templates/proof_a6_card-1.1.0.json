@@ -2,10 +2,11 @@
   "schema_version": 1,
   "id": "proof_a6_card",
   "version": "1.1.0",
-  "name": "Google Reviews Bold",
-  "preview_asset": "template_google_reviews_bold.png",
-  "product_id": "a6_card",
-  "use_case_ids": ["google_reviews"],
+  "name": "Terminbuchungskarte",
+  "description": "Direkte Terminbuchung mit klarer Zielseite und QR-Fokus.",
+  "preview_asset": "booking.png",
+  "product_id": "appointment_booking_card",
+  "use_case_ids": ["appointment_booking"],
   "active": true,
   "page_width_mm": 111,
   "page_height_mm": 154,
@@ -16,35 +17,65 @@
       "type": "text",
       "required": true,
       "max_length": 40,
-      "max_lines": 2
+      "max_lines": 1,
+      "label": "Unternehmensname",
+      "help_text": "So erscheint dein Unternehmen auf der Karte.",
+      "group": "Texte",
+      "placeholder": "Studio Sonnenschein",
+      "suggestions": ["Studio Sonnenschein", "Muster GmbH", "Café Nord"],
+      "default_value": "Studio Sonnenschein"
     },
     {
       "id": "headline",
       "type": "text",
       "required": true,
       "max_length": 60,
-      "max_lines": 3
+      "max_lines": 3,
+      "label": "Überschrift",
+      "help_text": "Kurz und klar, damit der Blick direkt hängen bleibt.",
+      "group": "Texte",
+      "placeholder": "Scanne und bewerte uns",
+      "suggestions": ["Termin buchen", "Jetzt Termin sichern", "Zur Buchung"],
+      "default_value": "Termin buchen"
     },
     {
       "id": "logo",
       "type": "logo",
       "required": false,
       "max_length": null,
-      "max_lines": null
+      "max_lines": null,
+      "label": "Logo",
+      "help_text": "Ein sauberes Markenlogo für den Auftritt.",
+      "group": "Bilder",
+      "placeholder": null,
+      "suggestions": [],
+      "default_value": null
     },
     {
       "id": "heroImage",
       "type": "image",
       "required": false,
       "max_length": null,
-      "max_lines": null
+      "max_lines": null,
+      "label": "Bild",
+      "help_text": "Ein passendes Foto für die Vorlage.",
+      "group": "Bilder",
+      "placeholder": null,
+      "suggestions": [],
+      "default_value": null
     },
     {
       "id": "qrTarget",
       "type": "url",
       "required": true,
       "max_length": null,
-      "max_lines": null
+      "max_lines": null,
+      "label": "QR-Ziel",
+      "help_text": "Die Zieladresse wird in den QR-Code übernommen.",
+      "group": "Link und QR",
+      "placeholder": "example.com/review",
+      "suggestions": ["example.com/review", "example.com/booking", "example.com/menu"],
+      "default_value": "example.com/review"
     }
   ],
   "font_family": "Proof Sans",
@@ -67,7 +98,7 @@
         "height_mm": 18
       },
       "z_index": 1,
-      "text": "Tell us what you think",
+      "text": "Termin buchen",
       "font_family": "Proof Sans",
       "font_size_mm": 7.2,
       "font_weight": 700,
@@ -85,7 +116,7 @@
         "height_mm": 26
       },
       "z_index": 1,
-      "text": "Scan the QR code to rate your visit and leave feedback in a few seconds.",
+      "text": "Der QR-Code bringt dich direkt zur Buchungsseite.",
       "font_family": "Proof Sans",
       "font_size_mm": 3.0,
       "font_weight": 400,
@@ -104,7 +135,7 @@
       },
       "z_index": 1,
       "asset_key": "heroImage",
-      "alt": "Review hero image",
+      "alt": "Produktmotiv",
       "fit": "cover",
       "movement_mm": {
         "x_mm": 0,
@@ -127,7 +158,7 @@
       },
       "z_index": 2,
       "asset_key": "logo",
-      "alt": "Studio logo",
+      "alt": "Logo",
       "fit": "contain",
       "enhancement": "none",
       "movement_mm": {
@@ -138,20 +169,6 @@
       },
       "min_scale": 0.7,
       "max_scale": 1.2
-    }
-  ],
-  "variants": [
-    {
-      "id": "logo-focused",
-      "name": "Logo im Fokus",
-      "active": true,
-      "preview_asset": "template_google_reviews_bold.png"
-    },
-    {
-      "id": "text-focused",
-      "name": "Text im Fokus",
-      "active": true,
-      "preview_asset": "template_google_reviews_minimal.png"
     }
   ]
 }

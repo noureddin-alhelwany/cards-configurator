@@ -1,11 +1,10 @@
 import './SelectionPage.css';
 import StateMessage from '../ui/StateMessage';
 import { SelectionContentPanel, SelectionFeedbackPanel, SelectionPreviewPanel, SelectionReviewPanel } from './selectionPanels';
-import { ProductCard, TemplateCard, UseCaseCard } from './selectionUi';
-import { useSelectionFlow, visibleProductUseCaseNames } from './selectionFlow';
-import { templateKey } from './selectionRules';
+import { ProductCard, TemplateCard } from './selectionUi';
+import { useSelectionFlow } from './selectionFlow';
+import { templateKey, validationDisplayPath } from './selectionRules';
 import { uiText } from '../ui/text';
-import { formatLocalizedDate } from '../ui/viewHelpers';
 
 export default function SelectionPage() {
   const {
@@ -31,14 +30,14 @@ export default function SelectionPage() {
     expandedAssetFieldId,
     previewExpanded,
     orderSubmitting,
-    matchingProducts,
-    showProductStep,
+    availableProducts,
     wizardSteps,
     matchingTemplates,
     productById,
     designStepIndex,
     contentStepIndex,
     reviewStepIndex,
+    validationIssues,
     visibleValidationIssues,
     visibleBlockingIssues,
     showBlockingSummary,
@@ -47,7 +46,6 @@ export default function SelectionPage() {
     previewMode,
     isApproved,
     approvalReady,
-    handleUseCaseSelect,
     handleProductSelect,
     handleTemplateSelect,
     handleVariantSelect,
@@ -92,9 +90,8 @@ export default function SelectionPage() {
   const activeStepIndex = Math.min(wizardStepIndex, wizardSteps.length - 1);
   const activeStep = wizardSteps[activeStepIndex] ?? wizardSteps[0];
   const showSupplementaryPanels = activeStep.id === 'content' || activeStep.id === 'review';
-  const wizardHint = activeStep.id === 'selection'
-    ? uiText.selection.wizardSteps.selection.hint
-    : activeStep.id === 'product'
+  const wizardHint =
+    activeStep.id === 'product'
       ? uiText.selection.wizardSteps.product.hint
       : activeStep.id === 'design'
         ? uiText.selection.wizardSteps.design.hint
@@ -110,29 +107,34 @@ export default function SelectionPage() {
             <p className="selection-kicker">{uiText.appName}</p>
             <h1>{uiText.selection.header.title}</h1>
             <p className="selection-lede">{uiText.selection.header.lead}</p>
-            <p className="selection-summary" aria-live="polite">
-              Schritt {activeStepIndex + 1} von {wizardSteps.length}: {activeStep.title}
-            </p>
             <p className="selection-lede selection-lede--compact" aria-live="polite">
-              {wizardHint}
+              Schritt {activeStepIndex + 1} von {wizardSteps.length}: {activeStep.title}. {wizardHint}
             </p>
           </div>
           <div className="selection-header__actions">
-            <button type="button" className="wizard-step-nav__button" disabled={resetSubmitting} onClick={handleDraftReset}>
-              {resetSubmitting ? uiText.selection.buttons.resetPending : isApproved ? uiText.selection.buttons.resetNew : uiText.selection.buttons.reset}
-            </button>
-            <p className="selection-header__hint">
-              {isApproved ? uiText.selection.buttons.resetLockedHint : uiText.selection.buttons.resetHint}
+            <p className="selection-header__autosave" aria-live="polite">
+              {uiText.selection.autosave.saved}
             </p>
-            {state.draft?.updated_at ? (
-              <p className="selection-header__autosave" aria-live="polite">
-                {uiText.selection.autosave.label}: {formatLocalizedDate(state.draft.updated_at)}
-              </p>
-            ) : (
-              <p className="selection-header__autosave" aria-live="polite">
-                {uiText.selection.autosave.fallback}
-              </p>
-            )}
+            <details className="selection-header__menu">
+              <summary className="wizard-step-nav__button">{uiText.selection.buttons.more}</summary>
+              <div className="selection-header__menu-panel">
+                <button
+                  type="button"
+                  className="wizard-step-nav__button"
+                  disabled={resetSubmitting}
+                  onClick={() => {
+                    if (window.confirm(uiText.selection.buttons.resetConfirm)) {
+                      void handleDraftReset();
+                    }
+                  }}
+                >
+                  {resetSubmitting ? uiText.selection.buttons.resetPending : isApproved ? uiText.selection.buttons.resetNew : uiText.selection.buttons.reset}
+                </button>
+                <p className="selection-header__hint">
+                  {isApproved ? uiText.selection.buttons.resetLockedHint : uiText.selection.buttons.resetHint}
+                </p>
+              </div>
+            </details>
           </div>
         </header>
 
@@ -165,55 +167,11 @@ export default function SelectionPage() {
 
         <div className={`selection-layout${showSupplementaryPanels ? '' : ' selection-layout--single'}`}>
           <main className="selection-main">
-            {activeStep.id === 'selection' ? (
-              <section className="selection-section selection-section--wizard selection-step-panel">
-                <div className="selection-section__heading">
-                  <h2>{uiText.selection.sections.selection}</h2>
-                  <p>{bundle.use_cases.filter((useCase) => useCase.active).length} aktive Auswahlmöglichkeiten</p>
-                </div>
-                {bundle.use_cases.some((useCase) => useCase.active) ? (
-                  <div className="use-case-grid">
-                    {bundle.use_cases
-                      .filter((useCase) => useCase.active)
-                      .map((useCase) => (
-                        <UseCaseCard
-                          key={useCase.id}
-                          useCase={useCase}
-                          selected={useCase.id === selectedUseCase?.id}
-                          onSelect={handleUseCaseSelect}
-                          disabled={isApproved}
-                        />
-                      ))}
-                  </div>
-                ) : (
-                  <StateMessage
-                    tone="empty"
-                    kicker={uiText.selection.emptyUseCases.kicker}
-                    title={uiText.selection.emptyUseCases.title}
-                    description={uiText.selection.emptyUseCases.description}
-                  />
-                )}
-                <div className="wizard-step-nav">
-                  <button type="button" className="wizard-step-nav__button" disabled>
-                    {uiText.common.back}
-                  </button>
-                  <button
-                    type="button"
-                    className="wizard-step-nav__button wizard-step-nav__button--primary"
-                    disabled={!selectedUseCase}
-                    onClick={() => setWizardStepIndex(designStepIndex)}
-                  >
-                    {uiText.common.next}
-                  </button>
-                </div>
-              </section>
-            ) : null}
-
-            {activeStep.id === 'product' && showProductStep ? (
+            {activeStep.id === 'product' ? (
               <section className="selection-section selection-section--wizard selection-step-panel">
                 <div className="selection-section__heading">
                   <h2>{uiText.selection.sections.product}</h2>
-                  <p>{matchingProducts.length} Einträge</p>
+                  <p>{availableProducts.length} Einträge</p>
                 </div>
                 {pendingProduct ? (
                   <div className="product-change-notice" role="alert">
@@ -237,38 +195,26 @@ export default function SelectionPage() {
                   </div>
                 ) : null}
                 <div className="product-grid">
-                  {matchingProducts.map((product) => (
+                  {availableProducts.map((product) => (
                     <ProductCard
                       key={product.id}
                       product={product}
                       selected={product.id === selectedProduct?.id}
                       onSelect={handleProductSelect}
-                      useCaseNames={visibleProductUseCaseNames(bundle, product.id)}
                       recommended={product.id === recommendedProductId}
                       disabled={isApproved}
                     />
                   ))}
                 </div>
-                {selectedProduct ? (
-                  <article className="product-detail">
-                    <p className="product-detail__eyebrow">{uiText.selection.productDetail.selected}</p>
-                    <h3>{selectedProduct.name}</h3>
-                    <p className="product-detail__hint">
-                      {selectedProduct.trim_width_mm} × {selectedProduct.trim_height_mm} mm ·{' '}
-                      {visibleProductUseCaseNames(bundle, selectedProduct.id).slice(0, 2).join(' · ') ||
-                        uiText.selection.productDetail.available}
-                    </p>
-                  </article>
-                ) : null}
                 <div className="wizard-step-nav">
-                  <button type="button" className="wizard-step-nav__button" onClick={goToPreviousWizardStep}>
+                  <button type="button" className="wizard-step-nav__button" disabled={activeStepIndex === 0} onClick={goToPreviousWizardStep}>
                     {uiText.common.back}
                   </button>
                   <button
                     type="button"
                     className="wizard-step-nav__button wizard-step-nav__button--primary"
                     disabled={!selectedProduct}
-                    onClick={() => setWizardStepIndex(contentStepIndex)}
+                    onClick={() => setWizardStepIndex(designStepIndex)}
                   >
                     {uiText.common.next}
                   </button>
@@ -279,7 +225,7 @@ export default function SelectionPage() {
             {activeStep.id === 'design' ? (
               <section className="selection-section selection-section--wizard selection-step-panel">
                 <div className="selection-section__heading">
-                  <h2>{showProductStep ? uiText.selection.sections.design : uiText.selection.sections.designWithoutProduct}</h2>
+                  <h2>{uiText.selection.sections.design}</h2>
                   <p>{matchingTemplates.length} Einträge</p>
                 </div>
                 <div className="template-grid">
@@ -323,7 +269,6 @@ export default function SelectionPage() {
 
             {activeStep.id === 'content' && selectedTemplate && selectedProduct && selectedUseCase ? (
               <SelectionContentPanel
-                showProductStep={showProductStep}
                 selectedTemplate={selectedTemplate}
                 selectedProduct={selectedProduct}
                 selectedVariantId={selectedVariantId}
@@ -349,11 +294,11 @@ export default function SelectionPage() {
 
             {activeStep.id === 'review' && selectedTemplate && selectedProduct && selectedUseCase ? (
               <SelectionReviewPanel
-                showProductStep={showProductStep}
                 selectedTemplate={selectedTemplate}
                 selectedProduct={selectedProduct}
                 isApproved={isApproved}
-                blockingIssuesCount={visibleBlockingIssues.length}
+                blockingIssuesCount={validationIssues.filter((issue) => issue.blocking).length}
+                validationIssues={validationIssues}
                 approvalReady={approvalReady}
                 approvalSubmitting={approvalSubmitting}
                 orderSubmitting={orderSubmitting}
@@ -404,6 +349,14 @@ export default function SelectionPage() {
                 visibleBlockingIssues={visibleBlockingIssues}
                 showBlockingSummary={showBlockingSummary}
                 issueLabel={issueLabel}
+                onIssueSelect={(issue) => {
+                  const path = validationDisplayPath(issue);
+                  markValidationPathTouched(path);
+                  const field = document.getElementById(path);
+                  field?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  const focusable = field?.querySelector<HTMLElement>('input, textarea, button');
+                  focusable?.focus();
+                }}
               />
             </aside>
           ) : null}

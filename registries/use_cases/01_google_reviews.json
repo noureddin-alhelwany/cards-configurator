@@ -1,0 +1,7 @@
+{
+  "id": "google_reviews",
+  "name": "Google-Bewertungskarte",
+  "description": "Kunden scannen den QR-Code und gelangen direkt zur Google-Bewertung.",
+  "preview_asset": "review.png",
+  "active": true
+}

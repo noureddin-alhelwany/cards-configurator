@@ -3,13 +3,13 @@ import type { RegistryBundle, TemplateDefinition } from '../registries/types';
 import type { DraftState, TemplateSelectionRequest } from '../drafts/types';
 import type { ElementAdjustment, ValidationIssue } from '../design/types';
 import type { OrderDetail } from '../orders/types';
+import type { TemplateVariantDefinition } from '../registries/types';
 import { assetElementForField, clamp, defaultAdjustmentsForTemplate, type AssetMetadata } from './selectionHelpers';
 import {
   activeVariant,
   buildWizardSteps,
-  demoTextForRole,
+  fieldDefaultValue,
   fieldLabel,
-  fieldRole,
   templateKey,
   templateRecommendationIndex,
   trimSuggestion,
@@ -98,20 +98,17 @@ export function approvalChecklistFromAcknowledgement(checked: boolean): Approval
     : emptyApprovalChecklist();
 }
 
-export function wizardStepIndexFromDraft(draft: DraftState, includeProductStep: boolean): number {
+export function wizardStepIndexFromDraft(draft: DraftState): number {
   if (draft.approved_at) {
-    return includeProductStep ? 4 : 3;
+    return 3;
   }
-  if (!draft.use_case_id) {
+  if (!draft.product_id) {
     return 0;
   }
-  if (includeProductStep && !draft.product_id) {
+  if (!draft.template_id || !draft.template_version) {
     return 1;
   }
-  if (!draft.template_id || !draft.template_version) {
-    return includeProductStep ? 2 : 1;
-  }
-  return includeProductStep ? 3 : 2;
+  return 2;
 }
 
 async function loadRegistries(): Promise<RegistryBundle> {
@@ -252,6 +249,15 @@ export function compatibleProducts(bundle: RegistryBundle, selectedUseCaseId: st
   return activeProducts.filter((product) => compatibleProductIds.has(product.id));
 }
 
+export function primaryUseCaseIdForProduct(bundle: RegistryBundle, productId: string) {
+  const useCaseIds = new Set<string>();
+  bundle.templates
+    .filter((template) => template.active && template.product_id === productId)
+    .forEach((template) => template.use_case_ids.forEach((useCaseId) => useCaseIds.add(useCaseId)));
+
+  return bundle.use_cases.find((useCase) => useCase.active && useCaseIds.has(useCase.id))?.id ?? null;
+}
+
 export function visibleTemplates(bundle: RegistryBundle, selectedUseCaseId: string | null) {
   if (!selectedUseCaseId) {
     return bundle.templates.filter((template) => template.active);
@@ -319,7 +325,6 @@ export function useSelectionFlow() {
           return;
         }
         setState({ bundle, health, error: null, draft });
-        const includeProductStep = visibleProducts(bundle).length > 1;
         const firstUseCase = bundle.use_cases.find((useCase) => useCase.active);
         const firstProduct = bundle.products.find((product) => product.active);
         setSelectedUseCaseId(draft.use_case_id ?? firstUseCase?.id ?? null);
@@ -329,7 +334,7 @@ export function useSelectionFlow() {
         );
         setSelectedVariantId(draft.layout_state.variant_id || null);
         setLayoutValues(layoutValuesFromState(draft.layout_state));
-        setWizardStepIndex(wizardStepIndexFromDraft(draft, includeProductStep));
+        setWizardStepIndex(wizardStepIndexFromDraft(draft));
       })
       .catch(() => {
         if (active) {
@@ -383,12 +388,12 @@ export function useSelectionFlow() {
 
   const isApproved = Boolean(state.draft?.approved_at);
   const approvalReady = Object.values(approvalChecklist).every(Boolean);
-  const matchingProducts = useMemo(
+  const availableProducts = useMemo(() => (bundle ? visibleProducts(bundle) : []), [bundle]);
+  const recommendedProducts = useMemo(
     () => (bundle ? compatibleProducts(bundle, selectedUseCaseId) : []),
     [bundle, selectedUseCaseId],
   );
-  const showProductStep = matchingProducts.length > 1;
-  const wizardSteps = useMemo(() => buildWizardSteps(showProductStep), [showProductStep]);
+  const wizardSteps = useMemo(() => buildWizardSteps(), []);
   const selectionState = useMemo(
     () => ({
       selectedUseCase,
@@ -403,8 +408,8 @@ export function useSelectionFlow() {
         blocking: (qualityReport?.issues ?? []).some((issue) => issue.blocking),
       },
       previewState: {
-        live: Boolean(selectedTemplate && selectedProduct && selectedUseCase && wizardStepIndex < (showProductStep ? 4 : 3)),
-        mockup: Boolean(selectedTemplate && selectedProduct && selectedUseCase && wizardStepIndex >= (showProductStep ? 4 : 3)),
+        live: Boolean(selectedTemplate && selectedProduct && selectedUseCase && wizardStepIndex < 3),
+        mockup: Boolean(selectedTemplate && selectedProduct && selectedUseCase && wizardStepIndex >= 3),
       },
       approvalState: {
         checklist: approvalChecklist,
@@ -424,7 +429,6 @@ export function useSelectionFlow() {
       selectedTemplate,
       selectedUseCase,
       selectedVariant,
-      showProductStep,
       wizardStepIndex,
     ],
   );
@@ -445,9 +449,9 @@ export function useSelectionFlow() {
     () => new Map(bundle?.products.map((product) => [product.id, product] as const) ?? []),
     [bundle],
   );
-  const designStepIndex = showProductStep ? 2 : 1;
-  const contentStepIndex = showProductStep ? 3 : 2;
-  const reviewStepIndex = showProductStep ? 4 : 3;
+  const designStepIndex = 1;
+  const contentStepIndex = 2;
+  const reviewStepIndex = 3;
   const validationIssues = qualityReport?.issues ?? EMPTY_VALIDATION_ISSUES;
   const visibleValidationIssues = useMemo(
     () =>
@@ -459,7 +463,7 @@ export function useSelectionFlow() {
   const visibleBlockingIssues = visibleValidationIssues.filter((issue) => issue.blocking);
   const showBlockingSummary = validationRevealAll && visibleBlockingIssues.length > 1;
   const recommendedTemplateKey = matchingTemplates[0] ? templateKey(matchingTemplates[0]) : null;
-  const recommendedProductId = matchingProducts[0]?.id ?? null;
+  const recommendedProductId = recommendedProducts[0]?.id ?? null;
   const previewMode: PreviewMode = selectionState.previewState.live ? 'live' : selectionState.previewState.mockup ? 'mockup' : 'hidden';
 
   function syncSelectionFromDraft(draft: DraftState) {
@@ -482,13 +486,13 @@ export function useSelectionFlow() {
   }
 
   useEffect(() => {
-    if (!bundle || matchingProducts.length === 0) {
+    if (!bundle || availableProducts.length === 0) {
       return;
     }
     if (!selectedProductId) {
-      setSelectedProductId(matchingProducts[0].id);
+      setSelectedProductId(availableProducts[0].id);
     }
-  }, [bundle, matchingProducts, selectedProductId]);
+  }, [availableProducts, bundle, selectedProductId]);
 
   useEffect(() => {
     if (!bundle) {
@@ -577,17 +581,10 @@ export function useSelectionFlow() {
     };
   }, [selectedTemplateKey, layoutValues, selectedVariantId]);
 
-  function handleUseCaseSelect(useCaseId: string) {
-    setSelectedUseCaseId(useCaseId);
-    setPendingProductId(null);
-    setExpandedAssetFieldId(null);
-    setPreviewExpanded(false);
-    resetValidationRevealState();
-    setWizardStepIndex(1);
-  }
-
   function applyProductSelection(productId: string) {
+    const nextUseCaseId = bundle ? primaryUseCaseIdForProduct(bundle, productId) : null;
     setSelectedProductId(productId);
+    setSelectedUseCaseId(nextUseCaseId ?? bundle?.use_cases.find((useCase) => useCase.active)?.id ?? selectedUseCaseId);
     setSelectedTemplateKey(null);
     setSelectedVariantId(null);
     setLayoutValues(emptyLayoutValues());
@@ -606,8 +603,12 @@ export function useSelectionFlow() {
   }
 
   function handleProductSelect(productId: string) {
-    if (isApproved || productId === selectedProductId) {
+    if (isApproved) {
+      return;
+    }
+    if (productId === selectedProductId) {
       setPendingProductId(null);
+      setWizardStepIndex(designStepIndex);
       return;
     }
     if (selectedTemplate && selectedTemplate.product_id !== productId) {
@@ -615,6 +616,7 @@ export function useSelectionFlow() {
       return;
     }
     applyProductSelection(productId);
+    setWizardStepIndex(designStepIndex);
   }
 
   function goToPreviousWizardStep() {
@@ -656,8 +658,7 @@ export function useSelectionFlow() {
       template.fields
         .filter((field) => field.type === 'text' || field.type === 'url')
         .map((field, index) => {
-          const role = fieldRole(field, index);
-          return [field.id, trimSuggestion(demoTextForRole(role, demoUseCase), field.max_length)];
+          return [field.id, trimSuggestion(fieldDefaultValue(field, index, demoUseCase), field.max_length)];
         }),
     );
     if (Object.keys(seededTextValues).length > 0) {
@@ -841,7 +842,7 @@ export function useSelectionFlow() {
     if (!field) {
       return issue.code === 'qr_too_small' ? 'QR-Ziel' : 'Prüfung';
     }
-    return fieldLabel(fieldRole(field, selectedTemplate.fields.indexOf(field)));
+    return fieldLabel(field, selectedTemplate.fields.indexOf(field));
   }
 
   return {
@@ -872,8 +873,7 @@ export function useSelectionFlow() {
     expandedAssetFieldId,
     previewExpanded,
     orderSubmitting,
-    matchingProducts,
-    showProductStep,
+    availableProducts,
     wizardSteps,
     selectionState,
     matchingTemplates,
@@ -890,7 +890,6 @@ export function useSelectionFlow() {
     previewMode,
     isApproved,
     approvalReady,
-    handleUseCaseSelect,
     handleProductSelect,
     handleTemplateSelect,
     handleVariantSelect,

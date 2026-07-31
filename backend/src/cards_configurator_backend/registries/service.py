@@ -22,7 +22,11 @@ def build_proof_fixture(bundle: RegistryBundle, proof_assets_dir: Path) -> Proof
 
     logo_path = proof_assets_dir / "logo.png"
     logo_bytes = logo_path.read_bytes()
-    hero_image_path = proof_assets_dir / "google_reviews_preview.png"
+    hero_image_asset = {
+        "google_reviews": "review.png",
+        "appointment_booking": "booking.png",
+    }.get(use_case.id, "review.png")
+    hero_image_path = proof_assets_dir / hero_image_asset
     hero_image_bytes = hero_image_path.read_bytes()
     qr = segno.make(use_case.description, error="m")
     qr_buffer = BytesIO()

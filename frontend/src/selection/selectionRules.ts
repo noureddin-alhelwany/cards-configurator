@@ -4,22 +4,13 @@ import { uiText } from '../ui/text';
 
 export type TemplateFieldRole = 'business' | 'headline' | 'body' | 'qrTarget' | 'logo' | 'image' | 'generic';
 
-export function buildWizardSteps(includeProductStep: boolean) {
+export function buildWizardSteps() {
   return [
     {
-      id: 'selection',
-      title: uiText.selection.wizardSteps.selection.title,
-      description: uiText.selection.wizardSteps.selection.description,
+      id: 'product',
+      title: uiText.selection.wizardSteps.product.title,
+      description: uiText.selection.wizardSteps.product.description,
     },
-    ...(includeProductStep
-      ? [
-          {
-            id: 'product',
-            title: uiText.selection.wizardSteps.product.title,
-            description: uiText.selection.wizardSteps.product.description,
-          },
-        ]
-      : []),
     {
       id: 'design',
       title: uiText.selection.wizardSteps.design.title,
@@ -41,17 +32,23 @@ export function buildWizardSteps(includeProductStep: boolean) {
 export type WizardStep = ReturnType<typeof buildWizardSteps>[number];
 
 export function templateStyleDescription(template: TemplateDefinition) {
+  if (template.description) {
+    return template.description;
+  }
   const name = (template.name ?? '').toLowerCase();
-  if (name.includes('clean') || name.includes('classic') || name.includes('minimal')) {
+  if (name.includes('classic') || name.includes('minimal')) {
     return 'Klar, ruhig und mit viel Weißraum.';
   }
   if (name.includes('bold') || name.includes('strong')) {
     return 'Große Botschaft und besonders sichtbarer QR-Code.';
   }
+  if (name.includes('minimum')) {
+    return 'Sehr reduziert und auf das Wesentliche fokussiert.';
+  }
   if (name.includes('warm') || name.includes('friendly')) {
     return 'Freundlich und passend für Beauty, Wellness und Gastronomie.';
   }
-  if (name.includes('premium') || name.includes('luxury')) {
+  if (name.includes('premium') || name.includes('primum') || name.includes('luxury')) {
     return 'Reduziert und hochwertig.';
   }
   return 'Eine kuratierte Vorlage mit vollständiger Vorschau.';
@@ -89,7 +86,11 @@ export function fieldRole(field: TemplateDefinition['fields'][number], index: nu
   return 'generic';
 }
 
-export function fieldLabel(role: TemplateFieldRole) {
+export function fieldLabel(field: TemplateDefinition['fields'][number], index: number) {
+  if (field.label) {
+    return field.label;
+  }
+  const role = fieldRole(field, index);
   switch (role) {
     case 'business':
       return 'Unternehmensname';
@@ -109,7 +110,11 @@ export function fieldLabel(role: TemplateFieldRole) {
   }
 }
 
-export function fieldGroupLabel(role: TemplateFieldRole) {
+export function fieldGroupLabel(field: TemplateDefinition['fields'][number], index: number) {
+  if (field.group) {
+    return field.group;
+  }
+  const role = fieldRole(field, index);
   switch (role) {
     case 'logo':
     case 'image':
@@ -121,7 +126,11 @@ export function fieldGroupLabel(role: TemplateFieldRole) {
   }
 }
 
-export function fieldHelperText(role: TemplateFieldRole) {
+export function fieldHelperText(field: TemplateDefinition['fields'][number], index: number) {
+  if (field.help_text) {
+    return field.help_text;
+  }
+  const role = fieldRole(field, index);
   switch (role) {
     case 'business':
       return 'So erscheint dein Name auf der Karte.';
@@ -141,7 +150,12 @@ export function fieldHelperText(role: TemplateFieldRole) {
   }
 }
 
-export function fieldSuggestions(role: TemplateFieldRole) {
+export function fieldSuggestions(field: TemplateDefinition['fields'][number], index: number) {
+  const suggestions = field.suggestions ?? [];
+  if (suggestions.length > 0) {
+    return suggestions;
+  }
+  const role = fieldRole(field, index);
   switch (role) {
     case 'business':
       return ['Studio Sonnenschein', 'Muster GmbH', 'Café Nord'];
@@ -154,6 +168,32 @@ export function fieldSuggestions(role: TemplateFieldRole) {
     default:
       return [];
   }
+}
+
+export function fieldPlaceholder(field: TemplateDefinition['fields'][number], index: number) {
+  if (field.placeholder) {
+    return field.placeholder;
+  }
+  const role = fieldRole(field, index);
+  switch (role) {
+    case 'business':
+      return 'Studio Sonnenschein';
+    case 'headline':
+      return 'Scanne und bewerte uns';
+    case 'body':
+      return 'Deine Meinung hilft uns weiter.';
+    case 'qrTarget':
+      return 'example.com/review';
+    default:
+      return '';
+  }
+}
+
+export function fieldDefaultValue(field: TemplateDefinition['fields'][number], index: number, useCase: UseCaseDefinition) {
+  if (field.default_value != null) {
+    return field.default_value;
+  }
+  return demoTextForRole(fieldRole(field, index), useCase);
 }
 
 export function trimSuggestion(value: string, maxLength: number | null) {
@@ -193,7 +233,7 @@ export function friendlyValidationMessage(issue: ValidationIssue, fieldName: str
     case 'qr_too_small':
       return `${fieldName} ist zu klein für dieses Produkt.`;
     default:
-      return issue.message || `${fieldName} sollte geprüft werden.`;
+      return `${fieldName} sollte geprüft werden.`;
   }
 }
 
@@ -218,17 +258,20 @@ export function activeVariant(template: TemplateDefinition, variantId: string | 
 
 export function templateRecommendationIndex(template: TemplateDefinition, index: number) {
   const name = (template.name ?? '').toLowerCase();
-  if (name.includes('clean') || name.includes('classic')) {
+  if (name.includes('clean') || name.includes('classic') || name.includes('minimal')) {
     return 0;
   }
   if (name.includes('bold')) {
     return 1;
   }
-  if (name.includes('warm')) {
+  if (name.includes('minimum')) {
     return 2;
   }
-  if (name.includes('premium')) {
+  if (name.includes('warm')) {
     return 3;
+  }
+  if (name.includes('premium') || name.includes('primum')) {
+    return 4;
   }
   return index;
 }

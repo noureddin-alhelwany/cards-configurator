@@ -1,7 +1,7 @@
 {
-  "id": "a6_card",
-  "name": "Google-Bewertungskarte",
-  "description": "Kunden scannen den QR-Code und gelangen direkt zur Google-Bewertung.",
+  "id": "appointment_booking_card",
+  "name": "Terminbuchungskarte",
+  "description": "Der QR-Code führt direkt zur Online-Terminbuchung oder Terminseite.",
   "trim_width_mm": 105,
   "trim_height_mm": 148,
   "bleed_mm": 3,
@@ -10,6 +10,6 @@
   "minimum_dpi": 225,
   "qr_min_width_mm": 18,
   "qr_min_module_mm": 0.42,
-  "preview_asset": "review.png",
+  "preview_asset": "booking.png",
   "active": true
 }
