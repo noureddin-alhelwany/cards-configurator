@@ -1,4 +1,4 @@
-# Intelligent Print & Design Configurator
+# cards-configurator
 
 Dieses Repository enthält die Produkt-, MVP- und Architekturgrundlage für die
 Implementierung mit Codex.
@@ -20,9 +20,15 @@ Implementierung mit Codex.
 
 - Persistente lokale Daten liegen in `.data/` bzw. im Compose-Volume
   `cards-configurator-data`.
+- Der aktuelle SQLite-Stand wird als SQL-Export unter `exports/cards-configurator.sqlite.sql`
+  versioniert.
 - Generierte Artefakte, Build-Ausgaben und lokale Caches sind in `.gitignore`
   erfasst.
 
+## DB-Export
+
+- Export aktualisieren: `make db-export`
+- Nach jedem Commit soll der Export neu geschrieben und mit dem Commit mitgeführt werden.
 
 ## Bootstrap-Install
 

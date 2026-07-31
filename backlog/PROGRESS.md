@@ -1,4 +1,4 @@
-# Cards Designer Progress
+# cards-configurator Progress
 
 ## Summary
 

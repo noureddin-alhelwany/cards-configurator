@@ -1,5 +1,5 @@
 export const uiText = {
-  appName: 'Cards Configurator',
+  appName: 'cards-configurator',
   common: {
     back: 'Zurück',
     next: 'Weiter',
@@ -9,7 +9,7 @@ export const uiText = {
   selection: {
     loading: {
       kicker: 'Loading registries',
-      title: 'Cards Configurator',
+      title: 'cards-configurator',
       description: 'Die Konfigurationen werden geladen.',
     },
     emptyUseCases: {

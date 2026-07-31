@@ -90,7 +90,7 @@ const frontendHtml = await frontendResponse.text();
 const healthResponse = await fetch(`${backendUrl}/api/healthz`);
 const health = await healthResponse.json();
 
-if (!frontendHtml.includes('Cards Configurator')) {
+if (!frontendHtml.includes('cards-configurator')) {
   throw new Error('Frontend shell did not render the expected title.');
 }
 

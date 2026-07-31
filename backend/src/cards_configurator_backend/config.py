@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "Cards Configurator"
+    app_name: str = "cards-configurator"
     environment: str = "development"
     database_url: str = "sqlite:///./data/cards-configurator.sqlite3"
     frontend_dist_dir: Path = Path("frontend/dist")

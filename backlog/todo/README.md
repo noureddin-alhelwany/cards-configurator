@@ -1,4 +1,4 @@
-# Cards Designer – nur neue UI/UX Work Items
+# cards-configurator – nur neue UI/UX Work Items
 
 Dieses Paket enthält ausschließlich neue Work Items auf Basis des aktuellen Stands.
 

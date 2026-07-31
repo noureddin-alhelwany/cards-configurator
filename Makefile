@@ -8,7 +8,7 @@ BACKEND_PIP := $(BACKEND_VENV)/bin/pip
 BACKEND_PYTEST := $(BACKEND_VENV)/bin/pytest
 FRONTEND_PNPM := COREPACK_HOME=/tmp/corepack corepack pnpm
 
-.PHONY: help backend-install frontend-install backend-dev frontend-dev lint typecheck test test-render test-e2e build docker-up docker-build
+.PHONY: help backend-install frontend-install backend-dev frontend-dev lint typecheck test test-render test-e2e build docker-up docker-build db-export
 
 help:
 	@echo 'backend-install   Create the Python virtual environment and install backend dependencies'
@@ -21,6 +21,7 @@ help:
 	@echo 'test-render       Run the bootstrap render smoke checks'
 	@echo 'test-e2e          Run the bootstrap end-to-end smoke checks'
 	@echo 'build             Build the frontend bundle and validate the backend package'
+	@echo 'db-export         Export the local SQLite database as a tracked SQL dump'
 	@echo 'docker-build      Build the container image'
 	@echo 'docker-up         Start the Compose stack'
 
@@ -60,6 +61,9 @@ test-e2e:
 build:
 	$(FRONTEND_PNPM) --dir $(FRONTEND_DIR) build
 	$(BACKEND_PYTHON) -m compileall $(BACKEND_DIR)/src
+
+db-export:
+	$(BACKEND_PYTHON) scripts/export_db.py
 
 docker-build:
 	docker compose build
