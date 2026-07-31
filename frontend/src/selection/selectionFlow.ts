@@ -461,7 +461,6 @@ export function useSelectionFlow() {
     [touchedValidationPaths, validationIssues, validationRevealAll],
   );
   const visibleBlockingIssues = visibleValidationIssues.filter((issue) => issue.blocking);
-  const showBlockingSummary = validationRevealAll && visibleBlockingIssues.length > 1;
   const recommendedTemplateKey = matchingTemplates[0] ? templateKey(matchingTemplates[0]) : null;
   const recommendedProductId = recommendedProducts[0]?.id ?? null;
   const previewMode: PreviewMode = selectionState.previewState.live ? 'live' : selectionState.previewState.mockup ? 'mockup' : 'hidden';
@@ -884,7 +883,6 @@ export function useSelectionFlow() {
     validationIssues,
     visibleValidationIssues,
     visibleBlockingIssues,
-    showBlockingSummary,
     recommendedTemplateKey,
     recommendedProductId,
     previewMode,

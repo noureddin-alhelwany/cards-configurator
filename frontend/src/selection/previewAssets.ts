@@ -1,5 +1,5 @@
 export function previewAssetPath(asset: string) {
-  return `/preview-assets/${asset}`;
+  return `/proof-assets/${asset}`;
 }
 
 export function emptyPreviewAsset(label: string) {

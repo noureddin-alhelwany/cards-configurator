@@ -1,8 +1,12 @@
 import type { TemplateDefinition, UseCaseDefinition } from '../registries/types';
 import type { ValidationIssue } from '../design/types';
+import { fieldRole } from '../design/fieldRoles';
+import type { TemplateFieldRole } from '../design/fieldRoles';
 import { uiText } from '../ui/text';
 
-export type TemplateFieldRole = 'business' | 'headline' | 'body' | 'qrTarget' | 'logo' | 'image' | 'generic';
+// Re-exported so existing `selectionRules` importers stay unchanged.
+export { fieldRole };
+export type { TemplateFieldRole };
 
 export function buildWizardSteps() {
   return [
@@ -54,36 +58,30 @@ export function templateStyleDescription(template: TemplateDefinition) {
   return 'Eine kuratierte Vorlage mit vollständiger Vorschau.';
 }
 
-export function fieldRole(field: TemplateDefinition['fields'][number], index: number): TemplateFieldRole {
-  const id = field.id.toLowerCase();
-  if (field.type === 'logo') {
-    return 'logo';
+const TEMPLATE_STYLE_KEYWORDS = ['Classic', 'Bold', 'Minimal', 'Minimum', 'Warm', 'Premium'] as const;
+
+/**
+ * Short style name for the compact content-step header ("Design: Bold").
+ *
+ * The five `proof_a6_card` registry entries share one id and use `version` as a style
+ * axis, so the readable style sits in the template name rather than in the version.
+ */
+export function templateStyleName(template: TemplateDefinition) {
+  const name = (template.name ?? '').trim();
+  if (!name) {
+    return uiText.common.templateFallback;
   }
-  if (field.type === 'image') {
-    return 'image';
-  }
-  if (field.type === 'url' || id.includes('qr') || id.includes('url') || id.includes('target')) {
-    return 'qrTarget';
-  }
-  if (id.includes('business') || id.includes('company') || id.includes('studio') || id.includes('brand')) {
-    return 'business';
-  }
-  if (id.includes('headline') || id.includes('title') || id.includes('claim') || id.includes('hero')) {
-    return 'headline';
-  }
-  if (id.includes('body') || id.includes('description') || id.includes('text') || id.includes('copy')) {
-    return 'body';
-  }
-  if (index === 0) {
-    return 'business';
-  }
-  if (index === 1) {
-    return 'headline';
-  }
-  if (index === 2) {
-    return 'body';
-  }
-  return 'generic';
+  const matched = TEMPLATE_STYLE_KEYWORDS.find((keyword) => name.toLowerCase().includes(keyword.toLowerCase()));
+  return matched ?? name.split(/\s+/).pop() ?? uiText.common.templateFallback;
+}
+
+export function activeVariants(template: TemplateDefinition) {
+  return template.variants.filter((variant) => variant.active);
+}
+
+/** A variant picker is only meaningful when there is more than one option to pick. */
+export function hasVariantChoice(template: TemplateDefinition) {
+  return activeVariants(template).length > 1;
 }
 
 export function fieldLabel(field: TemplateDefinition['fields'][number], index: number) {
@@ -117,8 +115,9 @@ export function fieldGroupLabel(field: TemplateDefinition['fields'][number], ind
   const role = fieldRole(field, index);
   switch (role) {
     case 'logo':
+      return 'Logo';
     case 'image':
-      return 'Medien';
+      return 'Bilder';
     case 'qrTarget':
       return 'Link und QR';
     default:
@@ -163,9 +162,9 @@ export function fieldSuggestions(field: TemplateDefinition['fields'][number], in
       return ['Danke für deinen Besuch', 'Scanne und bewerte uns', 'Jetzt Termin buchen'];
     case 'body':
       return ['Deine Meinung hilft uns weiter.', 'Nur kurz scannen und Feedback teilen.', 'Einmal scannen, direkt loslegen.'];
-    case 'qrTarget':
-      return ['example.com/review', 'example.com/booking', 'example.com/menu'];
     default:
+      // No suggestions for link fields: a placeholder example is clearer than a chip
+      // that writes a fake URL into the customer's card.
       return [];
   }
 }
@@ -212,7 +211,9 @@ export function demoTextForRole(role: TemplateFieldRole, useCase: UseCaseDefinit
     case 'body':
       return `Scanne den QR-Code und teile deine Erfahrung mit ${useCase.name.toLowerCase()}.`;
     case 'qrTarget':
-      return 'https://example.com/review';
+      // Seeded into the draft on template selection, so it must stay empty: a
+      // pre-filled example link would silently ship on the printed card.
+      return '';
     default:
       return 'Beispieltext';
   }

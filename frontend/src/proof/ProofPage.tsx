@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import DesignRenderer from '../design/DesignRenderer';
 import type { ProofFixture } from '../design/types';
+import { expectedAssetCount } from '../design/renderReadiness';
 import './ProofPage.css';
 import { uiText } from '../ui/text';
-
-const EXPECTED_ASSETS = 3;
 
 async function loadProofFixture(): Promise<ProofFixture> {
   const response = await fetch('/api/render/proof-fixture');
@@ -55,7 +54,7 @@ export default function ProofPage() {
   }, []);
 
   useEffect(() => {
-    if (fixture && fontsReady && assetLoads >= EXPECTED_ASSETS) {
+    if (fixture && fontsReady && assetLoads >= expectedAssetCount(fixture)) {
       document.documentElement.dataset.renderReady = 'true';
     }
   }, [assetLoads, fixture, fontsReady]);
@@ -94,6 +93,7 @@ export default function ProofPage() {
         </header>
         <DesignRenderer
           fixture={fixture}
+          variant="production"
           onAssetReady={() => {
             setAssetLoads((count) => count + 1);
           }}

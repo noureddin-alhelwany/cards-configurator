@@ -34,3 +34,7 @@ frontend/.cache/
 *.sqlite3
 *.db
 *.log
+
+# IDE and local review scratch
+.idea/
+.lavish/

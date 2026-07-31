@@ -1,16 +1,9 @@
-import type {
-  ProductDefinition,
-  TemplateDefinition,
-  TemplateVariantDefinition,
-  UseCaseDefinition,
-} from '../registries/types';
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import type { ProductDefinition, TemplateDefinition, UseCaseDefinition } from '../registries/types';
 import type { ElementAdjustment, ValidationIssue } from '../design/types';
-import type { AssetMetadata } from './selectionHelpers';
-import { assetElementForField, clamp } from './selectionHelpers';
 import { uiText } from '../ui/text';
-import { TemplateFieldsList, TemplateLivePreview, TemplateVariantButtons } from './selectionUi';
-import { friendlyValidationMessage, fieldLabel } from './selectionRules';
-import type { DraftLayoutValues } from './selectionTypes';
+import { TemplateLivePreview } from './selectionPreview';
 
 type SelectionPreviewPanelProps = {
   previewMode: 'hidden' | 'live' | 'mockup';
@@ -42,350 +35,98 @@ export function SelectionPreviewPanel({
   onToggleExpanded,
 }: SelectionPreviewPanelProps) {
   const previewVisible = previewMode !== 'hidden';
-  const previewStateText =
-    previewMode === 'mockup'
-      ? uiText.selection.preview.approvalVisible
-      : previewMode === 'live'
-        ? uiText.selection.preview.liveVisible
-        : uiText.selection.preview.previewHidden;
+  const title = previewMode === 'mockup' ? uiText.selection.preview.approvalTitle : uiText.selection.preview.liveTitle;
+  const canRender = previewVisible && selectedTemplate && selectedProduct && selectedUseCase;
+
+  // Escape leaves the enlarged view.
+  useEffect(() => {
+    if (!previewExpanded) {
+      return;
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onToggleExpanded();
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [previewExpanded, onToggleExpanded]);
+
+  const preview = canRender ? (
+    <TemplateLivePreview
+      template={selectedTemplate}
+      product={selectedProduct}
+      useCase={selectedUseCase}
+      selectedVariantId={selectedVariantId}
+      layoutValues={layoutValues}
+      assetPreviews={assetPreviews}
+      validationIssues={validationIssues}
+      showLivePreview={previewMode === 'live'}
+      showMockup={previewMode === 'mockup'}
+      expanded={previewExpanded}
+    />
+  ) : null;
+
+  const toggle =
+    previewVisible && selectedTemplate ? (
+      <button type="button" className="content-step__link" aria-expanded={previewExpanded} onClick={onToggleExpanded}>
+        {previewExpanded ? uiText.selection.preview.collapse : uiText.selection.preview.expand}
+      </button>
+    ) : null;
+
   return (
-    <section className="selection-sidecard">
-      <div className="selection-section__heading">
-        <h2>{previewMode === 'mockup' ? uiText.selection.preview.approvalTitle : uiText.selection.preview.liveTitle}</h2>
-        <p>{previewStateText}</p>
+    <section className="selection-sidecard selection-sidecard--preview">
+      <div className="selection-preview__heading">
+        <h2>{title}</h2>
+        {toggle}
       </div>
-      {previewVisible && selectedTemplate && selectedProduct && selectedUseCase ? (
-        <TemplateLivePreview
-          template={selectedTemplate}
-          product={selectedProduct}
-          useCase={selectedUseCase}
-          selectedVariantId={selectedVariantId}
-          layoutValues={layoutValues}
-          assetPreviews={assetPreviews}
-          validationIssues={validationIssues}
-          showLivePreview={previewMode === 'live'}
-          showMockup={previewMode === 'mockup'}
-          expanded={previewExpanded}
-          onToggleExpanded={onToggleExpanded}
-        />
-      ) : (
-        <p className="selection-sidecard__empty">{uiText.selection.preview.empty}</p>
-      )}
+      {/* The enlarged view is portalled to <body>: `.selection-panel` sets
+          `backdrop-filter`, which would otherwise clip a fixed overlay to the panel.
+          Rendered in exactly one place so there is never a second live canvas. */}
+      {preview && previewExpanded
+        ? createPortal(
+            <div className="preview-overlay" role="dialog" aria-modal="true" aria-label={title}>
+              <div className="preview-overlay__bar">
+                <h2>{title}</h2>
+                <button type="button" className="wizard-step-nav__button" onClick={onToggleExpanded}>
+                  {uiText.selection.preview.collapse}
+                </button>
+              </div>
+              <div className="preview-overlay__body">{preview}</div>
+            </div>,
+            document.body,
+          )
+        : preview}
+      {canRender ? null : <p className="selection-sidecard__empty">{uiText.selection.preview.empty}</p>}
     </section>
   );
 }
 
-type SelectionFeedbackPanelProps = {
+type SelectionStepAlertsProps = {
   qualityError: string | null;
   approvalError: string | null;
   resetError: string | null;
-  visibleValidationIssues: ValidationIssue[];
-  visibleBlockingIssues: ValidationIssue[];
-  showBlockingSummary: boolean;
-  issueLabel: (issue: ValidationIssue) => string;
-  onIssueSelect: (issue: ValidationIssue) => void;
 };
 
-export function SelectionFeedbackPanel({
-  qualityError,
-  approvalError,
-  resetError,
-  visibleValidationIssues,
-  visibleBlockingIssues,
-  showBlockingSummary,
-  issueLabel,
-  onIssueSelect,
-}: SelectionFeedbackPanelProps) {
-  const hasIssues = visibleValidationIssues.length > 0;
-  const hasErrors = Boolean(qualityError || approvalError || resetError);
-  const issueCountLabel = visibleValidationIssues.length === 1 ? 'Hinweis' : uiText.selection.feedback.hint;
-
+/**
+ * Non-field errors (quality check, approval, reset).
+ *
+ * These used to live in the always-on feedback sidecard. That panel is gone, so this
+ * has to be rendered by every step that can trigger those failures — otherwise a
+ * failed approval or reset would leave no visible trace at all.
+ */
+export function SelectionStepAlerts({ qualityError, approvalError, resetError }: SelectionStepAlertsProps) {
+  const messages = [qualityError, approvalError, resetError].filter((message): message is string => Boolean(message));
+  if (messages.length === 0) {
+    return null;
+  }
   return (
-    <section className="selection-sidecard">
-      <div className="selection-section__heading">
-        <h2>{uiText.selection.feedback.title}</h2>
-        <p>{hasIssues ? `${visibleValidationIssues.length} ${issueCountLabel}` : uiText.selection.feedback.allGood}</p>
-      </div>
-      <div className="selection-feedback">
-        {qualityError ? <p className="template-field__error">{qualityError}</p> : null}
-        {approvalError ? <p className="template-field__error">{approvalError}</p> : null}
-        {resetError ? <p className="template-field__error">{resetError}</p> : null}
-        {showBlockingSummary ? (
-          <p className="selection-feedback__summary">
-            {visibleBlockingIssues.length} {uiText.selection.feedback.blockingSummary}
-          </p>
-        ) : null}
-        {hasIssues ? (
-          <div className="template-quality">
-            <p className="template-detail__group-title">{uiText.selection.feedback.qualityTitle}</p>
-            <ul className="template-quality__list">
-              {visibleValidationIssues.map((issue) => (
-                <li key={`${issue.path}-${issue.code}`}>
-                  <button
-                    type="button"
-                    className={`template-quality__item template-quality__item--button template-quality__item--${issue.severity}`}
-                    onClick={() => onIssueSelect(issue)}
-                  >
-                    <strong>{issue.severity === 'warning' ? 'Hinweis' : 'Fehler'}</strong>
-                    <span>{friendlyValidationMessage(issue, issueLabel(issue))}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : !hasErrors ? (
-          <p className="selection-sidecard__empty">{uiText.selection.feedback.empty}</p>
-        ) : null}
-      </div>
-    </section>
-  );
-}
-
-type TemplateImageAdjustmentDialogProps = {
-  template: TemplateDefinition;
-  layoutValues: DraftLayoutValues;
-  assetPreviews: Record<string, string>;
-  assetDetails: Record<string, AssetMetadata>;
-  expandedAssetFieldId: string | null;
-  isApproved: boolean;
-  onAssetAdjustmentChange: (fieldId: string, adjustment: ElementAdjustment) => Promise<void> | void;
-  onAssetAdjustmentReset: (fieldId: string) => Promise<void> | void;
-  onClose: () => void;
-};
-
-function TemplateImageAdjustmentDialog({
-  template,
-  layoutValues,
-  assetPreviews,
-  assetDetails,
-  expandedAssetFieldId,
-  isApproved,
-  onAssetAdjustmentChange,
-  onAssetAdjustmentReset,
-  onClose,
-}: TemplateImageAdjustmentDialogProps) {
-  if (!expandedAssetFieldId) {
-    return null;
-  }
-
-  const field = template.fields.find((entry) => entry.id === expandedAssetFieldId) ?? null;
-  if (!field) {
-    return null;
-  }
-
-  const assetElement = assetElementForField(template, field.id);
-  if (!assetElement) {
-    return null;
-  }
-
-  const fieldIndex = template.fields.indexOf(field);
-  const title = fieldLabel(field, fieldIndex);
-  const assetValue = layoutValues.asset_values[field.id] ?? '';
-  const assetPreview = assetPreviews[field.id] ?? (assetValue.startsWith('data:') ? assetValue : '');
-  const assetDetail = assetDetails[field.id] ?? null;
-  const assetAdjustment = layoutValues.element_adjustments[assetElement.id] ?? { offset_x: 0, offset_y: 0, scale: 1 };
-
-  return (
-    <div className="template-image-dialog" role="dialog" aria-modal="true" aria-labelledby="template-image-dialog__title">
-      <button type="button" className="template-image-dialog__backdrop" aria-label="Dialog schließen" onClick={onClose} />
-      <div className="template-image-dialog__panel">
-        <div className="template-image-dialog__header">
-          <div>
-            <p className="template-detail__eyebrow">Bildbearbeitung</p>
-            <h3 id="template-image-dialog__title">{title}</h3>
-            <p className="template-image-dialog__hint">Bild verschieben, zoomen und direkt kontrollieren.</p>
-          </div>
-          <button type="button" className="template-field__reset" onClick={onClose}>
-            Schließen
-          </button>
-        </div>
-        <div className="template-image-dialog__body">
-          <div className="template-image-dialog__preview">
-            {assetPreview ? <img src={assetPreview} alt={`${title} Vorschau`} /> : <div className="template-field__preview--empty">Kein Upload</div>}
-          </div>
-          <div className="template-image-dialog__controls">
-            <label className="template-field__control">
-              <span>Verschieben X</span>
-              <input
-                type="range"
-                min="-1"
-                max="1"
-                step="0.01"
-                value={assetAdjustment.offset_x}
-                disabled={isApproved}
-                onChange={(event) =>
-                  onAssetAdjustmentChange(field.id, {
-                    ...assetAdjustment,
-                    offset_x: clamp(Number(event.target.value), -1, 1),
-                  })
-                }
-              />
-              <output>{assetAdjustment.offset_x.toFixed(2)}</output>
-            </label>
-            <label className="template-field__control">
-              <span>Verschieben Y</span>
-              <input
-                type="range"
-                min="-1"
-                max="1"
-                step="0.01"
-                value={assetAdjustment.offset_y}
-                disabled={isApproved}
-                onChange={(event) =>
-                  onAssetAdjustmentChange(field.id, {
-                    ...assetAdjustment,
-                    offset_y: clamp(Number(event.target.value), -1, 1),
-                  })
-                }
-              />
-              <output>{assetAdjustment.offset_y.toFixed(2)}</output>
-            </label>
-            <label className="template-field__control">
-              <span>Skalierung</span>
-              <input
-                type="range"
-                min={assetElement.min_scale}
-                max={assetElement.max_scale}
-                step="0.01"
-                value={assetAdjustment.scale}
-                disabled={isApproved}
-                onChange={(event) =>
-                  onAssetAdjustmentChange(field.id, {
-                    ...assetAdjustment,
-                    scale: clamp(Number(event.target.value), assetElement.min_scale, assetElement.max_scale),
-                  })
-                }
-              />
-              <output>{assetAdjustment.scale.toFixed(2)}</output>
-            </label>
-            {assetDetail ? (
-              <p className="template-image-dialog__meta">
-                {assetDetail.mime_type}
-                {assetDetail.width_px && assetDetail.height_px ? ` · ${assetDetail.width_px} × ${assetDetail.height_px} px` : ''}
-              </p>
-            ) : null}
-          </div>
-        </div>
-        <div className="template-image-dialog__actions">
-          <button type="button" className="wizard-step-nav__button" disabled={isApproved} onClick={() => onAssetAdjustmentReset(field.id)}>
-            Zurücksetzen
-          </button>
-          <button type="button" className="wizard-step-nav__button wizard-step-nav__button--primary" onClick={onClose}>
-            Übernehmen
-          </button>
-        </div>
-      </div>
+    <div className="content-step__alert" role="alert">
+      {messages.map((message) => (
+        <p key={message}>{message}</p>
+      ))}
     </div>
-  );
-}
-
-type SelectionContentPanelProps = {
-  selectedTemplate: TemplateDefinition;
-  selectedProduct: ProductDefinition;
-  selectedVariantId: string | null;
-  layoutValues: DraftLayoutValues;
-  assetPreviews: Record<string, string>;
-  assetDetails: Record<string, AssetMetadata>;
-  assetErrors: Record<string, string | null>;
-  validationIssues: ValidationIssue[];
-  expandedAssetFieldId: string | null;
-  isApproved: boolean;
-  onLayoutReset: () => void;
-  onVariantSelect: (variant: TemplateVariantDefinition) => Promise<void> | void;
-  onTextFieldChange: (fieldId: string, value: string) => Promise<void> | void;
-  onAssetFieldChange: (fieldId: string, kind: 'logo' | 'image', file: File | null) => Promise<void> | void;
-  onAssetAdjustmentChange: (fieldId: string, adjustment: ElementAdjustment) => Promise<void> | void;
-  onAssetAdjustmentReset: (fieldId: string) => Promise<void> | void;
-  onToggleAssetEditor: (fieldId: string | null) => void;
-  onFieldInteract: (fieldId: string) => void;
-  onBack: () => void;
-  onNext: () => void;
-};
-
-export function SelectionContentPanel({
-  selectedTemplate,
-  selectedProduct,
-  selectedVariantId,
-  layoutValues,
-  assetPreviews,
-  assetDetails,
-  assetErrors,
-  validationIssues,
-  expandedAssetFieldId,
-  isApproved,
-  onLayoutReset,
-  onVariantSelect,
-  onTextFieldChange,
-  onAssetFieldChange,
-  onAssetAdjustmentChange,
-  onAssetAdjustmentReset,
-  onToggleAssetEditor,
-  onFieldInteract,
-  onBack,
-  onNext,
-}: SelectionContentPanelProps) {
-  return (
-    <section className="selection-section selection-section--wizard selection-step-panel">
-      <div className="selection-section__heading">
-        <h2>{uiText.selection.content.title}</h2>
-        <p>{uiText.selection.content.summary}</p>
-      </div>
-      <article className="template-detail">
-        <p className="template-detail__eyebrow">{uiText.selection.content.eyebrow}</p>
-        <h3>{selectedTemplate.name ?? uiText.common.templateFallback}</h3>
-        {selectedTemplate.description ? <p className="template-detail__hint">{selectedTemplate.description}</p> : null}
-        <p className="template-detail__meta">{selectedProduct.name}</p>
-        <div className="template-detail__actions">
-          <button type="button" className="template-field__reset" disabled={isApproved} onClick={onLayoutReset}>
-            {uiText.selection.content.contentReset}
-          </button>
-        </div>
-        <p className="template-detail__hint">{uiText.selection.content.hint}</p>
-        <div className="template-detail__group">
-          <p className="template-detail__group-title">{uiText.selection.content.variants}</p>
-          <TemplateVariantButtons template={selectedTemplate} selectedVariantId={selectedVariantId} onSelect={onVariantSelect} disabled={isApproved} />
-        </div>
-        <div className="template-detail__group">
-          <p className="template-detail__group-title">{uiText.selection.content.fields}</p>
-          <TemplateFieldsList
-            template={selectedTemplate}
-            product={selectedProduct}
-            layoutValues={layoutValues}
-            assetPreviews={assetPreviews}
-            assetDetails={assetDetails}
-            assetErrors={assetErrors}
-            validationIssues={validationIssues}
-            onTextChange={onTextFieldChange}
-            onAssetChange={onAssetFieldChange}
-            onAssetAdjustmentChange={onAssetAdjustmentChange}
-            onAssetAdjustmentReset={onAssetAdjustmentReset}
-            expandedAssetFieldId={expandedAssetFieldId}
-            onToggleAssetEditor={onToggleAssetEditor}
-            onFieldInteract={onFieldInteract}
-            disabled={isApproved}
-          />
-        </div>
-      </article>
-      <TemplateImageAdjustmentDialog
-        template={selectedTemplate}
-        layoutValues={layoutValues}
-        assetPreviews={assetPreviews}
-        assetDetails={assetDetails}
-        expandedAssetFieldId={expandedAssetFieldId}
-        isApproved={isApproved}
-        onAssetAdjustmentChange={onAssetAdjustmentChange}
-        onAssetAdjustmentReset={onAssetAdjustmentReset}
-        onClose={() => onToggleAssetEditor(null)}
-      />
-      <div className="wizard-step-nav">
-        <button type="button" className="wizard-step-nav__button" onClick={onBack}>
-          {uiText.common.back}
-        </button>
-        <button type="button" className="wizard-step-nav__button wizard-step-nav__button--primary" onClick={onNext}>
-          {uiText.selection.buttons.toReview}
-        </button>
-      </div>
-    </section>
   );
 }
 
@@ -399,6 +140,9 @@ type SelectionReviewPanelProps = {
   approvalSubmitting: boolean;
   orderSubmitting: boolean;
   approvedAt: string | null | undefined;
+  qualityError: string | null;
+  approvalError: string | null;
+  resetError: string | null;
   onBack: () => void;
   onSubmit: () => void;
   onApprovalChange: (checked: boolean) => void;
@@ -414,14 +158,21 @@ export function SelectionReviewPanel({
   approvalSubmitting,
   orderSubmitting,
   approvedAt,
+  qualityError,
+  approvalError,
+  resetError,
   onBack,
   onSubmit,
   onApprovalChange,
 }: SelectionReviewPanelProps) {
-  const requiredIssues = validationIssues.filter((issue) => issue.code === 'required_field_missing');
-  const qrIssues = validationIssues.filter((issue) => issue.code === 'qr_too_small');
-  const imageIssues = validationIssues.filter((issue) => issue.code === 'image_dpi_warning' || issue.code === 'image_dpi_too_low');
-  const layoutIssues = validationIssues.filter((issue) => issue.code === 'text_overflow' || issue.code === 'text_too_long');
+  // Findings about static template copy carry `editable: false`. They are addressed to the
+  // template author — showing them in the customer's checklist would ask them to fix
+  // something they cannot reach.
+  const actionable = validationIssues.filter((issue) => issue.details?.editable !== false);
+  const requiredIssues = actionable.filter((issue) => issue.code === 'required_field_missing');
+  const qrIssues = actionable.filter((issue) => issue.code === 'qr_too_small');
+  const imageIssues = actionable.filter((issue) => issue.code === 'image_dpi_warning' || issue.code === 'image_dpi_too_low');
+  const layoutIssues = actionable.filter((issue) => issue.code === 'text_overflow' || issue.code === 'text_too_long');
   const checks = [
     { title: 'Pflichtfelder', issues: requiredIssues, detail: 'Alle obligatorischen Felder sind gefüllt.' },
     { title: 'QR-Code', issues: qrIssues, detail: 'Der QR-Code ist ausreichend groß und gut lesbar.' },
@@ -435,6 +186,7 @@ export function SelectionReviewPanel({
         <h2>{uiText.selection.sections.review}</h2>
         <p>{isApproved ? uiText.selection.review.approvedStatus : uiText.selection.review.pendingStatus}</p>
       </div>
+      <SelectionStepAlerts qualityError={qualityError} approvalError={approvalError} resetError={resetError} />
       <article className="template-detail">
         <p className="template-detail__eyebrow">{uiText.selection.review.eyebrow}</p>
         <h3>{selectedTemplate.name ?? uiText.common.templateFallback}</h3>

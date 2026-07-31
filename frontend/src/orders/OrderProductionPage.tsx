@@ -1,24 +1,37 @@
 import { useEffect, useState } from 'react';
 import DesignRenderer from '../design/DesignRenderer';
 import type { ProofFixture } from '../design/types';
+import { expectedAssetCount } from '../design/renderReadiness';
+import { brandingFallbackDataUrl, businessNameFromLayout, logoAssetKeys } from '../design/branding';
 import './OrderProductionPage.css';
 import StateMessage from '../ui/StateMessage';
 import { uiText } from '../ui/text';
+
+/**
+ * Fills in the typographic branding stand-in for logo slots without an uploaded asset.
+ *
+ * The live preview does the same, so an approved proof prints exactly as reviewed —
+ * and the logo box never renders as a broken image.
+ */
+function withBrandingFallback(fixture: ProofFixture): ProofFixture {
+  const missing = logoAssetKeys(fixture.template).filter((assetKey) => !fixture.assets[assetKey]);
+  if (missing.length === 0) {
+    return fixture;
+  }
+  const businessName = businessNameFromLayout(fixture.template, fixture.layout_state);
+  const assets = { ...fixture.assets };
+  missing.forEach((assetKey) => {
+    assets[assetKey] = { mime_type: 'image/svg+xml', data_url: brandingFallbackDataUrl(businessName) };
+  });
+  return { ...fixture, assets };
+}
 
 async function loadOrderFixture(orderId: string): Promise<ProofFixture> {
   const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}/fixture`);
   if (!response.ok) {
     throw new Error(`Failed to load order fixture: ${response.status}`);
   }
-  return (await response.json()) as ProofFixture;
-}
-
-function expectedAssetCount(fixture: ProofFixture) {
-  const imageAssets = fixture.template.elements
-    .filter((element) => element.kind === 'image' && fixture.assets[element.asset_key])
-    .length;
-  const qrAssets = fixture.assets.qr ? 1 : 0;
-  return imageAssets + qrAssets;
+  return withBrandingFallback((await response.json()) as ProofFixture);
 }
 
 export default function OrderProductionPage({ orderId }: { orderId: string }) {
@@ -90,9 +103,10 @@ export default function OrderProductionPage({ orderId }: { orderId: string }) {
   }
 
   return (
-    <main className="order-render-shell">
+    <main className="order-render-shell order-render-shell--production">
       <DesignRenderer
         fixture={fixture}
+        variant="production"
         onAssetReady={() => {
           setAssetLoads((count) => count + 1);
         }}

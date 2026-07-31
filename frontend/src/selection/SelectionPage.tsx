@@ -1,9 +1,11 @@
 import './SelectionPage.css';
 import StateMessage from '../ui/StateMessage';
-import { SelectionContentPanel, SelectionFeedbackPanel, SelectionPreviewPanel, SelectionReviewPanel } from './selectionPanels';
+import { SelectionPreviewPanel, SelectionReviewPanel } from './selectionPanels';
+import { SelectionContentPanel } from './selectionContentStep';
 import { ProductCard, TemplateCard } from './selectionUi';
 import { useSelectionFlow } from './selectionFlow';
 import { templateKey, validationDisplayPath } from './selectionRules';
+import type { ValidationIssue } from '../design/types';
 import { uiText } from '../ui/text';
 
 export default function SelectionPage() {
@@ -40,7 +42,6 @@ export default function SelectionPage() {
     validationIssues,
     visibleValidationIssues,
     visibleBlockingIssues,
-    showBlockingSummary,
     recommendedTemplateKey,
     recommendedProductId,
     previewMode,
@@ -87,6 +88,16 @@ export default function SelectionPage() {
     );
   }
 
+  /** Reveals an issue and jumps to the field it belongs to. */
+  function focusValidationIssue(issue: ValidationIssue) {
+    const path = validationDisplayPath(issue);
+    markValidationPathTouched(path);
+    const field = document.getElementById(path);
+    field?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const focusable = field?.querySelector<HTMLElement>('input, textarea, button');
+    focusable?.focus();
+  }
+
   const activeStepIndex = Math.min(wizardStepIndex, wizardSteps.length - 1);
   const activeStep = wizardSteps[activeStepIndex] ?? wizardSteps[0];
   const showSupplementaryPanels = activeStep.id === 'content' || activeStep.id === 'review';
@@ -130,6 +141,11 @@ export default function SelectionPage() {
                 >
                   {resetSubmitting ? uiText.selection.buttons.resetPending : isApproved ? uiText.selection.buttons.resetNew : uiText.selection.buttons.reset}
                 </button>
+                {activeStep.id === 'content' ? (
+                  <button type="button" className="wizard-step-nav__button" disabled={isApproved} onClick={handleLayoutReset}>
+                    {uiText.selection.content.adjustmentReset}
+                  </button>
+                ) : null}
                 <p className="selection-header__hint">
                   {isApproved ? uiText.selection.buttons.resetLockedHint : uiText.selection.buttons.resetHint}
                 </p>
@@ -270,16 +286,21 @@ export default function SelectionPage() {
             {activeStep.id === 'content' && selectedTemplate && selectedProduct && selectedUseCase ? (
               <SelectionContentPanel
                 selectedTemplate={selectedTemplate}
-                selectedProduct={selectedProduct}
                 selectedVariantId={selectedVariantId}
                 layoutValues={layoutValues}
                 assetPreviews={assetPreviews}
                 assetDetails={assetDetails}
                 assetErrors={assetErrors}
                 validationIssues={visibleValidationIssues}
+                visibleBlockingIssues={visibleBlockingIssues}
+                qualityError={qualityError}
+                approvalError={approvalError}
+                resetError={resetError}
                 expandedAssetFieldId={expandedAssetFieldId}
                 isApproved={isApproved}
-                onLayoutReset={handleLayoutReset}
+                issueLabel={issueLabel}
+                onIssueSelect={focusValidationIssue}
+                onChangeDesign={() => setWizardStepIndex(designStepIndex)}
                 onVariantSelect={handleVariantSelect}
                 onTextFieldChange={handleTextFieldChange}
                 onAssetFieldChange={handleAssetFieldChange}
@@ -303,6 +324,9 @@ export default function SelectionPage() {
                 approvalSubmitting={approvalSubmitting}
                 orderSubmitting={orderSubmitting}
                 approvedAt={state.draft?.approved_at}
+                qualityError={qualityError}
+                approvalError={approvalError}
+                resetError={resetError}
                 onBack={goToPreviousWizardStep}
                 onSubmit={isApproved ? handleOrderCreate : handleApprovalSubmit}
                 onApprovalChange={(checked) =>
@@ -327,7 +351,7 @@ export default function SelectionPage() {
           </main>
 
           {showSupplementaryPanels ? (
-            <aside className="selection-sidebar">
+            <aside className="selection-sidebar" aria-label={uiText.selection.preview.liveTitle}>
               <SelectionPreviewPanel
                 previewMode={previewMode}
                 selectedTemplate={selectedTemplate}
@@ -339,24 +363,6 @@ export default function SelectionPage() {
                 validationIssues={visibleValidationIssues}
                 previewExpanded={previewExpanded}
                 onToggleExpanded={() => setPreviewExpanded((current) => !current)}
-              />
-
-              <SelectionFeedbackPanel
-                qualityError={qualityError}
-                approvalError={approvalError}
-                resetError={resetError}
-                visibleValidationIssues={visibleValidationIssues}
-                visibleBlockingIssues={visibleBlockingIssues}
-                showBlockingSummary={showBlockingSummary}
-                issueLabel={issueLabel}
-                onIssueSelect={(issue) => {
-                  const path = validationDisplayPath(issue);
-                  markValidationPathTouched(path);
-                  const field = document.getElementById(path);
-                  field?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  const focusable = field?.querySelector<HTMLElement>('input, textarea, button');
-                  focusable?.focus();
-                }}
               />
             </aside>
           ) : null}

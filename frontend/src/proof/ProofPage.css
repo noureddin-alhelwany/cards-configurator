@@ -51,3 +51,35 @@
 .proof-shell--error {
   align-items: start;
 }
+
+/*
+ * The proof route wraps the card in a page shell for human inspection. None of that
+ * belongs in the PDF: `page.pdf()` captures the whole document, so the shell's padding
+ * and the header would offset and paginate the card.
+ */
+@media print {
+  .proof-shell {
+    display: block;
+    place-items: initial;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    background: none;
+  }
+
+  .proof-card {
+    width: auto;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    gap: 0;
+  }
+
+  .proof-header,
+  .proof-kicker,
+  .proof-summary {
+    display: none;
+  }
+}

@@ -24,20 +24,20 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.0.0',
+                'template_version': '1.2.0',
             },
         )
         assert response.status_code == 200
         payload = response.json()
         assert payload['template_id'] == 'proof_a6_card'
-        assert payload['template_version'] == '1.0.0'
-        assert payload['variant_id'] == 'logo-focused'
-        assert payload['layout_state']['variant_id'] == 'logo-focused'
+        assert payload['template_version'] == '1.2.0'
+        # No registry template declares layout variants, so the draft stays variant-less.
+        assert payload['variant_id'] is None
+        assert payload['layout_state']['variant_id'] == ''
 
         layout_response = client.patch(
             '/api/drafts/current/layout',
             json={
-                'variant_id': 'text-focused',
                 'text_values': {'businessName': 'Studio One'},
                 'element_adjustments': {
                     'proof-logo': {'offset_x': 0.25, 'offset_y': -0.1, 'scale': 1.1},
@@ -46,8 +46,8 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
         )
         assert layout_response.status_code == 200
         layout_payload = layout_response.json()
-        assert layout_payload['variant_id'] == 'text-focused'
-        assert layout_payload['layout_state']['variant_id'] == 'text-focused'
+        assert layout_payload['variant_id'] is None
+        assert layout_payload['layout_state']['variant_id'] == ''
         assert layout_payload['layout_state']['text_values']['businessName'] == 'Studio One'
         assert layout_payload['layout_state']['element_adjustments']['proof-logo']['offset_x'] == 0.25
         assert layout_payload['layout_state']['element_adjustments']['proof-logo']['scale'] == 1.1
@@ -56,8 +56,8 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
         assert refreshed.status_code == 200
         refreshed_payload = refreshed.json()
         assert refreshed_payload['template_id'] == 'proof_a6_card'
-        assert refreshed_payload['template_version'] == '1.0.0'
-        assert refreshed_payload['variant_id'] == 'text-focused'
+        assert refreshed_payload['template_version'] == '1.2.0'
+        assert refreshed_payload['variant_id'] is None
         assert refreshed_payload['layout_state']['text_values']['businessName'] == 'Studio One'
         assert refreshed_payload['layout_state']['element_adjustments']['proof-logo']['offset_y'] == -0.1
         assert refreshed_payload['updated_at'] is not None
@@ -74,7 +74,7 @@ def test_current_draft_survives_reload(tmp_path: Path, monkeypatch) -> None:
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.0.0',
+                'template_version': '1.2.0',
             },
         )
         client.patch(
@@ -106,7 +106,7 @@ def test_url_values_are_normalized_and_qr_preview_is_generated(tmp_path: Path, m
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.0.0',
+                'template_version': '1.2.0',
             },
         )
 
@@ -138,7 +138,7 @@ def test_design_approval_locks_the_draft(tmp_path: Path, monkeypatch) -> None:
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.0.0',
+                'template_version': '1.2.0',
             },
         )
         assert template_response.status_code == 200
@@ -185,13 +185,16 @@ def test_design_approval_locks_the_draft(tmp_path: Path, monkeypatch) -> None:
         )
         assert locked_layout_response.status_code == 409
 
+        # 1.3.0 is another Google-Reviews design on the same product, so the only
+        # reason to reject it is the approval lock. (An incompatible version would
+        # 400 on the product/use-case check before the lock is ever consulted.)
         locked_template_response = client.post(
             '/api/drafts/current/template',
             json={
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.1.0',
+                'template_version': '1.3.0',
             },
         )
         assert locked_template_response.status_code == 409
@@ -212,7 +215,7 @@ def test_design_approval_locks_the_draft(tmp_path: Path, monkeypatch) -> None:
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.0.0',
+                'template_version': '1.2.0',
             },
         )
         assert unlocked_template_response.status_code == 200

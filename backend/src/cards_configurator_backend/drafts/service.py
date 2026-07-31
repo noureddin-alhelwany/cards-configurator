@@ -8,7 +8,12 @@ from sqlalchemy.orm import Session
 
 from ..models import DraftRecord
 from ..registries.loader import RegistryBundle
-from ..registries.schemas import LayoutState, TemplateDefinition
+from ..registries.schemas import (
+    ElementAdjustment,
+    ImageElementDefinition,
+    LayoutState,
+    TemplateDefinition,
+)
 from ..urls import normalize_url
 from .schemas import (
     ApprovalRequest,
@@ -109,6 +114,40 @@ def _find_template(bundle: RegistryBundle, template_id: str, template_version: s
     )
 
 
+def _clamp_element_adjustments(
+    template: TemplateDefinition | None,
+    adjustments: dict[str, ElementAdjustment],
+) -> dict[str, ElementAdjustment]:
+    """Store only adjustments the renderer can actually apply.
+
+    This used to be a blind `dict.update`. The browser clamps before saving and the renderer
+    clamps before drawing, but a direct PATCH persisted anything -- and then the quality gate
+    computed the effective DPI from the stored value while the card was drawn with the clamped
+    one, so validator and renderer disagreed and the DPI gate could be defeated.
+
+    Offsets are normalised to [-1, 1] per `docs/TEMPLATE_AND_RENDERING.md`; scale is clamped to
+    the element's declared range. Adjustments for unknown elements are dropped rather than
+    accumulated as stale keys.
+    """
+    if template is None:
+        return {}
+
+    image_elements = {
+        element.id: element for element in template.elements if isinstance(element, ImageElementDefinition)
+    }
+    clamped: dict[str, ElementAdjustment] = {}
+    for element_id, adjustment in adjustments.items():
+        element = image_elements.get(element_id)
+        if element is None:
+            continue
+        clamped[element_id] = ElementAdjustment(
+            offset_x=min(1.0, max(-1.0, adjustment.offset_x)),
+            offset_y=min(1.0, max(-1.0, adjustment.offset_y)),
+            scale=min(element.max_scale, max(element.min_scale, adjustment.scale)),
+        )
+    return clamped
+
+
 def _normalize_layout_text_values(template: TemplateDefinition, text_values: dict[str, str]) -> dict[str, str]:
     normalized_values = dict(text_values)
     for field in template.fields:
@@ -194,7 +233,9 @@ def update_layout_state(session: Session, bundle: RegistryBundle, request: Layou
     if request.asset_values is not None:
         layout_state.asset_values.update(request.asset_values)
     if request.element_adjustments is not None:
-        layout_state.element_adjustments.update(request.element_adjustments)
+        layout_state.element_adjustments.update(
+            _clamp_element_adjustments(template, request.element_adjustments)
+        )
 
     payload["layout_state"] = layout_state.model_dump()
     draft.payload = payload

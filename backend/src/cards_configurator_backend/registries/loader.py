@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any, cast
 
+from PIL import Image, UnidentifiedImageError
 from pydantic import ValidationError
 
 from .schemas import (
@@ -13,6 +15,21 @@ from .schemas import (
     TemplateDefinition,
     UseCaseDefinition,
 )
+
+# A background is the one asset a card cannot do without, and it is read on every bundle
+# load -- `routes.py` reloads the bundle per request when the app state is cold. Keyed by
+# identity *and* mtime/size so replacing the file during a dev session is picked up.
+_IMAGE_PROBE_CACHE: dict[tuple[str, int, int], tuple[int, int] | None] = {}
+
+# Vector artwork is resolution independent: Chrome embeds SVG in an <img> as path
+# operators (the QR code is the standing proof), so a DPI check would be meaningless.
+_VECTOR_SUFFIXES = {".svg", ".svgz"}
+
+# Aspect deviation the loader tolerates before it says anything, and before it refuses the
+# template. 2% is the gap between the existing mockups and full-bleed geometry -- visible as
+# a shifted crop, not as an obviously broken card, which is exactly why it needs a check.
+_ASPECT_WARNING_RATIO = 0.01
+_ASPECT_ERROR_RATIO = 0.03
 
 
 def _issue(
@@ -115,7 +132,150 @@ def _load_templates(directory: Path) -> tuple[list[TemplateDefinition], list[Reg
     return records, issues
 
 
-def load_registry_bundle(registries_dir: Path) -> RegistryBundle:
+def _probe_image_size(path: Path) -> tuple[int, int] | None:
+    """Pixel size of a raster file, or `None` if it is not decodable raster.
+
+    `Image.open` only reads the header, so this stays cheap enough to run on every load.
+    """
+    stat = path.stat()
+    key = (str(path), stat.st_mtime_ns, stat.st_size)
+    if key in _IMAGE_PROBE_CACHE:
+        return _IMAGE_PROBE_CACHE[key]
+    try:
+        with Image.open(path) as image:
+            size = (int(image.size[0]), int(image.size[1]))
+    except (UnidentifiedImageError, OSError, ValueError):
+        size = None
+    _IMAGE_PROBE_CACHE[key] = size
+    return size
+
+
+def _background_diagnostics(
+    record: TemplateDefinition,
+    product: ProductDefinition,
+    assets_dir: Path,
+) -> list[RegistryIssue]:
+    """Check the declared background artwork against the page it has to fill.
+
+    A card without artwork must not be orderable, and soft artwork prints soft, so a missing
+    file and an under-resolution raster are both errors that drop the template out of the
+    selection. Aspect drift is a warning first: 1% is invisible, 3% moves the crop enough to
+    cut into content.
+    """
+    if record.background_asset is None:
+        return []
+
+    path = assets_dir / record.background_asset
+    if not path.is_file():
+        return [
+            _issue(
+                "template_background_missing",
+                record.id,
+                f"Template '{record.id}' declares background artwork that is missing: {record.background_asset}",
+                details={"template_id": record.id, "background_asset": record.background_asset, "path": str(path)},
+            )
+        ]
+
+    issues: list[RegistryIssue] = []
+
+    if record.background_asset_sha256 is not None:
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        if digest != record.background_asset_sha256:
+            issues.append(
+                _issue(
+                    "template_background_changed",
+                    record.id,
+                    f"Background artwork of '{record.id}' no longer matches its declared digest",
+                    blocking=False,
+                    details={
+                        "template_id": record.id,
+                        "background_asset": record.background_asset,
+                        "expected_sha256": record.background_asset_sha256,
+                        "actual_sha256": digest,
+                    },
+                )
+            )
+
+    if path.suffix.lower() in _VECTOR_SUFFIXES:
+        return issues
+
+    size = _probe_image_size(path)
+    if size is None:
+        issues.append(
+            _issue(
+                "template_background_missing",
+                record.id,
+                f"Background artwork of '{record.id}' could not be read as an image",
+                details={"template_id": record.id, "background_asset": record.background_asset, "path": str(path)},
+            )
+        )
+        return issues
+
+    width_px, height_px = size
+    # The artwork is drawn with `object-fit: cover`, so the overflowing axis is cropped and
+    # the sparser axis decides the printed resolution -- the same rule as `quality.py`.
+    dpi_x = width_px / (record.page_width_mm / 25.4)
+    dpi_y = height_px / (record.page_height_mm / 25.4)
+    effective_dpi = min(dpi_x, dpi_y)
+    dpi_details: dict[str, Any] = {
+        "template_id": record.id,
+        "background_asset": record.background_asset,
+        "width_px": width_px,
+        "height_px": height_px,
+        "effective_dpi": round(effective_dpi, 2),
+        "minimum_dpi": product.minimum_dpi,
+        "warning_dpi": product.warning_dpi,
+    }
+    if effective_dpi < product.minimum_dpi:
+        issues.append(
+            _issue(
+                "template_background_dpi_too_low",
+                record.id,
+                f"Background artwork of '{record.id}' is below the product minimum of {product.minimum_dpi} dpi",
+                details=dpi_details,
+            )
+        )
+    elif effective_dpi < product.warning_dpi:
+        issues.append(
+            _issue(
+                "template_background_dpi_warning",
+                record.id,
+                f"Background artwork of '{record.id}' is below the recommended {product.warning_dpi} dpi",
+                blocking=False,
+                details=dpi_details,
+            )
+        )
+
+    expected_aspect = record.page_width_mm / record.page_height_mm
+    actual_aspect = width_px / height_px
+    deviation = abs(actual_aspect / expected_aspect - 1)
+    if deviation > _ASPECT_WARNING_RATIO:
+        issues.append(
+            _issue(
+                "template_background_aspect_mismatch",
+                record.id,
+                f"Background artwork of '{record.id}' does not match the page aspect ratio",
+                blocking=deviation > _ASPECT_ERROR_RATIO,
+                details={
+                    "template_id": record.id,
+                    "background_asset": record.background_asset,
+                    "expected_aspect": round(expected_aspect, 4),
+                    "actual_aspect": round(actual_aspect, 4),
+                    "deviation": round(deviation, 4),
+                },
+            )
+        )
+
+    return issues
+
+
+def load_registry_bundle(registries_dir: Path, assets_dir: Path | None = None) -> RegistryBundle:
+    """Load and cross-check the registry files.
+
+    `assets_dir` is optional so the loader stays usable without artwork on disk (most tests
+    build registries in a tmp dir). Pass it to have declared background artwork verified;
+    without it, artwork checks are skipped rather than guessed.
+    """
     use_cases, diagnostics = _load_use_cases(registries_dir / "use_cases")
     products, product_issues = _load_products(registries_dir / "products")
     templates, template_issues = _load_templates(registries_dir / "templates")
@@ -204,6 +364,13 @@ def load_registry_bundle(registries_dir: Path) -> RegistryBundle:
                 )
             )
             continue
+
+        if assets_dir is not None:
+            background_issues = _background_diagnostics(record, product, assets_dir)
+            diagnostics.extend(background_issues)
+            if any(issue.blocking for issue in background_issues):
+                # A card whose artwork is missing or too soft must not be orderable.
+                continue
 
         seen_templates.add(key)
         active_templates.append(record)

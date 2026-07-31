@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import type { ProductDefinition, TemplateDefinition } from '../registries/types';
+import type { TemplateDefinition } from '../registries/types';
 import type { ElementAdjustment, ValidationIssue } from '../design/types';
-import { assetElementForField, imageQualitySummary, type AssetMetadata } from './selectionHelpers';
+import { assetElementForField, type AssetMetadata } from './selectionHelpers';
 import {
   fieldGroupLabel,
   fieldHelperText,
@@ -14,31 +14,350 @@ import {
 } from './selectionRules';
 import { uiText } from '../ui/text';
 
-type TemplateFieldsListProps = {
-  template: TemplateDefinition;
-  product: ProductDefinition;
-  layoutValues: {
-    text_values: Record<string, string>;
-    asset_values: Record<string, string>;
-    element_adjustments: Record<string, ElementAdjustment>;
+const MAX_SUGGESTIONS = 3;
+const MAX_TEXTAREA_ROWS = 2;
+
+type TemplateField = TemplateDefinition['fields'][number];
+
+type LayoutValues = {
+  text_values: Record<string, string>;
+  asset_values: Record<string, string>;
+  element_adjustments: Record<string, ElementAdjustment>;
+};
+
+type SharedFieldProps = {
+  field: TemplateField;
+  index: number;
+  /** False for single-field sections, where the section heading already names the field. */
+  showLabel: boolean;
+  issue: ValidationIssue | null;
+  onFieldInteract: (fieldId: string) => void;
+  disabled: boolean;
+};
+
+type ContentSection = {
+  key: string;
+  title: string;
+  fields: Array<{ field: TemplateField; index: number }>;
+  showFieldLabels: boolean;
+  optional: boolean;
+};
+
+/**
+ * Groups template fields into the visible form sections.
+ *
+ * Grouping comes from the registry (`fieldGroupLabel`) so nothing here knows about
+ * concrete field ids. A section holding a single field borrows that field's label as
+ * its heading — that is what collapses "Bilder → Logo" and "Link und QR → Link zu
+ * deinen Google-Bewertungen" into one line instead of a heading plus a label.
+ */
+export function useContentSections(template: TemplateDefinition): ContentSection[] {
+  return useMemo(() => {
+    const groups = new Map<string, ContentSection>();
+
+    template.fields.forEach((field, index) => {
+      if (field.type !== 'text' && field.type !== 'url' && field.type !== 'logo' && field.type !== 'image') {
+        return;
+      }
+      const groupTitle = fieldGroupLabel(field, index);
+      const existing = groups.get(groupTitle);
+      if (existing) {
+        existing.fields.push({ field, index });
+        return;
+      }
+      groups.set(groupTitle, {
+        key: groupTitle,
+        title: groupTitle,
+        fields: [{ field, index }],
+        showFieldLabels: true,
+        optional: false,
+      });
+    });
+
+    return Array.from(groups.values()).map((section) => {
+      if (section.fields.length !== 1) {
+        return section;
+      }
+      const { field, index } = section.fields[0];
+      return {
+        ...section,
+        title: fieldLabel(field, index),
+        showFieldLabels: false,
+        optional: !field.required,
+      };
+    });
+  }, [template.fields]);
+}
+
+function textFor(template: string, field: string) {
+  return template.replace('{field}', field);
+}
+
+type ContentTextFieldProps = SharedFieldProps & {
+  value: string;
+  onTextChange: (fieldId: string, value: string) => void;
+};
+
+export function ContentTextField({
+  field,
+  index,
+  showLabel,
+  issue,
+  value,
+  onTextChange,
+  onFieldInteract,
+  disabled,
+}: ContentTextFieldProps) {
+  const fieldName = fieldLabel(field, index);
+  const inputId = `${field.id}-input`;
+  const hintId = `${field.id}-hint`;
+  const errorId = `${field.id}-error`;
+  const helpText = field.help_text ?? (showLabel ? null : fieldHelperText(field, index));
+  const isSingleLine = field.type === 'url' || (field.max_lines ?? 1) <= 1;
+  const suggestions = fieldSuggestions(field, index)
+    .map((suggestion) => trimSuggestion(suggestion, field.max_length))
+    .slice(0, MAX_SUGGESTIONS);
+  const lineLimit = field.max_lines ?? 1;
+  const lineLimitReached = lineLimit > 1 && value.split('\n').length >= lineLimit;
+
+  // Only static text goes into aria-describedby. Pointing it at the live character
+  // counter would make screen readers re-announce the description on every keystroke.
+  const describedBy = [helpText ? hintId : null, issue ? errorId : null].filter(Boolean).join(' ') || undefined;
+  const sharedProps = {
+    id: inputId,
+    'aria-label': showLabel ? undefined : fieldName,
+    'aria-describedby': describedBy,
+    'aria-invalid': Boolean(issue?.blocking),
+    value,
+    maxLength: field.max_length ?? undefined,
+    placeholder: fieldPlaceholder(field, index),
+    disabled,
+    onFocus: () => onFieldInteract(field.id),
+    onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      onFieldInteract(field.id);
+      onTextChange(field.id, event.target.value);
+    },
   };
+
+  return (
+    <div
+      id={field.id}
+      className={`content-field${issue ? ` content-field--issue content-field--issue--${issue.severity}` : ''}`}
+    >
+      {showLabel || field.max_length !== null ? (
+        <div className="content-field__row">
+          {showLabel ? (
+            <label className="content-field__label" htmlFor={inputId}>
+              {fieldName}
+            </label>
+          ) : (
+            <span />
+          )}
+          {field.max_length !== null ? (
+            <span className="content-field__counter" aria-hidden="true">
+              {value.length} / {field.max_length} {uiText.selection.content.charUnit}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {isSingleLine ? (
+        <input type={field.type === 'url' ? 'url' : 'text'} inputMode={field.type === 'url' ? 'url' : undefined} {...sharedProps} />
+      ) : (
+        <textarea rows={Math.min(MAX_TEXTAREA_ROWS, lineLimit)} {...sharedProps} />
+      )}
+
+      {helpText ? (
+        <p className="content-field__hint" id={hintId}>
+          {helpText}
+        </p>
+      ) : null}
+
+      {lineLimitReached ? (
+        <p className="content-field__note" aria-hidden="true">
+          {uiText.selection.content.lineLimit.replace('{count}', String(lineLimit))}
+        </p>
+      ) : null}
+
+      {suggestions.length > 0 ? (
+        <div className="content-field__chips" aria-label={textFor(uiText.selection.content.suggestionsLabel, fieldName)}>
+          {suggestions.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              className="template-suggestion"
+              disabled={disabled}
+              onClick={() => {
+                onFieldInteract(field.id);
+                onTextChange(field.id, suggestion);
+              }}
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {issue ? (
+        <p className="content-field__error" id={errorId} aria-live="polite">
+          {friendlyValidationMessage(issue, fieldName)}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+type ContentAssetFieldProps = SharedFieldProps & {
+  template: TemplateDefinition;
+  layoutValues: LayoutValues;
+  assetPreviews: Record<string, string>;
+  assetDetails: Record<string, AssetMetadata>;
+  assetErrors: Record<string, string | null>;
+  onAssetChange: (fieldId: string, kind: 'logo' | 'image', file: File | null) => void;
+  onToggleAssetEditor: (fieldId: string | null) => void;
+};
+
+export function ContentAssetField({
+  field,
+  index,
+  showLabel,
+  issue,
+  template,
+  layoutValues,
+  assetPreviews,
+  assetDetails,
+  assetErrors,
+  onAssetChange,
+  onToggleAssetEditor,
+  onFieldInteract,
+  disabled,
+}: ContentAssetFieldProps) {
+  const fieldName = fieldLabel(field, index);
+  const hintId = `${field.id}-hint`;
+  const errorId = `${field.id}-error`;
+  const kind = field.type === 'logo' ? 'logo' : 'image';
+  const assetValue = layoutValues.asset_values[field.id] ?? '';
+  const assetPreview = assetPreviews[field.id] ?? (assetValue.startsWith('data:') ? assetValue : '');
+  const assetDetail = assetDetails[field.id] ?? null;
+  const assetElement = assetElementForField(template, field.id);
+  const helpText = field.help_text ?? (showLabel ? null : fieldHelperText(field, index));
+
+  /**
+   * Accessible file input: a visually hidden `<input>` inside its `<label>`, so it stays
+   * keyboard reachable. `accessibleName` names the action rather than the field — the
+   * section heading already says "Logo" — and always contains the visible text (WCAG 2.5.3).
+   */
+  const fileInput = (label: string, accessibleName: string, quiet: boolean) => (
+    <label className={`content-asset__button${quiet ? ' content-asset__button--quiet' : ''}`}>
+      <input
+        type="file"
+        aria-label={accessibleName}
+        accept="image/png,image/jpeg,image/svg+xml"
+        disabled={disabled}
+        onFocus={() => onFieldInteract(field.id)}
+        onChange={(event) => {
+          onFieldInteract(field.id);
+          onAssetChange(field.id, kind, event.target.files?.[0] ?? null);
+        }}
+      />
+      {label}
+    </label>
+  );
+
+  return (
+    <div
+      id={field.id}
+      className={`content-field content-field--asset${issue ? ` content-field--issue content-field--issue--${issue.severity}` : ''}`}
+    >
+      {showLabel ? <span className="content-field__label">{fieldName}</span> : null}
+
+      {assetPreview ? (
+        <div className="content-asset content-asset--filled">
+          <img className="content-asset__thumb" src={assetPreview} alt={`${fieldName} Vorschau`} />
+          <div className="content-asset__body">
+            <p className="content-asset__status">{assetDetail?.original_filename ?? fieldName}</p>
+            <div className="content-asset__actions">
+              {assetElement ? (
+                <button
+                  type="button"
+                  className="content-asset__action"
+                  disabled={disabled}
+                  onClick={() => {
+                    onFieldInteract(field.id);
+                    onToggleAssetEditor(field.id);
+                  }}
+                >
+                  {textFor(uiText.selection.content.assetAdjust, fieldName)}
+                </button>
+              ) : null}
+              {fileInput(
+                uiText.selection.content.assetReplace,
+                textFor(uiText.selection.content.assetReplaceLabel, fieldName),
+                true,
+              )}
+              <button
+                type="button"
+                className="content-asset__action"
+                aria-label={textFor(uiText.selection.content.assetRemoveLabel, fieldName)}
+                disabled={disabled}
+                onClick={() => {
+                  onFieldInteract(field.id);
+                  onAssetChange(field.id, kind, null);
+                }}
+              >
+                {uiText.selection.content.assetRemove}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="content-asset content-asset--empty">
+          {(() => {
+            const uploadLabel = textFor(uiText.selection.content.assetUpload, fieldName);
+            return fileInput(uploadLabel, uploadLabel, false);
+          })()}
+          {helpText ? (
+            <p className="content-field__hint" id={hintId}>
+              {helpText}
+            </p>
+          ) : null}
+        </div>
+      )}
+
+      {/* No local DPI estimate: the resolution verdict comes from the quality check below,
+          which knows the crop (`cover` hides pixels) and the clamped scale the renderer
+          actually applies. A second formula here could only contradict it. */}
+      {assetErrors[field.id] ? (
+        <p className="content-field__error" id={errorId} aria-live="polite">
+          {assetErrors[field.id]}
+        </p>
+      ) : null}
+
+      {issue ? (
+        <p className="content-field__error" aria-live="polite">
+          {friendlyValidationMessage(issue, fieldName)}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+type ContentFieldSectionsProps = {
+  template: TemplateDefinition;
+  layoutValues: LayoutValues;
   assetPreviews: Record<string, string>;
   assetDetails: Record<string, AssetMetadata>;
   assetErrors: Record<string, string | null>;
   validationIssues: ValidationIssue[];
   onTextChange: (fieldId: string, value: string) => void;
   onAssetChange: (fieldId: string, kind: 'logo' | 'image', file: File | null) => void;
-  onAssetAdjustmentChange: (fieldId: string, adjustment: ElementAdjustment) => void;
-  onAssetAdjustmentReset: (fieldId: string) => void;
-  expandedAssetFieldId: string | null;
   onToggleAssetEditor: (fieldId: string | null) => void;
   onFieldInteract: (fieldId: string) => void;
   disabled?: boolean;
 };
 
-export function TemplateFieldsList({
+export function ContentFieldSections({
   template,
-  product,
   layoutValues,
   assetPreviews,
   assetDetails,
@@ -46,300 +365,60 @@ export function TemplateFieldsList({
   validationIssues,
   onTextChange,
   onAssetChange,
-  onAssetAdjustmentChange,
-  onAssetAdjustmentReset,
-  expandedAssetFieldId,
   onToggleAssetEditor,
   onFieldInteract,
   disabled = false,
-}: TemplateFieldsListProps) {
-  const groupedFields = useMemo(() => {
-    const groups = new Map<
-      string,
-      {
-        title: string;
-        description: string;
-        fields: Array<{ field: TemplateDefinition['fields'][number] }>;
-      }
-    >();
+}: ContentFieldSectionsProps) {
+  const sections = useContentSections(template);
 
-    template.fields.forEach((field, index) => {
-      const title = fieldGroupLabel(field, index);
-      const description =
-        title === 'Bilder'
-          ? 'Logo und Fotos für den Markenauftritt.'
-          : title === 'Link und QR'
-            ? 'Zieladresse und QR-Code verständlich ablegen.'
-            : 'Texte mit klaren Beispielen und Zählern.';
-      const current = groups.get(title);
-      const entry = { field };
-      if (current) {
-        current.fields.push(entry);
-        return;
-      }
-      groups.set(title, {
-        title,
-        description,
-        fields: [entry],
-      });
-    });
-
-    return Array.from(groups.values());
-  }, [template.fields]);
-
-  function renderIssue(fieldId: string) {
+  function issueFor(fieldId: string) {
     return validationIssues.find((issue) => validationDisplayPath(issue) === fieldId) ?? null;
   }
 
-  function renderSuggestions(field: TemplateDefinition['fields'][number], index: number) {
-    if (field.type !== 'text' && field.type !== 'url') {
-      return null;
-    }
-
-    const suggestions = fieldSuggestions(field, index).map((suggestion) => trimSuggestion(suggestion, field.max_length));
-    if (suggestions.length === 0) {
-      return null;
-    }
-
-    return (
-      <div className="template-suggestions" aria-label={`Vorschläge für ${fieldLabel(field, index)}`}>
-        {suggestions.map((suggestion) => (
-          <button
-            key={suggestion}
-            type="button"
-            className="template-suggestion"
-            disabled={disabled}
-            onClick={() => {
-              onFieldInteract(field.id);
-              onTextChange(field.id, suggestion);
-            }}
-          >
-            {suggestion}
-          </button>
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div className="template-fields">
-      {groupedFields.map((group) => (
-        <section key={group.title} className="template-field-group" aria-label={group.title}>
-          <div className="template-field-group__header">
-            <div>
-              <h4>{group.title}</h4>
-              <p>{group.description}</p>
-            </div>
+    <>
+      {sections.map((section) => (
+        <section key={section.key} className="content-section" aria-labelledby={`${section.key}-title`}>
+          <div className="content-section__head">
+            <h3 id={`${section.key}-title`} className="content-section__title">
+              {section.title}
+            </h3>
+            {section.optional ? (
+              <span className="content-field__optional">{uiText.selection.content.optional}</span>
+            ) : null}
           </div>
-          <div className="template-field-group__fields">
-            {group.fields.map(({ field }) => {
-              const fieldIndex = template.fields.indexOf(field);
-              const fieldName = fieldLabel(field, fieldIndex);
-              const fieldIssue = renderIssue(field.id);
-              const isAssetField = field.type === 'logo' || field.type === 'image';
-              const isSingleLine = field.type === 'url' || (field.type === 'text' && (field.max_lines ?? 1) <= 1);
-
-              if (field.type === 'text' || field.type === 'url') {
-                const value = layoutValues.text_values[field.id] ?? '';
-                const remainingCharacters = field.max_length === null ? null : Math.max(0, field.max_length - value.length);
-                const hintId = `${field.id}-hint`;
-                const errorId = `${field.id}-error`;
-                return (
-                  <label
-                    key={field.id}
-                    id={field.id}
-                    className={`template-field${fieldIssue ? ` template-field--issue template-field--issue--${fieldIssue.severity}` : ''}`}
-                  >
-                    <div className="template-field__header">
-                      <div>
-                        <span className="template-field__label">{fieldName}</span>
-                        <p className="template-field__hint">{fieldHelperText(field, fieldIndex)}</p>
-                      </div>
-                      <div className="template-field__meta">
-                        {field.required ? <span className="template-field__required">Pflicht</span> : <span className="template-field__optional">Optional</span>}
-                      </div>
-                    </div>
-                    {isSingleLine ? (
-                      <input
-                        type={field.type === 'url' ? 'url' : 'text'}
-                        inputMode={field.type === 'url' ? 'url' : undefined}
-                        aria-label={fieldName}
-                        aria-describedby={fieldIssue ? `${hintId} ${errorId}` : hintId}
-                        aria-invalid={Boolean(fieldIssue?.blocking)}
-                        value={value}
-                        maxLength={field.max_length ?? undefined}
-                        placeholder={fieldPlaceholder(field, fieldIndex)}
-                        disabled={disabled}
-                        onFocus={() => onFieldInteract(field.id)}
-                        onChange={(event) => {
-                          onFieldInteract(field.id);
-                          onTextChange(field.id, event.target.value);
-                        }}
-                      />
-                    ) : (
-                      <textarea
-                        aria-label={fieldName}
-                        aria-describedby={fieldIssue ? `${hintId} ${errorId}` : hintId}
-                        aria-invalid={Boolean(fieldIssue?.blocking)}
-                        value={value}
-                        rows={field.max_lines ?? 1}
-                        maxLength={field.max_length ?? undefined}
-                        placeholder={fieldPlaceholder(field, fieldIndex)}
-                        disabled={disabled}
-                        onFocus={() => onFieldInteract(field.id)}
-                        onChange={(event) => {
-                          onFieldInteract(field.id);
-                          onTextChange(field.id, event.target.value);
-                        }}
-                      />
-                    )}
-                    <p className="template-field__hint" id={hintId}>
-                      {field.max_length !== null
-                        ? `Maximal ${field.max_length} Zeichen${remainingCharacters !== null ? ` · ${remainingCharacters} verbleibend` : ''}`
-                        : 'Kein Zeichenlimit gesetzt'}
-                    </p>
-                    {field.max_lines !== null && field.max_lines > 1 ? <p className="template-field__hint">Maximal {field.max_lines} Zeilen</p> : null}
-                    {renderSuggestions(field, fieldIndex)}
-                    {fieldIssue ? (
-                      <p className="template-field__error" id={errorId} aria-live="polite">
-                        {friendlyValidationMessage(fieldIssue, fieldName)}
-                      </p>
-                    ) : null}
-                  </label>
-                );
-              }
-
-              if (!isAssetField) {
-                return null;
-              }
-
-              const assetValue = layoutValues.asset_values[field.id] ?? '';
-              const assetPreview = assetPreviews[field.id] ?? (assetValue.startsWith('data:') ? assetValue : '');
-              const assetDetail = assetDetails[field.id] ?? null;
-              const assetElement = assetElementForField(template, field.id);
-              const assetAdjustment = assetElement
-                ? layoutValues.element_adjustments[assetElement.id] ?? { offset_x: 0, offset_y: 0, scale: 1 }
-                : { offset_x: 0, offset_y: 0, scale: 1 };
-              const effectiveDpi =
-                assetElement && assetDetail?.width_px
-                  ? assetDetail.width_px / ((assetElement.box_mm.width_mm * assetAdjustment.scale) / 25.4)
-                  : null;
-              const dpiSummary = effectiveDpi === null ? null : imageQualitySummary(effectiveDpi, product);
-              const hintId = `${field.id}-hint`;
-              const errorId = `${field.id}-error`;
-              return (
-                <div
-                  key={field.id}
-                  id={field.id}
-                  className={`template-field${fieldIssue ? ` template-field--issue template-field--issue--${fieldIssue.severity}` : ''}`}
-                >
-                  <div className="template-field__header">
-                    <div>
-                      <span className="template-field__label">{fieldName}</span>
-                      <p className="template-field__hint">{fieldHelperText(field, fieldIndex)}</p>
-                    </div>
-                    <div className="template-field__meta">
-                      {field.required ? <span className="template-field__required">Pflicht</span> : <span className="template-field__optional">Optional</span>}
-                    </div>
-                  </div>
-                  <div className="template-upload">
-                    <div className="template-upload__actions">
-                      <label className="template-upload__button">
-                        <input
-                          type="file"
-                          aria-label={fieldName}
-                          accept="image/png,image/jpeg,image/svg+xml"
-                          disabled={disabled}
-                          onFocus={() => onFieldInteract(field.id)}
-                          onChange={(event) => {
-                            onFieldInteract(field.id);
-                            onAssetChange(field.id, field.type === 'logo' ? 'logo' : 'image', event.target.files?.[0] ?? null);
-                          }}
-                        />
-                        {assetValue ? 'Ersetzen' : 'Datei auswählen'}
-                      </label>
-                      <button
-                        type="button"
-                        className="template-field__reset"
-                        disabled={disabled || !assetValue}
-                        onClick={() => {
-                          onFieldInteract(field.id);
-                          onAssetChange(field.id, field.type === 'logo' ? 'logo' : 'image', null);
-                        }}
-                      >
-                        Entfernen
-                      </button>
-                      {assetElement ? (
-                        <button
-                          type="button"
-                          className="template-field__reset"
-                          disabled={disabled}
-                          onClick={() => onToggleAssetEditor(expandedAssetFieldId === field.id ? null : field.id)}
-                        >
-                          {expandedAssetFieldId === field.id ? 'Anpassung schließen' : 'Bild anpassen'}
-                        </button>
-                      ) : null}
-                    </div>
-                    <p className="template-upload__hint" id={hintId}>
-                      Unterstützt werden PNG, JPG und SVG. Maus, Touch und Tastatur funktionieren gleichermaßen.
-                    </p>
-                    {assetPreview ? (
-                      <div className="template-field__preview">
-                        <img src={assetPreview} alt={`${fieldName} Vorschau`} />
-                      </div>
-                    ) : (
-                      <div className="template-field__preview template-field__preview--empty" aria-hidden="true">
-                        <span>{fieldName}</span>
-                        <strong>Kein Upload</strong>
-                      </div>
-                    )}
-                    {assetValue ? (
-                      <details className="template-upload__details">
-                        <summary>Technische Details</summary>
-                        <dl>
-                          <div>
-                            <dt>Dateityp</dt>
-                            <dd>{assetDetail?.mime_type ?? 'unbekannt'}</dd>
-                          </div>
-                          <div>
-                            <dt>Größe</dt>
-                            <dd>
-                              {assetDetail?.width_px && assetDetail?.height_px
-                                ? `${assetDetail.width_px} × ${assetDetail.height_px} px`
-                                : 'unbekannt'}
-                            </dd>
-                          </div>
-                        </dl>
-                      </details>
-                    ) : null}
-                    {dpiSummary ? <p className={`template-field__hint template-field__hint--${dpiSummary.className}`}>{dpiSummary.text}</p> : null}
-                    {assetErrors[field.id] ? (
-                      <p className="template-field__error" id={errorId} aria-live="polite">
-                        {assetErrors[field.id]}
-                      </p>
-                    ) : null}
-                    {fieldIssue ? (
-                      <p className="template-field__error" aria-live="polite">
-                        {friendlyValidationMessage(fieldIssue, fieldName)}
-                      </p>
-                    ) : null}
-                    {assetElement ? (
-                      <button
-                        type="button"
-                        className="template-field__reset"
-                        disabled={disabled}
-                        onClick={() => onToggleAssetEditor(expandedAssetFieldId === field.id ? null : field.id)}
-                      >
-                        {expandedAssetFieldId === field.id ? 'Bildansicht schließen' : 'Bild anpassen'}
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          {section.fields.map(({ field, index }) => {
+            const shared = {
+              field,
+              index,
+              showLabel: section.showFieldLabels,
+              issue: issueFor(field.id),
+              onFieldInteract,
+              disabled,
+            };
+            return field.type === 'logo' || field.type === 'image' ? (
+              <ContentAssetField
+                key={field.id}
+                {...shared}
+                template={template}
+                layoutValues={layoutValues}
+                assetPreviews={assetPreviews}
+                assetDetails={assetDetails}
+                assetErrors={assetErrors}
+                onAssetChange={onAssetChange}
+                onToggleAssetEditor={onToggleAssetEditor}
+              />
+            ) : (
+              <ContentTextField
+                key={field.id}
+                {...shared}
+                value={layoutValues.text_values[field.id] ?? ''}
+                onTextChange={onTextChange}
+              />
+            );
+          })}
         </section>
       ))}
-    </div>
+    </>
   );
 }

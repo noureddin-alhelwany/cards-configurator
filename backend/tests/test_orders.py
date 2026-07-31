@@ -33,7 +33,7 @@ def test_order_creation_persists_and_exposes_detail(tmp_path: Path, monkeypatch)
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.0.0',
+                'template_version': '1.2.0',
             },
         )
         assert template_response.status_code == 200
@@ -125,7 +125,7 @@ def test_failed_rendering_can_be_retried(tmp_path: Path, monkeypatch) -> None:
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.0.0',
+                'template_version': '1.2.0',
             },
         )
         assert template_response.status_code == 200
@@ -190,3 +190,72 @@ def test_failed_rendering_can_be_retried(tmp_path: Path, monkeypatch) -> None:
         assert len(jobs) == 1
         assert jobs[0]['status'] == 'completed'
         assert jobs[0]['attempts'] == 2
+
+
+def test_order_creation_ignores_asset_values_for_removed_fields(tmp_path: Path, monkeypatch) -> None:
+    """A draft saved before a field was removed must still be orderable.
+
+    Layout updates merge instead of deleting, so `asset_values` can still carry an id for
+    a field the template no longer declares -- and that asset may be gone from disk.
+    """
+    db_path = tmp_path / 'orders.sqlite3'
+    monkeypatch.setenv('DATABASE_URL', f'sqlite:///{db_path}')
+
+    async def fake_render_order_artifacts(*, output_dir: Path, **_: object) -> SimpleNamespace:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        preview_path = output_dir / 'preview.png'
+        pdf_path = output_dir / 'order.pdf'
+        preview_path.write_bytes(b'png')
+        pdf_path.write_bytes(b'pdf')
+        return SimpleNamespace(preview_path=str(preview_path), pdf_path=str(pdf_path))
+
+    monkeypatch.setattr(
+        'cards_configurator_backend.rendering.jobs.render_order_artifacts',
+        fake_render_order_artifacts,
+    )
+
+    with TestClient(create_app()) as client:
+        client.post(
+            '/api/drafts/current/template',
+            json={
+                'use_case_id': 'google_reviews',
+                'product_id': 'a6_card',
+                'template_id': 'proof_a6_card',
+                'template_version': '1.2.0',
+            },
+        )
+        layout_response = client.patch(
+            '/api/drafts/current/layout',
+            json={
+                'text_values': {
+                    'businessName': 'Studio One',
+                    'headline': 'Leave a Google review',
+                    'qrTarget': 'example.com/review',
+                },
+                'asset_values': {'heroImage': 'an-asset-id-that-no-longer-exists'},
+            },
+        )
+        assert layout_response.status_code == 200
+        assert layout_response.json()['layout_state']['asset_values'] == {
+            'heroImage': 'an-asset-id-that-no-longer-exists'
+        }
+
+        validation_payload = client.get('/api/drafts/current/validation').json()
+        assert validation_payload['blocking'] is False
+
+        approval_response = client.post(
+            '/api/drafts/current/approval',
+            json={
+                'texts_checked': True,
+                'url_checked': True,
+                'image_crop_checked': True,
+                'preview_released': True,
+            },
+        )
+        assert approval_response.status_code == 200
+
+        order_response = client.post('/api/orders')
+        assert order_response.status_code == 200
+
+        detail_payload = client.get(f"/api/orders/{order_response.json()['id']}").json()
+        assert detail_payload['assets'] == []

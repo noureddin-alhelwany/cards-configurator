@@ -15,6 +15,40 @@
   border-radius: 6mm;
 }
 
+/*
+ * The printed card carries only the artwork and the building blocks.
+ *
+ * `border-radius` matters most: on a full-bleed card it clips artwork away at all four
+ * corners, and a press needs ink all the way to the bleed edge. `overflow: hidden` stays —
+ * it is what turns a `cover` background into a bleed crop instead of an overflow.
+ */
+.design-stage--production {
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.design-stage-shell--production {
+  display: block;
+  width: var(--page-width);
+}
+
+/*
+ * The artwork fills the page from the stage geometry alone — `inset: 0` needs no numbers
+ * from the template, so it cannot be off by a millimetre. `cover` plus the stage's
+ * `overflow: hidden` turns a slight aspect mismatch into a bleed crop rather than a gap.
+ */
+.design-stage__background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
 .design-stage__bleed {
   position: absolute;
   inset: 0;
@@ -40,6 +74,13 @@
 .design-element--text {
   white-space: pre-wrap;
   text-wrap: balance;
+  /*
+   * Once auto-fit hits its shrink floor, further text has to go somewhere. Without this it
+   * prints over the artwork and over its neighbours; clipped is not good either, but it is
+   * visible in the preview, and the quality gate blocks the same case. Never a template
+   * decision: overlapping text is wrong on every card.
+   */
+  overflow: hidden;
 }
 
 .design-element--text--reduced {
@@ -64,4 +105,56 @@
 
 .design-element--issue--error {
   outline-color: rgba(138, 59, 36, 0.6);
+}
+
+/*
+ * Print reset for everything OUTSIDE the card.
+ *
+ * `@media print` is the right tool here and only here: the preview PNG is an element
+ * screenshot of `.design-stage`, so it never sees the page shell, while `page.pdf()`
+ * captures the whole document. Without this the card is centred in an 1800px viewport,
+ * which puts it ~175mm from the left edge and makes Chrome paginate a 111mm page.
+ */
+@media print {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  .design-stage-shell {
+    display: block;
+    place-items: initial;
+    width: auto;
+  }
+
+  /* Belt and braces: any route that prints the screen variant still gets a clean sheet. */
+  .design-stage {
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .design-stage__bleed,
+  .design-stage__trim {
+    display: none;
+  }
+
+  .design-element--issue {
+    outline: none;
+  }
+}
+
+/*
+ * QR quiet-zone plate. The element box is the symbol; this wrapper adds the light margin
+ * the QR standard requires around it, so `1 module == box_width_mm / module_count` holds
+ * exactly and the validator's numbers describe what is printed.
+ */
+.design-element--qr-plate {
+  display: block;
+}
+
+.design-element--qr-plate .design-element--qr {
+  display: block;
+  object-fit: contain;
 }

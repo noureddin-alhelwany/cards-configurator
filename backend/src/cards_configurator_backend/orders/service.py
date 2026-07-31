@@ -21,8 +21,11 @@ from ..registries.schemas import (
     TemplateDefinition,
     UseCaseDefinition,
 )
-from ..rendering.jobs import load_order_assets_from_storage, render_order_job
-from ..urls import build_qr_data_url
+# `..rendering.jobs` is imported inside the two functions that need it. At module level it
+# closes a cycle: rendering/__init__ -> rendering.jobs -> orders.schemas -> orders/__init__
+# -> orders.service -> rendering.jobs (still initialising). That made any module importing
+# `rendering` before `orders` fail with an ImportError.
+from ..urls import QR_DARK_DEFAULT, build_qr_data_url, resolve_qr_value
 from .schemas import OrderAssetState, OrderDetail, OrderSummary
 
 ORDER_RENDER_ENGINE_VERSION = "1"
@@ -112,6 +115,8 @@ def get_order(session: Session, order_id: str) -> OrderDetail:
 
 
 def get_order_fixture(session: Session, data_dir: Path, order_id: str) -> ProofFixture:
+    from ..rendering.jobs import load_order_assets_from_storage
+
     record = session.get(OrderRecord, order_id)
     if record is None:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -121,13 +126,16 @@ def get_order_fixture(session: Session, data_dir: Path, order_id: str) -> ProofF
     use_case = UseCaseDefinition.model_validate(record.use_case_snapshot)
     layout_state = LayoutState.model_validate(record.layout_snapshot)
     assets = load_order_assets_from_storage(data_dir, session, record.id)
-    qr_field = next((field for field in template.fields if field.type == "url"), None)
-    qr_value = layout_state.text_values.get(qr_field.id, "") if qr_field is not None else ""
-    if not qr_value:
-        qr_element = next((element for element in template.elements if element.kind == "qr"), None)
-        qr_value = qr_element.value if qr_element is not None else ""
+    qr_value = resolve_qr_value(template, layout_state)
     if qr_value:
-        assets["qr"] = AssetDataUrl(mime_type="image/svg+xml", data_url=build_qr_data_url(qr_value))
+        qr_element = next((element for element in template.elements if element.kind == "qr"), None)
+        assets["qr"] = AssetDataUrl(
+            mime_type="image/svg+xml",
+            data_url=build_qr_data_url(
+                qr_value,
+                dark=qr_element.color if qr_element is not None else QR_DARK_DEFAULT,
+            ),
+        )
     return ProofFixture(template=template, product=product, use_case=use_case, layout_state=layout_state, assets=assets)
 
 
@@ -137,6 +145,8 @@ async def create_order(
     data_dir: Path,
     base_url: str,
 ) -> OrderDetail:
+    from ..rendering.jobs import load_order_assets_from_storage, render_order_job
+
     draft = get_current_draft(session)
     if draft.approved_at is None:
         raise HTTPException(status_code=409, detail="Draft must be approved before creating an order")
@@ -177,8 +187,12 @@ async def create_order(
     session.add(record)
     session.flush()
 
+    # Only attach assets for fields the template still declares. Layout updates merge
+    # rather than delete, so a draft created before a field was removed can still carry
+    # its asset id -- and that asset may no longer exist on disk.
+    asset_field_ids = {field.id for field in template.fields if field.type in {"logo", "image"}}
     for semantic_role, asset_id in draft.layout_state.asset_values.items():
-        if not asset_id or asset_id.startswith("data:"):
+        if not asset_id or asset_id.startswith("data:") or semantic_role not in asset_field_ids:
             continue
         load_asset(data_dir, asset_id)
         session.add(OrderAssetRecord(order_id=record.id, asset_id=asset_id, semantic_role=semantic_role))
