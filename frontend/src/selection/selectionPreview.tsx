@@ -4,6 +4,7 @@ import type { ElementAdjustment, ProofFixture, ValidationIssue } from '../design
 import DesignRenderer from '../design/DesignRenderer';
 import { defaultAdjustmentsForTemplate } from './selectionHelpers';
 import { emptyPreviewAsset, placeholderQrDataUrl } from './previewAssets';
+import { brandingFallbackDataUrl, businessNameFromLayout } from '../design/branding';
 import { fieldDefaultValue, fieldLabel, trimSuggestion } from './selectionRules';
 import { uiText } from '../ui/text';
 
@@ -25,8 +26,17 @@ export function buildTemplatePreviewFixture(
   );
 
   const assets: ProofFixture['assets'] = {};
+  const demoBusinessName = businessNameFromLayout(template, { text_values });
   template.fields.forEach((field, index) => {
-    if (field.type === 'logo' || field.type === 'image') {
+    if (field.type === 'logo') {
+      // No upload in a browse preview: stand in with the brand name, same as the live card.
+      assets[field.id] = {
+        mime_type: 'image/svg+xml',
+        data_url: brandingFallbackDataUrl(demoBusinessName),
+      };
+      return;
+    }
+    if (field.type === 'image') {
       assets[field.id] = {
         mime_type: 'image/svg+xml',
         data_url: emptyPreviewAsset(fieldLabel(field, index)),
@@ -70,7 +80,6 @@ type TemplateLivePreviewProps = {
   showLivePreview?: boolean;
   showMockup?: boolean;
   expanded?: boolean;
-  onToggleExpanded?: () => void;
 };
 
 export function TemplateLivePreview({
@@ -84,7 +93,6 @@ export function TemplateLivePreview({
   showLivePreview = true,
   showMockup = true,
   expanded = false,
-  onToggleExpanded,
 }: TemplateLivePreviewProps) {
   const [qrPreview, setQrPreview] = useState<{ value: string; data_url: string } | null>(null);
   const [qrError, setQrError] = useState<string | null>(null);
@@ -92,6 +100,8 @@ export function TemplateLivePreview({
   const qrField = template.fields.find((field) => field.type === 'url') ?? null;
   const qrFieldId = qrField?.id ?? null;
   const qrValue = qrFieldId ? layoutValues.text_values[qrFieldId] ?? '' : '';
+  const qrElement = template.elements.find((element) => element.kind === 'qr');
+  const qrColor = qrElement && qrElement.kind === 'qr' ? qrElement.color : null;
 
   useEffect(() => {
     let active = true;
@@ -106,7 +116,10 @@ export function TemplateLivePreview({
     }
 
     setQrLoading(true);
-    const url = `/api/qr?value=${encodeURIComponent(qrValue)}`;
+    // Ask for the template's own QR colour so the preview matches the printed card.
+    const url = `/api/qr?value=${encodeURIComponent(qrValue)}${
+      qrColor ? `&dark=${encodeURIComponent(qrColor)}` : ''
+    }`;
     fetch(url)
       .then(async (response) => {
         if (!response.ok) {
@@ -132,7 +145,7 @@ export function TemplateLivePreview({
     return () => {
       active = false;
     };
-  }, [qrFieldId, qrValue]);
+  }, [qrFieldId, qrValue, qrColor]);
 
   const hasPreviewContent =
     template.fields.some((field) => field.type === 'text' || field.type === 'url' || field.type === 'logo' || field.type === 'image') ||
@@ -158,13 +171,30 @@ export function TemplateLivePreview({
             ...Object.fromEntries(
               template.fields
                 .filter((field) => field.type === 'logo' || field.type === 'image')
-                .map((field) => [
-                  field.id,
-                  {
-                    mime_type: assetPreviews[field.id]?.startsWith('data:image/svg+xml') ? 'image/svg+xml' : 'image/png',
-                    data_url: assetPreviews[field.id] ?? emptyPreviewAsset(field.type === 'logo' ? 'Logo' : 'Bild'),
-                  },
-                ]),
+                .map((field) => {
+                  const uploaded = assetPreviews[field.id];
+                  if (uploaded) {
+                    return [
+                      field.id,
+                      {
+                        mime_type: uploaded.startsWith('data:image/svg+xml') ? 'image/svg+xml' : 'image/png',
+                        data_url: uploaded,
+                      },
+                    ];
+                  }
+                  // Without a logo the brand name carries the card. The production render
+                  // applies the same fallback, so the approved proof is what gets printed.
+                  return [
+                    field.id,
+                    {
+                      mime_type: 'image/svg+xml',
+                      data_url:
+                        field.type === 'logo'
+                          ? brandingFallbackDataUrl(businessNameFromLayout(template, layoutValues))
+                          : emptyPreviewAsset('Bild'),
+                    },
+                  ];
+                }),
             ),
             ...(qrPreview
               ? {
@@ -181,14 +211,6 @@ export function TemplateLivePreview({
     <div className={`template-live-preview${expanded ? ' template-live-preview--expanded' : ''}`}>
       {showLivePreview ? (
         <>
-          <div className="template-live-preview__header">
-            <p className="template-detail__group-title">{uiText.selection.preview.liveTitle}</p>
-            {onToggleExpanded ? (
-              <button type="button" className="template-field__reset" onClick={onToggleExpanded}>
-                {expanded ? uiText.selection.preview.collapse : uiText.selection.preview.expand}
-              </button>
-            ) : null}
-          </div>
           {proofFixture ? (
             <div className={`template-live-preview__stage${expanded ? ' template-live-preview__stage--expanded' : ''}`}>
               {qrLoading ? <p className="template-live-preview__loading">{uiText.selection.preview.loading}</p> : null}
@@ -197,9 +219,6 @@ export function TemplateLivePreview({
           ) : (
             <p className="template-field__hint">{uiText.selection.preview.liveHint}</p>
           )}
-          <p className="template-live-preview__note">
-            {uiText.selection.preview.note}
-          </p>
         </>
       ) : null}
       {showMockup && proofFixture ? (
@@ -210,7 +229,7 @@ export function TemplateLivePreview({
           </div>
         </div>
       ) : null}
-      {qrField && !qrPreview ? <p className="template-field__hint">{qrError ?? uiText.selection.preview.qrPlaceholder}</p> : null}
+      {qrField && qrError ? <p className="content-field__error">{qrError}</p> : null}
     </div>
   );
 }

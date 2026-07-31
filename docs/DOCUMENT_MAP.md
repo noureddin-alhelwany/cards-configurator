@@ -11,6 +11,7 @@ Read only what the active task requires.
 | `STACK.md` | Frameworks and libraries | Setup/dependency changes |
 | `DOMAIN_MODEL.md` | Persistence and snapshots | Backend/data changes |
 | `TEMPLATE_AND_RENDERING.md` | Layout, renderer, assets, PDF | Editor/render work |
+| `PRINT_BUILD_LAYER.md` | Print-ready build layer: plan, progress, open TODOs | Artwork/print pipeline work |
 | `QUALITY_STRATEGY.md` | Validation and test levels | Validation/QA work |
 | `IMPLEMENTATION_ORDER.md` | Milestones and sequence | Choosing next work |
 | `DEFINITION_OF_DONE.md` | Completion standard | Before marking done |

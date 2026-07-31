@@ -28,7 +28,7 @@ def test_validation_reports_missing_required_fields(tmp_path: Path, monkeypatch)
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.0.0',
+                'template_version': '1.2.0',
             },
         )
         assert response.status_code == 200
@@ -53,7 +53,7 @@ def test_validation_reports_text_overflow(tmp_path: Path, monkeypatch) -> None:
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.0.0',
+                'template_version': '1.2.0',
             },
         )
         client.patch(
@@ -75,7 +75,10 @@ def test_validation_reports_text_overflow(tmp_path: Path, monkeypatch) -> None:
         assert 'text_overflow' in codes or 'text_too_long' in codes
 
 
-def test_validation_flags_warning_and_blocking_image_dpi(tmp_path: Path, monkeypatch) -> None:
+def test_validation_flags_warning_and_blocking_logo_dpi(tmp_path: Path, monkeypatch) -> None:
+    # The logo is the only asset field left on the template; its element `proof-logo`
+    # is 28 mm wide, so effective_dpi == width_px * 25.4 / 28 at the default scale.
+    # 300 px -> 272 dpi (warning band 225..300), 200 px -> 181 dpi (below the 225 minimum).
     db_path = tmp_path / 'drafts.sqlite3'
     monkeypatch.setenv('DATABASE_URL', f'sqlite:///{db_path}')
 
@@ -86,13 +89,13 @@ def test_validation_flags_warning_and_blocking_image_dpi(tmp_path: Path, monkeyp
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.0.0',
+                'template_version': '1.2.0',
             },
         )
 
         warning_asset = client.post(
-            '/api/assets?kind=image&filename=hero-warning.png&mime_type=image/png',
-            content=_png_bytes((480, 240)),
+            '/api/assets?kind=logo&filename=logo-warning.png&mime_type=image/png',
+            content=_png_bytes((300, 150)),
             headers={'Content-Type': 'image/png'},
         ).json()
 
@@ -104,7 +107,7 @@ def test_validation_flags_warning_and_blocking_image_dpi(tmp_path: Path, monkeyp
                     'headline': 'Short headline',
                     'qrTarget': 'example.com/review',
                 },
-                'asset_values': {'heroImage': warning_asset['id']},
+                'asset_values': {'logo': warning_asset['id']},
             },
         )
 
@@ -119,15 +122,15 @@ def test_validation_flags_warning_and_blocking_image_dpi(tmp_path: Path, monkeyp
         assert warning_issue['details']['warning_dpi'] == 300
 
         blocking_asset = client.post(
-            '/api/assets?kind=image&filename=hero-blocking.png&mime_type=image/png',
-            content=_png_bytes((300, 150)),
+            '/api/assets?kind=logo&filename=logo-blocking.png&mime_type=image/png',
+            content=_png_bytes((200, 100)),
             headers={'Content-Type': 'image/png'},
         ).json()
 
         client.patch(
             '/api/drafts/current/layout',
             json={
-                'asset_values': {'heroImage': blocking_asset['id']},
+                'asset_values': {'logo': blocking_asset['id']},
             },
         )
 
@@ -146,7 +149,7 @@ def test_validation_blocks_small_qr_codes(tmp_path: Path, monkeypatch) -> None:
 
     app = create_app()
     bundle = load_registry_bundle(get_settings().registries_dir)
-    template = next(template for template in bundle.templates if template.id == 'proof_a6_card' and template.version == '1.0.0')
+    template = next(template for template in bundle.templates if template.id == 'proof_a6_card' and template.version == '1.2.0')
     for element in template.elements:
         if element.kind == 'qr':
             element.box_mm.width_mm = 10
@@ -160,7 +163,7 @@ def test_validation_blocks_small_qr_codes(tmp_path: Path, monkeypatch) -> None:
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.0.0',
+                'template_version': '1.2.0',
             },
         )
 

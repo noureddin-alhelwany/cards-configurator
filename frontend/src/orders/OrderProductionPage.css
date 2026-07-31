@@ -36,3 +36,27 @@
     padding: var(--space-5);
   }
 }
+
+/*
+ * Production render: the page IS the card. Any centring, padding or background here
+ * becomes an offset in the PDF — `place-items: center` in an 1800px viewport pushes a
+ * 111mm card ~175mm to the right and makes Chrome paginate.
+ */
+.order-render-shell--production {
+  display: block;
+  width: auto;
+  height: auto;
+  background: none;
+}
+
+@media print {
+  .order-render-shell {
+    display: block;
+    place-items: initial;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    background: none;
+  }
+}

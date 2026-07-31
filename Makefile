@@ -18,7 +18,7 @@ help:
 	@echo 'lint              Run backend and frontend lint checks'
 	@echo 'typecheck         Run backend and frontend type checks'
 	@echo 'test              Run backend and frontend test suites'
-	@echo 'test-render       Run the bootstrap render smoke checks'
+	@echo 'test-render       Run the Chromium render and PDF checks (needs a browser)'
 	@echo 'test-e2e          Run the bootstrap end-to-end smoke checks'
 	@echo 'build             Build the frontend bundle and validate the backend package'
 	@echo 'db-export         Export the local SQLite database as a tracked SQL dump'
@@ -53,7 +53,7 @@ test:
 	$(FRONTEND_PNPM) --dir $(FRONTEND_DIR) test
 
 test-render:
-	$(BACKEND_PYTEST) $(BACKEND_DIR)/tests/test_migration.py
+	$(BACKEND_PYTEST) $(BACKEND_DIR)/tests/test_rendering_proof.py $(BACKEND_DIR)/tests/test_pdf_pipeline.py
 
 test-e2e:
 	$(FRONTEND_PNPM) --dir $(FRONTEND_DIR) test:e2e

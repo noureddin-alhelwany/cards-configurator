@@ -11,7 +11,9 @@ def _box_as_float_list(box: pikepdf.Array) -> list[float]:
     return [float(value) for value in box]
 
 
-def test_production_pdf_pipeline_sets_boxes_and_preview(live_server: str, tmp_path: Path) -> None:
+def test_production_pdf_pipeline_sets_boxes_and_preview(
+    live_server: str, chromium_available: None, tmp_path: Path
+) -> None:
     response = httpx.post(f"{live_server}/api/render/proof", timeout=120.0)
     response.raise_for_status()
     payload = response.json()
@@ -33,7 +35,9 @@ def test_production_pdf_pipeline_sets_boxes_and_preview(live_server: str, tmp_pa
     assert bleed_box == pytest.approx(media_box, abs=0.001)
 
 
-def test_order_pdf_pipeline_sets_boxes_preview_and_pdf(live_server: str, tmp_path: Path) -> None:
+def test_order_pdf_pipeline_sets_boxes_preview_and_pdf(
+    live_server: str, chromium_available: None, tmp_path: Path
+) -> None:
     draft_response = httpx.get(f"{live_server}/api/drafts/current", timeout=120.0)
     draft_response.raise_for_status()
     draft_payload = draft_response.json()
@@ -45,7 +49,7 @@ def test_order_pdf_pipeline_sets_boxes_preview_and_pdf(live_server: str, tmp_pat
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.0.0',
+                'template_version': '1.2.0',
             },
             timeout=120.0,
         )

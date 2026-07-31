@@ -24,7 +24,7 @@ from .registries.loader import load_registry_bundle
 from .registries.service import build_proof_fixture
 from .rendering import list_render_jobs, retry_order_render_job
 from .rendering.service import render_proof_artifacts
-from .urls import build_qr_data_url, normalize_url
+from .urls import QR_DARK_DEFAULT, build_qr_data_url, normalize_url
 
 router = APIRouter(prefix="/api", tags=["system"])
 
@@ -38,7 +38,8 @@ def healthz() -> dict[str, str]:
 def registries(request: Request) -> dict[str, object]:
     bundle = getattr(request.app.state, "registry_bundle", None)
     if bundle is None:
-        bundle = load_registry_bundle(get_settings().registries_dir)
+        settings = get_settings()
+        bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
     return bundle.model_dump()
 
 
@@ -47,7 +48,7 @@ def render_proof_fixture(request: Request) -> dict[str, object]:
     settings = get_settings()
     bundle = getattr(request.app.state, "registry_bundle", None)
     if bundle is None:
-        bundle = load_registry_bundle(settings.registries_dir)
+        bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
     fixture = build_proof_fixture(bundle, settings.proof_assets_dir)
     return fixture.model_dump()
 
@@ -66,7 +67,7 @@ def current_draft_validation(request: Request) -> dict[str, object]:
     settings = get_settings()
     bundle = getattr(request.app.state, "registry_bundle", None)
     if bundle is None:
-        bundle = load_registry_bundle(settings.registries_dir)
+        bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
 
     session = get_session_factory()()
     try:
@@ -82,7 +83,7 @@ def select_template(request: Request, selection: TemplateSelectionRequest) -> Dr
     settings = get_settings()
     bundle = getattr(request.app.state, "registry_bundle", None)
     if bundle is None:
-        bundle = load_registry_bundle(settings.registries_dir)
+        bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
 
     session = get_session_factory()()
     try:
@@ -96,7 +97,7 @@ def approve_current_draft(request: Request, body: ApprovalRequest) -> DraftState
     settings = get_settings()
     bundle = getattr(request.app.state, "registry_bundle", None)
     if bundle is None:
-        bundle = load_registry_bundle(settings.registries_dir)
+        bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
 
     session = get_session_factory()()
     try:
@@ -206,7 +207,7 @@ async def create_order_from_current_draft(request: Request) -> OrderDetail:
     settings = get_settings()
     bundle = getattr(request.app.state, "registry_bundle", None)
     if bundle is None:
-        bundle = load_registry_bundle(settings.registries_dir)
+        bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
 
     session = get_session_factory()()
     try:
@@ -222,16 +223,19 @@ def patch_layout(request: Request, body: LayoutStateUpdateRequest) -> DraftState
         settings = get_settings()
         bundle = getattr(request.app.state, "registry_bundle", None)
         if bundle is None:
-            bundle = load_registry_bundle(settings.registries_dir)
+            bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
         return update_layout_state(session, bundle, body)
     finally:
         session.close()
 
 
 @router.get("/qr")
-def qr_preview(value: str) -> dict[str, str]:
+def qr_preview(value: str, dark: str = QR_DARK_DEFAULT) -> dict[str, str]:
+    # `dark` lets the live preview request the template's own QR colour, so the preview and
+    # the printed card agree. Defaults to the production default, so the signature stays
+    # backwards compatible.
     normalized = normalize_url(value)
-    return {"value": normalized, "data_url": build_qr_data_url(normalized)}
+    return {"value": normalized, "data_url": build_qr_data_url(normalized, dark=dark)}
 
 
 @router.post("/assets")
@@ -252,7 +256,7 @@ async def render_proof(request: Request) -> dict[str, object]:
     settings = get_settings()
     bundle = getattr(request.app.state, "registry_bundle", None)
     if bundle is None:
-        bundle = load_registry_bundle(settings.registries_dir)
+        bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
     fixture = build_proof_fixture(bundle, settings.proof_assets_dir)
     page_url = str(request.base_url).rstrip("/") + "/render/proof"
     artifacts = await render_proof_artifacts(

@@ -14,8 +14,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "@fixtures/*": ["../registries/fixtures/*"]
+    }
   },
-  "include": ["src"],
+  "include": ["src", "../registries/fixtures"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

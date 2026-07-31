@@ -1,7 +1,7 @@
 import type { ProductDefinition, TemplateDefinition, TemplateVariantDefinition, UseCaseDefinition } from '../registries/types';
 import DesignRenderer from '../design/DesignRenderer';
 import { buildTemplatePreviewFixture } from './selectionPreview';
-import { templateStyleDescription } from './selectionRules';
+import { activeVariants, templateStyleDescription } from './selectionRules';
 import { uiText } from '../ui/text';
 import { previewAssetPath } from './previewAssets';
 
@@ -57,15 +57,16 @@ type TemplateVariantButtonsProps = {
 };
 
 export function TemplateVariantButtons({ template, selectedVariantId, onSelect, disabled = false }: TemplateVariantButtonsProps) {
-  const activeVariants = template.variants.filter((variant) => variant.active);
+  const variants = activeVariants(template);
 
-  if (activeVariants.length === 0) {
+  // A single option is not a choice — the template decides the layout in that case.
+  if (variants.length < 2) {
     return null;
   }
 
   return (
     <div className="template-variant-grid" role="tablist" aria-label="Layoutvarianten">
-      {activeVariants.map((variant) => (
+      {variants.map((variant) => (
         <button
           key={variant.id}
           type="button"

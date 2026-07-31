@@ -37,6 +37,20 @@ Effective DPI must account for:
 
 Product configuration supplies recommended, warning and minimum thresholds.
 
+The crop decides which axis is measured: `contain` keeps every pixel visible, so the denser
+axis wins (`max`); `cover` crops the overflow, so the sparser axis decides (`min`). Using the
+width axis alone over-reports for `cover` and lets a visibly soft image through.
+
+Zoom is clamped to the element's declared range on read **and** on write, so the validator and
+the renderer can never describe different cards.
+
+## Findings the customer cannot fix
+
+A finding is only blocking when the customer can act on it. Template-owned values — a quiet
+zone that is too narrow for the encoded URL, a QR plate reaching past the trim line, static
+element text that overflows — are reported as non-blocking warnings addressed to the template
+author. Blocking there would refuse an order over something the form does not expose.
+
 ## QR
 
 Check both:

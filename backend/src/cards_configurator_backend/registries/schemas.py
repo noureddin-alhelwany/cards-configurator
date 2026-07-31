@@ -91,6 +91,14 @@ class TextElementDefinition(ElementBase):
     color: str = "#1f1a17"
     line_height: float = 1.1
     align: Literal["left", "center", "right"] = "left"
+    # Vertical anchor inside the box. Without it auto-fit is visibly wrong: a two-line
+    # headline that shrinks to one line stays glued to the top of its box and drifts away
+    # from artwork that is optically centred. Default "top" is today's behaviour, so the
+    # renderer emits no wrapper for it and existing templates stay pixel-identical.
+    valign: Literal["top", "middle", "bottom"] = "top"
+    # Absolute shrink floor. `None` keeps the relative DEFAULT_MIN_FIT_SCALE, i.e. today's
+    # behaviour. Optional so every existing order snapshot still validates.
+    min_font_size_mm: float | None = None
 
 
 class ImageElementDefinition(ElementBase):
@@ -108,8 +116,18 @@ class QrElementDefinition(ElementBase):
     kind: Literal["qr"]
     value: str
     color: str = "#1f1a17"
-    background: str = "transparent"
+    # The quiet zone must be light to work as one. Defaulting to transparent would leave a
+    # QR unscannable on any coloured artwork, so a template has to opt into that explicitly.
+    background: str = "#ffffff"
     quiet_zone_mm: float = 2.0
+
+    @model_validator(mode="after")
+    def validate_square_box(self) -> QrElementDefinition:
+        # A non-square box stretches the symbol into unscannability. `object-fit: contain`
+        # currently saves us by accident; this makes the requirement explicit.
+        if abs(self.box_mm.width_mm - self.box_mm.height_mm) > 0.01:
+            raise ValueError("qr elements need a square box_mm; a stretched symbol does not scan")
+        return self
 
 
 RenderableElementDefinition = Annotated[
@@ -152,6 +170,14 @@ class TemplateDefinition(BaseModel):
     page_height_mm: float
     bleed_mm: float
     preview_asset: str | None = None
+    # Full-bleed artwork under every element. Deliberately not an element: without a box in
+    # the JSON its geometry cannot drift from `page_*_mm`, and no `kind` switch grows a case.
+    # Optional with a default, because order snapshots are re-validated against this model
+    # (`docs/DOMAIN_MODEL.md`) -- a required field would break every existing order.
+    background_asset: str | None = None
+    # Tripwire, not a lock: a replaced file would retroactively change a year-old order, so
+    # the loader digests the artwork at startup and warns when it no longer matches.
+    background_asset_sha256: str | None = None
     font_family: str
     fields: list[TemplateFieldDefinition] = Field(default_factory=list)
     fonts: list[FontDefinition]

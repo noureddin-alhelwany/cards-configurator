@@ -19,7 +19,7 @@
       "max_length": 40,
       "max_lines": 1,
       "label": "Unternehmensname",
-      "help_text": "So erscheint dein Unternehmen auf der Karte.",
+      "help_text": null,
       "group": "Texte",
       "placeholder": "Studio Sonnenschein",
       "suggestions": ["Studio Sonnenschein", "Muster GmbH", "Café Nord"],
@@ -45,20 +45,7 @@
       "max_length": null,
       "max_lines": null,
       "label": "Logo",
-      "help_text": "Ein sauberes Markenlogo für den Auftritt.",
-      "group": "Bilder",
-      "placeholder": null,
-      "suggestions": [],
-      "default_value": null
-    },
-    {
-      "id": "heroImage",
-      "type": "image",
-      "required": false,
-      "max_length": null,
-      "max_lines": null,
-      "label": "Bild",
-      "help_text": "Ein passendes Foto für die Vorlage.",
+      "help_text": "PNG, JPG oder SVG",
       "group": "Bilder",
       "placeholder": null,
       "suggestions": [],
@@ -70,12 +57,12 @@
       "required": true,
       "max_length": null,
       "max_lines": null,
-      "label": "QR-Ziel",
-      "help_text": "Die Zieladresse wird in den QR-Code übernommen.",
+      "label": "Link zu deinen Google-Bewertungen",
+      "help_text": "Wir erstellen daraus automatisch den QR-Code.",
       "group": "Link und QR",
-      "placeholder": "example.com/review",
-      "suggestions": ["example.com/review", "example.com/booking", "example.com/menu"],
-      "default_value": "example.com/review"
+      "placeholder": "Google-Bewertungslink einfügen",
+      "suggestions": [],
+      "default_value": ""
     }
   ],
   "font_family": "Proof Sans",
@@ -126,29 +113,6 @@
     },
     {
       "kind": "image",
-      "id": "proof-hero-image",
-      "box_mm": {
-        "x_mm": 54,
-        "y_mm": 14,
-        "width_mm": 42,
-        "height_mm": 44
-      },
-      "z_index": 1,
-      "asset_key": "heroImage",
-      "alt": "Produktmotiv",
-      "fit": "cover",
-      "movement_mm": {
-        "x_mm": 0,
-        "y_mm": 0,
-        "width_mm": 4,
-        "height_mm": 4
-      },
-      "enhancement": "contrast",
-      "min_scale": 0.8,
-      "max_scale": 1.3
-    },
-    {
-      "kind": "image",
       "id": "proof-logo",
       "box_mm": {
         "x_mm": 15,
@@ -183,7 +147,7 @@
       "value": "https://example.com/review",
       "color": "#1f1a17",
       "background": "transparent",
-      "quiet_zone_mm": 2
+      "quiet_zone_mm": 4
     }
   ]
 }

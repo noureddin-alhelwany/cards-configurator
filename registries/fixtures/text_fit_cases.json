@@ -1,0 +1,219 @@
+{
+  "_comment": [
+    "Contract fixture for the text auto-fit heuristic.",
+    "Read by backend/tests/test_text_fit.py and frontend/src/design/textFit.test.ts.",
+    "The two implementations (quality.py::_estimate_text_scale and design/textFit.ts::estimateTextFit)",
+    "cannot share code across languages, so this fixture is what proves they agree.",
+    "Expected values are rounded to 6 decimals; both sides compare with the same tolerance.",
+    "If a case fails on only one side, the implementations have drifted -- do not 'fix' the fixture."
+  ],
+  "tolerance": 1e-06,
+  "cases": [
+    {
+      "name": "empty text needs no shrinking",
+      "input": {
+        "box_width_mm": 70,
+        "box_height_mm": 22,
+        "font_size_mm": 6.8,
+        "line_height": 1.05,
+        "max_lines": 3
+      },
+      "text": "",
+      "expected": {
+        "scale": 1.0,
+        "raw_scale": 1.0,
+        "estimated_lines": 1,
+        "min_scale": 0.7
+      }
+    },
+    {
+      "name": "single short word fits at full size",
+      "input": {
+        "box_width_mm": 70,
+        "box_height_mm": 22,
+        "font_size_mm": 6.8,
+        "line_height": 1.05,
+        "max_lines": 3
+      },
+      "text": "Danke",
+      "expected": {
+        "scale": 1.0,
+        "raw_scale": 1.0,
+        "estimated_lines": 1,
+        "min_scale": 0.7
+      }
+    },
+    {
+      "name": "the shipped headline default fits",
+      "input": {
+        "box_width_mm": 70,
+        "box_height_mm": 22,
+        "font_size_mm": 6.8,
+        "line_height": 1.05,
+        "max_lines": 3
+      },
+      "text": "Scanne den QR-Code",
+      "expected": {
+        "scale": 1.0,
+        "raw_scale": 1.0,
+        "estimated_lines": 1,
+        "min_scale": 0.7
+      }
+    },
+    {
+      "name": "long single line shrinks on width",
+      "input": {
+        "box_width_mm": 70,
+        "box_height_mm": 22,
+        "font_size_mm": 6.8,
+        "line_height": 1.05,
+        "max_lines": 3
+      },
+      "text": "Wie war Ihr Besuch bei uns heute im Salon",
+      "expected": {
+        "scale": 0.7,
+        "raw_scale": 0.456502,
+        "estimated_lines": 3,
+        "min_scale": 0.7
+      }
+    },
+    {
+      "name": "trailing whitespace must not change the verdict",
+      "input": {
+        "box_width_mm": 70,
+        "box_height_mm": 22,
+        "font_size_mm": 6.8,
+        "line_height": 1.05,
+        "max_lines": 3
+      },
+      "text": "Scanne den QR-Code   \n\n",
+      "expected": {
+        "scale": 1.0,
+        "raw_scale": 1.0,
+        "estimated_lines": 1,
+        "min_scale": 0.7
+      }
+    },
+    {
+      "name": "explicit paragraphs count as separate lines",
+      "input": {
+        "box_width_mm": 70,
+        "box_height_mm": 22,
+        "font_size_mm": 6.8,
+        "line_height": 1.05,
+        "max_lines": 3
+      },
+      "text": "Zeile eins\nZeile zwei\nZeile drei",
+      "expected": {
+        "scale": 1.0,
+        "raw_scale": 1.0,
+        "estimated_lines": 3,
+        "min_scale": 0.7
+      }
+    },
+    {
+      "name": "max_lines binds before width or height",
+      "input": {
+        "box_width_mm": 70,
+        "box_height_mm": 60,
+        "font_size_mm": 4,
+        "line_height": 1.2,
+        "max_lines": 1
+      },
+      "text": "eins\nzwei\ndrei",
+      "expected": {
+        "scale": 0.7,
+        "raw_scale": 0.333333,
+        "estimated_lines": 3,
+        "min_scale": 0.7
+      }
+    },
+    {
+      "name": "no max_lines leaves the line constraint out",
+      "input": {
+        "box_width_mm": 70,
+        "box_height_mm": 60,
+        "font_size_mm": 4,
+        "line_height": 1.2,
+        "max_lines": null
+      },
+      "text": "eins\nzwei\ndrei",
+      "expected": {
+        "scale": 1.0,
+        "raw_scale": 1.0,
+        "estimated_lines": 3,
+        "min_scale": 0.7
+      }
+    },
+    {
+      "name": "height binds for a tall block in a short box",
+      "input": {
+        "box_width_mm": 60,
+        "box_height_mm": 8,
+        "font_size_mm": 3.1,
+        "line_height": 1.25,
+        "max_lines": null
+      },
+      "text": "Der QR-Code fuehrt direkt zur Zielseite und zeigt dort alle Details zu unserem Salon.",
+      "expected": {
+        "scale": 0.7,
+        "raw_scale": 0.414007,
+        "estimated_lines": 3,
+        "min_scale": 0.7
+      }
+    },
+    {
+      "name": "umlauts count as single characters",
+      "input": {
+        "box_width_mm": 70,
+        "box_height_mm": 22,
+        "font_size_mm": 6.8,
+        "line_height": 1.05,
+        "max_lines": 3
+      },
+      "text": "Grüße aus München",
+      "expected": {
+        "scale": 1.0,
+        "raw_scale": 1.0,
+        "estimated_lines": 1,
+        "min_scale": 0.7
+      }
+    },
+    {
+      "name": "absolute floor lifts the render scale above the relative default",
+      "input": {
+        "box_width_mm": 30,
+        "box_height_mm": 10,
+        "font_size_mm": 6.8,
+        "line_height": 1.05,
+        "max_lines": null,
+        "min_font_size_mm": 5.44
+      },
+      "expected": {
+        "scale": 0.8,
+        "raw_scale": 0.148544,
+        "estimated_lines": 7,
+        "min_scale": 0.8
+      },
+      "text": "Ein deutlich zu langer Text fuer diese sehr kleine Box"
+    },
+    {
+      "name": "without an absolute floor the relative default applies",
+      "input": {
+        "box_width_mm": 30,
+        "box_height_mm": 10,
+        "font_size_mm": 6.8,
+        "line_height": 1.05,
+        "max_lines": null,
+        "min_font_size_mm": null
+      },
+      "expected": {
+        "scale": 0.7,
+        "raw_scale": 0.148544,
+        "estimated_lines": 7,
+        "min_scale": 0.7
+      },
+      "text": "Ein deutlich zu langer Text fuer diese sehr kleine Box"
+    }
+  ]
+}

@@ -37,6 +37,10 @@ export type TextElementDefinition = {
   color: string;
   line_height: number;
   align: 'left' | 'center' | 'right';
+  /** Vertical anchor in the box; `top` is drawn without a wrapper. */
+  valign: 'top' | 'middle' | 'bottom';
+  /** Absolute shrink floor in mm; `null` keeps the relative DEFAULT_MIN_FIT_SCALE. */
+  min_font_size_mm: number | null;
 };
 
 export type ImageElementDefinition = {
@@ -99,6 +103,9 @@ export type TemplateDefinition = {
   page_height_mm: number;
   bleed_mm: number;
   preview_asset: string | null;
+  /** Full-bleed artwork drawn under every element, served from `/proof-assets/`. */
+  background_asset: string | null;
+  background_asset_sha256: string | null;
   font_family: string;
   fonts: FontDefinition[];
   elements: TemplateElementDefinition[];
