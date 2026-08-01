@@ -33,7 +33,7 @@ def test_order_creation_persists_and_exposes_detail(tmp_path: Path, monkeypatch)
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.2.0',
+                'template_version': '1.6.0',
             },
         )
         assert template_response.status_code == 200
@@ -44,6 +44,7 @@ def test_order_creation_persists_and_exposes_detail(tmp_path: Path, monkeypatch)
                 'text_values': {
                     'businessName': 'Studio One',
                     'headline': 'Leave a Google review',
+                    'body': 'Bewerte uns gern.',
                     'qrTarget': 'example.com/review',
                 },
             },
@@ -125,7 +126,7 @@ def test_failed_rendering_can_be_retried(tmp_path: Path, monkeypatch) -> None:
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.2.0',
+                'template_version': '1.6.0',
             },
         )
         assert template_response.status_code == 200
@@ -136,6 +137,7 @@ def test_failed_rendering_can_be_retried(tmp_path: Path, monkeypatch) -> None:
                 'text_values': {
                     'businessName': 'Studio One',
                     'headline': 'Leave a Google review',
+                    'body': 'Bewerte uns gern.',
                     'qrTarget': 'example.com/review',
                 },
             },
@@ -221,7 +223,7 @@ def test_order_creation_ignores_asset_values_for_removed_fields(tmp_path: Path, 
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.2.0',
+                'template_version': '1.6.0',
             },
         )
         layout_response = client.patch(
@@ -230,6 +232,7 @@ def test_order_creation_ignores_asset_values_for_removed_fields(tmp_path: Path, 
                 'text_values': {
                     'businessName': 'Studio One',
                     'headline': 'Leave a Google review',
+                    'body': 'Bewerte uns gern.',
                     'qrTarget': 'example.com/review',
                 },
                 'asset_values': {'heroImage': 'an-asset-id-that-no-longer-exists'},

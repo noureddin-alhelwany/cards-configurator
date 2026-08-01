@@ -11,7 +11,6 @@ import {
   buildWizardSteps,
   fieldDefaultValue,
   fieldLabel,
-  isLegacyGoogleReviewsTemplate,
   templateKey,
   templateRecommendationIndex,
   trimSuggestion,
@@ -263,7 +262,7 @@ export function primaryUseCaseIdForProduct(bundle: RegistryBundle, productId: st
 export function visibleTemplates(bundle: RegistryBundle, selectedUseCaseId: string | null) {
   return bundle.templates.filter(
     (template) => {
-      if (!template.active || isLegacyGoogleReviewsTemplate(template)) {
+      if (!template.active) {
         return false;
       }
       if (!selectedUseCaseId) {

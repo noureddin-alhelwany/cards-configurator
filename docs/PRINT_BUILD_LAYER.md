@@ -145,8 +145,7 @@ it is read nowhere, and bumping it would imply a migration history that does not
 - [x] `proof_a6_card-1.6.0.json` with four skins instead of four clones: wordmark slot
       (`businessName` finally drawn), website and Instagram fields plus slots, `body` field,
       tight centred slots, light QR plate, style picker re-enabled.
-- [ ] Do **not** touch 1.2.0–1.5.0: that keeps the 18 existing orders and the `"1.2.0"` pin in
-      `registries/service.py` (which the pixel baseline renders against) untouched.
+- [x] Only the 1.6.0 Google-Reviews design family remains in the normal selection flow.
 
 ### Part H — runtime
 - [ ] `Dockerfile` installs from `backend/requirements.lock`; `pyproject.toml` lists neither
@@ -164,14 +163,14 @@ it is read nowhere, and bumping it would imply a migration history that does not
 - [ ] **`businessName` is required, has no element**, and reaches the card only as glyphs
       inside `brandingFallbackDataUrl`, injected as the *logo* asset when no logo was uploaded
       — so uploading a logo removes the company name from the card entirely. Fixing the
-      fallback must be **template-conditional**, or the re-render of all 18 historical orders
-      changes.
+      fallback must be **template-conditional**, or the re-render of the existing approved
+      orders changes.
 - [ ] **Render tests are not runnable**: `conftest.py` calls `corepack` unconditionally, and
       `_find_browser_binary()` resolves nothing on macOS. `make test-render` runs
       `test_migration.py`, not the render tests.
 - [ ] Invariant worth enforcing in the loader as warnings: every text element has a field,
-      every text field an element. That would have caught `proof_a6_card-1.1.0.json` —
-      required `qrTarget`, **no QR element**, so the URL the user types is never drawn.
+      every text field an element. That would have caught a template with required `qrTarget`
+      but **no QR element**, so the URL the user types is never drawn.
 
 ## Manual acceptance for the first slice
 
@@ -185,6 +184,6 @@ it is read nowhere, and bumping it would imply a migration history that does not
 5. Open the PDF: 111×154mm, one page, content correctly positioned (not Letter), text
    selectable (= vector), QR sharp when zoomed, on a light plate, and **scannable with a
    phone**.
-6. Re-render the 18 historical orders — output unchanged.
+6. Re-render the existing approved orders — output unchanged.
 7. Drop in a 241 dpi raster artwork → loader warns; 200 dpi → the template leaves the
    selection.

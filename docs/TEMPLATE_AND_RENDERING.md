@@ -35,7 +35,7 @@ Rules:
 - Prefer SVG. Chrome embeds SVG in an `<img>` as path operators, so it stays vector in the PDF.
   Raster is accepted and then measured as `min(dpi_x, dpi_y)`, because `cover` crops.
 - Filenames are versioned: `backgrounds/<template_id>-<version>-<slot>.svg`. Orders re-render
-  from their snapshot through the same URL, so replacing a file changes historical output.
+  from their snapshot through the same URL, so replacing a file changes snapshot output.
   `background_asset_sha256` is an optional tripwire that makes that visible.
 - Every new schema field is optional with a default, or order snapshots stop validating.
 

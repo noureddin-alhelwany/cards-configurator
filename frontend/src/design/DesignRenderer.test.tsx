@@ -17,7 +17,7 @@ function buildFixture(): ProofFixture {
     template: {
       schema_version: 1,
       id: 'proof_a6_card',
-      version: '1.2.0',
+      version: '1.6.0',
       name: 'Google Reviews Bold',
       description: null,
       preview_asset: null,

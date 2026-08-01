@@ -114,7 +114,7 @@ def test_layout_patch_clamps_adjustments_to_what_the_renderer_can_draw(tmp_path:
                 "use_case_id": "google_reviews",
                 "product_id": "a6_card",
                 "template_id": "proof_a6_card",
-                "template_version": "1.2.0",
+                "template_version": "1.6.0",
             },
         )
 
@@ -152,7 +152,7 @@ def test_a_defeated_dpi_gate_stays_blocking_after_the_clamp(tmp_path: Path, monk
                 "use_case_id": "google_reviews",
                 "product_id": "a6_card",
                 "template_id": "proof_a6_card",
-                "template_version": "1.2.0",
+                "template_version": "1.6.0",
             },
         )
         asset = client.post(

@@ -5,7 +5,7 @@
   "name": "Google Reviews Bold",
   "description": "Eine Vorlage mit vier Stilen, einem echten Wortmarken-Slot und den restlichen Text- und QR-Slots.",
   "preview_asset": "template_google_reviews_premium.png",
-  "background_asset": "backgrounds/proof_a6_card-1.2.0-bold.svg",
+  "background_asset": "backgrounds/proof_a6_card-1.6.0-bold.svg",
   "product_id": "a6_card",
   "use_case_ids": ["google_reviews"],
   "active": true,
@@ -250,7 +250,7 @@
       "name": "Bold",
       "active": true,
       "preview_asset": "template_google_reviews_bold.png",
-      "background_asset": "backgrounds/proof_a6_card-1.2.0-bold.svg",
+      "background_asset": "backgrounds/proof_a6_card-1.6.0-bold.svg",
       "accent_color": "#28486a",
       "headline_font_family": "Proof Sans",
       "headline_font_weight": 700
@@ -260,7 +260,7 @@
       "name": "Minimum",
       "active": true,
       "preview_asset": "template_google_reviews_minimum.png",
-      "background_asset": "backgrounds/proof_a6_card-1.3.0-minimum.svg",
+      "background_asset": "backgrounds/proof_a6_card-1.6.0-minimum.svg",
       "accent_color": "#6d7b58",
       "headline_font_family": "Proof Sans",
       "headline_font_weight": 700
@@ -270,7 +270,7 @@
       "name": "Warm",
       "active": true,
       "preview_asset": "template_google_reviews_warm.png",
-      "background_asset": "backgrounds/proof_a6_card-1.4.0-warm.svg",
+      "background_asset": "backgrounds/proof_a6_card-1.6.0-warm.svg",
       "accent_color": "#a67b4d",
       "headline_font_family": "Proof Sans",
       "headline_font_weight": 700
@@ -280,7 +280,7 @@
       "name": "Premium",
       "active": true,
       "preview_asset": "template_google_reviews_premium.png",
-      "background_asset": "backgrounds/proof_a6_card-1.5.0-premium.svg",
+      "background_asset": "backgrounds/proof_a6_card-1.6.0-premium.svg",
       "accent_color": "#6b4e33",
       "headline_font_family": "Proof Sans",
       "headline_font_weight": 700

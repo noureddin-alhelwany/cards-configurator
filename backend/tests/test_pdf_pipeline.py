@@ -49,7 +49,7 @@ def test_order_pdf_pipeline_sets_boxes_preview_and_pdf(
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.2.0',
+                'template_version': '1.6.0',
             },
             timeout=120.0,
         )
@@ -61,6 +61,7 @@ def test_order_pdf_pipeline_sets_boxes_preview_and_pdf(
                 'text_values': {
                     'businessName': 'Studio One',
                     'headline': 'Leave a Google review',
+                    'body': 'Bewerte uns gern.',
                     'qrTarget': 'example.com/review',
                 },
             },

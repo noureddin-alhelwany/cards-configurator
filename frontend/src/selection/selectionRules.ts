@@ -63,8 +63,8 @@ const TEMPLATE_STYLE_KEYWORDS = ['Classic', 'Bold', 'Minimal', 'Minimum', 'Warm'
 /**
  * Short design name for the compact content-step header ("Design: Bold").
  *
- * The six `proof_a6_card` registry entries share one id and use `version` as a design
- * axis, so the readable style sits in the template name rather than in the version.
+ * The host template keeps the product-level identity, while the visible style lives in
+ * the template name or the active variant name.
  */
 export function designStyleName(template: TemplateDefinition) {
   const name = (template.name ?? '').trim();
@@ -262,16 +262,6 @@ export function activeVariant(template: TemplateDefinition, variantId: string | 
 
 const GOOGLE_REVIEWS_TEMPLATE_ID = 'proof_a6_card';
 const GOOGLE_REVIEWS_HOST_VERSION = '1.6.0';
-const GOOGLE_REVIEWS_LEGACY_VERSIONS = new Set(['1.2.0', '1.3.0', '1.4.0', '1.5.0']);
-
-export function isLegacyGoogleReviewsTemplate(template: TemplateDefinition) {
-  return (
-    template.id === GOOGLE_REVIEWS_TEMPLATE_ID &&
-    template.product_id === 'a6_card' &&
-    template.use_case_ids.includes('google_reviews') &&
-    GOOGLE_REVIEWS_LEGACY_VERSIONS.has(template.version)
-  );
-}
 
 export function isGoogleReviewsHostTemplate(template: TemplateDefinition) {
   return (
