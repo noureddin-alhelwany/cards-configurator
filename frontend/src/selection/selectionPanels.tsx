@@ -165,8 +165,8 @@ export function SelectionReviewPanel({
   onSubmit,
   onApprovalChange,
 }: SelectionReviewPanelProps) {
-  // Findings about static template copy carry `editable: false`. They are addressed to the
-  // template author — showing them in the customer's checklist would ask them to fix
+  // Findings about static design copy carry `editable: false`. They are addressed to the
+  // design author — showing them in the customer's checklist would ask them to fix
   // something they cannot reach.
   const actionable = validationIssues.filter((issue) => issue.details?.editable !== false);
   const requiredIssues = actionable.filter((issue) => issue.code === 'required_field_missing');
@@ -189,7 +189,7 @@ export function SelectionReviewPanel({
       <SelectionStepAlerts qualityError={qualityError} approvalError={approvalError} resetError={resetError} />
       <article className="template-detail">
         <p className="template-detail__eyebrow">{uiText.selection.review.eyebrow}</p>
-        <h3>{selectedTemplate.name ?? uiText.common.templateFallback}</h3>
+        <h3>{selectedTemplate.name ?? uiText.common.designFallback}</h3>
         {selectedTemplate.description ? <p className="template-detail__hint">{selectedTemplate.description}</p> : null}
         <p className="template-detail__meta">{selectedProduct.name}</p>
         <div className="template-quality template-quality--review">

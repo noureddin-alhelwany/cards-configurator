@@ -562,7 +562,7 @@
   font-weight: 600;
 }
 
-/* Template selection and detail */
+/* Design selection and detail */
 @keyframes selection-step-fade {
   from {
     opacity: 0;
@@ -817,7 +817,7 @@
   height: 18px;
 }
 
-/* Template editing controls */
+/* Design editing controls */
 .template-field__hint {
   margin: 0;
   color: #6c5848;

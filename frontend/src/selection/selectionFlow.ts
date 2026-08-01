@@ -516,12 +516,12 @@ export function useSelectionFlow() {
     if (!selectedTemplate) {
       return;
     }
-    if (selectedVariant && selectedVariant.active) {
+    const resolvedVariant = activeVariant(selectedTemplate, selectedVariantId);
+    if (resolvedVariant?.id === selectedVariantId) {
       return;
     }
-    const firstVariant = selectedTemplate.variants.find((variant) => variant.active) ?? null;
-    setSelectedVariantId(firstVariant?.id ?? null);
-  }, [selectedTemplate, selectedVariant]);
+    setSelectedVariantId(resolvedVariant?.id ?? null);
+  }, [selectedTemplate, selectedVariantId]);
 
   useEffect(() => {
     const assetEntries = Object.entries(layoutValues.asset_values).filter(
@@ -637,11 +637,7 @@ export function useSelectionFlow() {
     if (!demoUseCase) {
       return;
     }
-    const fallbackVariant =
-      variant ??
-      template.variants.find((candidate) => candidate.active && candidate.id === selectedVariantId) ??
-      template.variants.find((candidate) => candidate.active) ??
-      null;
+    const fallbackVariant = variant ?? activeVariant(template, selectedVariantId);
     const response = await saveTemplateSelection({
       use_case_id: selectedUseCaseId,
       product_id: selectedProductId,

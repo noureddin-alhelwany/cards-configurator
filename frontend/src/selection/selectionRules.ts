@@ -55,7 +55,7 @@ export function designStyleDescription(template: TemplateDefinition) {
   if (name.includes('premium') || name.includes('primum') || name.includes('luxury')) {
     return 'Reduziert und hochwertig.';
   }
-  return 'Eine kuratierte Vorlage mit vollständiger Vorschau.';
+  return 'Ein kuratiertes Design mit vollständiger Vorschau.';
 }
 
 const TEMPLATE_STYLE_KEYWORDS = ['Classic', 'Bold', 'Minimal', 'Minimum', 'Warm', 'Premium'] as const;
@@ -69,10 +69,10 @@ const TEMPLATE_STYLE_KEYWORDS = ['Classic', 'Bold', 'Minimal', 'Minimum', 'Warm'
 export function designStyleName(template: TemplateDefinition) {
   const name = (template.name ?? '').trim();
   if (!name) {
-    return uiText.common.templateFallback;
+    return uiText.common.designFallback;
   }
   const matched = TEMPLATE_STYLE_KEYWORDS.find((keyword) => name.toLowerCase().includes(keyword.toLowerCase()));
-  return matched ?? name.split(/\s+/).pop() ?? uiText.common.templateFallback;
+  return matched ?? name.split(/\s+/).pop() ?? uiText.common.designFallback;
 }
 
 export function selectedDesignName(template: TemplateDefinition, variantId: string | null) {
@@ -145,10 +145,10 @@ export function fieldHelperText(field: TemplateDefinition['fields'][number], ind
     case 'logo':
       return 'Ein Logo für einen sauberen Markenauftritt.';
     case 'image':
-      return 'Ein Bild mit passendem Ausschnitt für das Template.';
+      return 'Ein Bild mit passendem Ausschnitt für das Design.';
     case 'generic':
     default:
-      return 'Ein passender Inhalt für dieses Feld.';
+      return 'Ein passender Inhalt für dieses Design.';
   }
 }
 

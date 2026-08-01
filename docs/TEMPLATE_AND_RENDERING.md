@@ -1,8 +1,8 @@
-# Template, Editor and Rendering
+# Design, Editor and Rendering
 
-## Template model
+## Design model
 
-A template combines:
+A design combines:
 
 - physical canvas dimensions
 - dynamic field definitions
@@ -10,6 +10,9 @@ A template combines:
 - layout variants
 - versioned fonts and static assets
 - validation constraints
+
+Terminology note: the user-facing language in the app is now `Design`; the internal schema
+and type names still use `Template` until we do a separate mechanical rename.
 
 Supported initial dynamic element types:
 
@@ -22,7 +25,7 @@ Supported initial dynamic element types:
 
 ## Build layer
 
-A template carries two things for the same design:
+A design carries two things for the same look:
 
 - `preview_asset` — the flat mockup shown in the design gallery.
 - `background_asset` — text-free full-bleed artwork drawn under every element, plus the slot
@@ -40,7 +43,7 @@ Rules:
 - Every new schema field is optional with a default, or order snapshots stop validating.
 
 Loader diagnostics (require the assets directory): `template_background_missing`,
-`template_background_dpi_too_low` (both errors — the template leaves the selection),
+`template_background_dpi_too_low` (both errors — the design leaves the selection),
 `template_background_dpi_warning`, `template_background_aspect_mismatch` (warning up to 3%,
 error beyond), `template_background_changed`.
 
@@ -57,7 +60,7 @@ Never persist viewport pixels.
 
 ## Shared renderer
 
-`TemplateDefinition + LayoutState → DesignRenderer`
+`Design + LayoutState → DesignRenderer`
 
 The same React renderer is used for:
 
@@ -71,7 +74,7 @@ Do not implement a second Python layout renderer.
 
 ## Fonts
 
-- Every template references bundled, versioned font files.
+- Every design references bundled, versioned font files.
 - Browser and production render use the same files.
 - Production waits for `document.fonts.ready`.
 - A render-ready signal is required before screenshot/PDF capture.
@@ -94,7 +97,7 @@ The render derivative is generated from the original, not from the preview.
 - PNG/JPEG are straightforward.
 - Uploaded SVG must reject or remove scripts, event handlers and external
   references.
-- Template-owned SVG is trusted source-controlled content.
+- Design-owned SVG is trusted source-controlled content.
 - Logo proportions remain fixed; no free rotation.
 
 ## Screen and production variants
@@ -116,7 +119,7 @@ the element screenshot never sees.
   the two implementations provably equal.
 - The validator iterates **elements** and resolves the field, so element text without a field
   is checked too. Findings the customer cannot act on are non-blocking and addressed to the
-  template author.
+  design author.
 - `valign` anchors the block in its box; `min_font_size_mm` is the absolute shrink floor
   (`null` keeps the relative default). Text elements clip rather than overflow.
 

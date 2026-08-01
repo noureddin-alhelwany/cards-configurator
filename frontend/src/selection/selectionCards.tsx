@@ -25,7 +25,7 @@ export function TemplateCard({ template, product, useCase, selected, recommended
       aria-pressed={selected}
       disabled={disabled}
       onClick={() => onSelect(template)}
-      aria-label={`${template.name ?? uiText.common.templateFallback} auswählen`}
+      aria-label={`${uiText.selection.sections.design} auswählen: ${template.name ?? uiText.common.designFallback}`}
     >
       <div className="template-card__preview">
         {template.preview_asset ? (
@@ -41,8 +41,8 @@ export function TemplateCard({ template, product, useCase, selected, recommended
         </div>
       </div>
       <div className="template-card__body">
-        <p className="template-card__eyebrow">{uiText.common.templateFallback}</p>
-        <h3>{template.name ?? uiText.common.templateFallback}</h3>
+        <p className="template-card__eyebrow">{uiText.selection.sections.design}</p>
+        <h3>{template.name ?? uiText.common.designFallback}</h3>
         <p>{template.description ?? designStyleDescription(template)}</p>
       </div>
     </button>

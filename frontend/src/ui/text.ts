@@ -4,7 +4,7 @@ export const uiText = {
     back: 'Zurück',
     next: 'Weiter',
     loading: 'Wird geladen',
-    templateFallback: 'Vorlage',
+    designFallback: 'Design',
   },
   selection: {
     loading: {
@@ -83,7 +83,7 @@ export const uiText = {
       expand: 'Vorschau vergrößern',
       collapse: 'Verkleinern',
       loading: 'Vorschau wird geladen…',
-      liveHint: 'Live-Vorschau nutzt gerenderte Template-Elemente, sobald sie verfügbar sind.',
+      liveHint: 'Live-Vorschau nutzt gerenderte Designelemente, sobald sie verfügbar sind.',
       mockupTitle: 'Produkt-Mockup',
     },
     feedback: {
@@ -170,7 +170,7 @@ export const uiText = {
       snapshotCustomer: 'Kunde',
       snapshotUseCase: 'Use Case',
       snapshotProduct: 'Produkt',
-      snapshotTemplate: 'Template',
+      snapshotDesign: 'Design',
       snapshotVariant: 'Variante',
       snapshotApprovedAt: 'Freigabezeitpunkt',
       snapshotRenderEngine: 'Render Engine',

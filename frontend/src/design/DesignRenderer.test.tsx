@@ -18,7 +18,7 @@ function buildFixture(): ProofFixture {
       schema_version: 1,
       id: 'proof_a6_card',
       version: '1.6.0',
-      name: 'Google Reviews Bold',
+      name: 'Google Reviews',
       description: null,
       preview_asset: null,
       background_asset: null,

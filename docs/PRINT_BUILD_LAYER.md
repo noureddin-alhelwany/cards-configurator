@@ -1,22 +1,25 @@
-# Print Build Layer — Plan, Progress and Backlog
+# Design Build Layer — Plan, Progress and Backlog
 
-Status document for the work that turns a chosen template into a print-ready file. It is the
+Status document for the work that turns a chosen design into a print-ready file. It is the
 plan of record plus its current state; read it before picking up the next step. Background,
 measurements and the rejected alternatives live here so the code can stay short.
 
 ## Goal
 
 The customer picks a design, types a few values, uploads a logo, and gets a print file that
-looks like the chosen template. Building blocks are **text, logo, QR**. Colours belong to the
-template. Sizes fit automatically. Text, QR and logo must be sharp.
+looks like the chosen design. Building blocks are **text, logo, QR**. Colours belong to the
+design. Sizes fit automatically. Text, QR and logo must be sharp.
+
+Terminology note: the product UI now says `Design` everywhere; internal schema and type
+names still say `Template` for the moment.
 
 ## The model
 
-> **Template = (A) mockup image for the design gallery + (B) build layer: text-free background
+> **Design = (A) mockup image for the design gallery + (B) build layer: text-free background
 > artwork + slot boxes + fit rules.** The build layer feeds preview *and* PDF — one renderer,
 > as D-004 requires.
 
-One layout in four skins, not four cloned templates: the four mockups have the same sequence
+One layout in four skins, not four cloned designs: the four mockups have the same sequence
 of blocks and differ only in background decor, accent colour and headline typeface.
 `proof_a6_card-1.{2,3,4,5}.0.json` are byte-identical in `elements` — that is a symptom of
 there being no construct for "same layout, different look", which the skin model supplies.
@@ -33,10 +36,10 @@ there being no construct for "same layout, different look", which the skin model
 | 5 | `background_asset`: field, bottom layer, readiness lockstep, loader diagnostics | **done** | `registries/{schemas,loader}.py`, `design/renderReadiness.ts` |
 | 6 | `valign` (+ `min_font_size_mm`, pulled forward into step 2) | **done** | `registries/schemas.py`, `DesignRenderer.tsx` |
 | 7 | Skin model on `TemplateVariantDefinition` + `scripts/import_template_svg.py` | **done** | `registries/{schemas,svg_import}.py`, `frontend/src/design/{variantResolution.ts,DesignRenderer.tsx,renderReadiness.ts}` |
-| 8 | One real template `proof_a6_card-1.6.0.json` with four skins | **done** | `registries/templates/proof_a6_card-1.6.0.json` |
+| 8 | One real design `proof_a6_card-1.6.0.json` with four skins | **done** | `registries/templates/proof_a6_card-1.6.0.json` |
 | H | Runtime: Dockerfile from `requirements.lock`, pinned Chromium, real engine version | **todo** | `Dockerfile`, `rendering/service.py` |
 | 9 | Real bold weight: `@font-face` from `fonts[]`, `fonts.check()` gate | deferred | after the first slice |
-| 10 | Template-conditional branding fallback, remaining templates as new versions | deferred | after the first slice |
+| 10 | Design-conditional branding fallback, remaining designs as new versions | deferred | after the first slice |
 | 11 | `test_print_fidelity.py`, render tests runnable, `make test-render` | deferred | after the first slice |
 | 12 | Fold this document's conclusions into the permanent docs | deferred | after the first slice |
 
@@ -75,7 +78,7 @@ the product's 18mm minimum. Contract now: **the element box is the symbol** (`bo
 zone on coloured artwork.
 
 *Deviation from the plan:* `qr_quiet_zone_too_small` is a **non-blocking** finding addressed to
-the template author, not a blocking one. ISO/IEC 18004 requires 4 *modules*, so a **shorter**
+design author, not a blocking one. ISO/IEC 18004 requires 4 *modules*, so a **shorter**
 URL needs a **wider** zone — blocking would refuse an order over a template value the customer
 cannot reach. The shipped templates were raised from 2mm to 4mm.
 
@@ -163,7 +166,7 @@ it is read nowhere, and bumping it would imply a migration history that does not
 - [ ] **`businessName` is required, has no element**, and reaches the card only as glyphs
       inside `brandingFallbackDataUrl`, injected as the *logo* asset when no logo was uploaded
       — so uploading a logo removes the company name from the card entirely. Fixing the
-      fallback must be **template-conditional**, or the re-render of the existing approved
+      fallback must be **design-conditional**, or the re-render of the existing approved
       orders changes.
 - [ ] **Render tests are not runnable**: `conftest.py` calls `corepack` unconditionally, and
       `_find_browser_binary()` resolves nothing on macOS. `make test-render` runs

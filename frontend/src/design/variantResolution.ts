@@ -1,5 +1,9 @@
 import type { LayoutState, TemplateDefinition, TemplateVariantDefinition } from './types';
 
+export function defaultTemplateVariantId(template: TemplateDefinition): string | null {
+  return template.variants.find((variant) => variant.active)?.id ?? null;
+}
+
 export function activeTemplateVariant(
   template: TemplateDefinition,
   variantId: string | null | undefined,
@@ -18,4 +22,3 @@ export function resolveTemplateBackgroundAsset(
   const variant = activeTemplateVariant(template, layoutState.variant_id);
   return variant?.background_asset ?? template.background_asset;
 }
-

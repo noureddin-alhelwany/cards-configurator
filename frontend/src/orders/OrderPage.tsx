@@ -81,7 +81,7 @@ export default function OrderPage({ orderId }: { orderId: string }) {
   const mockupSrc = useMemo(() => `/api/orders/${encodeURIComponent(orderId)}/mockup`, [orderId]);
   const useCaseName = snapshotString(order?.use_case_snapshot, 'name') ?? 'Use Case';
   const productName = snapshotString(order?.product_snapshot, 'name') ?? 'Produkt';
-  const templateName = snapshotString(order?.template_snapshot, 'name') ?? 'Template';
+  const templateName = snapshotString(order?.template_snapshot, 'name') ?? 'Design';
   const variantName = variantLabelFromTemplateSnapshot(order?.template_snapshot, order?.variant_id ?? null);
   const displayName = order?.display_name ?? productName;
   const pdfHref = `/api/orders/${encodeURIComponent(orderId)}/pdf`;

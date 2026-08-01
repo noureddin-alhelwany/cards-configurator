@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ProductDefinition, TemplateDefinition, UseCaseDefinition } from '../registries/types';
 import type { ElementAdjustment, ProofFixture, ValidationIssue } from '../design/types';
 import DesignRenderer from '../design/DesignRenderer';
+import { defaultTemplateVariantId } from '../design/variantResolution';
 import { defaultAdjustmentsForTemplate } from './selectionHelpers';
 import { emptyPreviewAsset, placeholderQrDataUrl } from './previewAssets';
 import { brandingFallbackDataUrl, businessNameFromLayout } from '../design/branding';
@@ -56,7 +57,7 @@ export function buildTemplatePreviewFixture(
     product,
     use_case: useCase,
     layout_state: {
-      variant_id: template.variants.find((variant) => variant.active)?.id ?? '',
+      variant_id: defaultTemplateVariantId(template) ?? '',
       element_adjustments: defaultAdjustmentsForTemplate(template),
       text_values,
       asset_values: {},
@@ -162,7 +163,7 @@ export function TemplateLivePreview({
           product,
           use_case: useCase,
           layout_state: {
-            variant_id: selectedVariantId ?? template.variants.find((variant) => variant.active)?.id ?? '',
+            variant_id: selectedVariantId ?? defaultTemplateVariantId(template) ?? '',
             element_adjustments: layoutValues.element_adjustments,
             text_values: layoutValues.text_values,
             asset_values: layoutValues.asset_values,
