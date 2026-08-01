@@ -1,4 +1,5 @@
 import type { ProofFixture } from './types';
+import { resolveTemplateBackgroundAsset } from './variantResolution';
 
 /**
  * Number of `onAssetReady` callbacks a fixture will fire before it is fully painted.
@@ -15,7 +16,7 @@ export function expectedAssetCount(fixture: ProofFixture) {
   // The background must be counted here or Playwright screenshots the card before the
   // artwork is decoded — a plausible-looking but wrong print file, produced without any
   // error. `BACKGROUND_ASSET_ID` is the id `DesignRenderer` reports it under.
-  const backgroundAssets = fixture.template.background_asset ? 1 : 0;
+  const backgroundAssets = resolveTemplateBackgroundAsset(fixture.template, fixture.layout_state) ? 1 : 0;
   return imageAssets + qrAssets + backgroundAssets;
 }
 

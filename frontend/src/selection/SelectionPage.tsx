@@ -2,9 +2,9 @@ import './SelectionPage.css';
 import StateMessage from '../ui/StateMessage';
 import { SelectionPreviewPanel, SelectionReviewPanel } from './selectionPanels';
 import { SelectionContentPanel } from './selectionContentStep';
-import { ProductCard, TemplateCard } from './selectionUi';
+import { ProductCard, TemplateCard, DesignCard } from './selectionCards';
 import { useSelectionFlow } from './selectionFlow';
-import { templateKey, validationDisplayPath } from './selectionRules';
+import { activeVariants, templateKey, validationDisplayPath } from './selectionRules';
 import type { ValidationIssue } from '../design/types';
 import { uiText } from '../ui/text';
 
@@ -43,13 +43,13 @@ export default function SelectionPage() {
     visibleValidationIssues,
     visibleBlockingIssues,
     recommendedTemplateKey,
+    recommendedVariantId,
     recommendedProductId,
     previewMode,
     isApproved,
     approvalReady,
     handleProductSelect,
     handleTemplateSelect,
-    handleVariantSelect,
     handleTextFieldChange,
     handleAssetFieldChange,
     handleAssetAdjustmentChange,
@@ -242,10 +242,29 @@ export default function SelectionPage() {
               <section className="selection-section selection-section--wizard selection-step-panel">
                 <div className="selection-section__heading">
                   <h2>{uiText.selection.sections.design}</h2>
-                  <p>{matchingTemplates.length} Einträge</p>
+                  <p>
+                    {matchingTemplates.length === 1 && activeVariants(matchingTemplates[0]).length > 1
+                      ? activeVariants(matchingTemplates[0]).length
+                      : matchingTemplates.length}{' '}
+                    Einträge
+                  </p>
                 </div>
                 <div className="template-grid">
-                  {matchingTemplates.length > 0 ? (
+                  {matchingTemplates.length === 1 && activeVariants(matchingTemplates[0]).length > 1 ? (
+                    activeVariants(matchingTemplates[0]).map((variant) => (
+                      <DesignCard
+                        key={variant.id}
+                        template={matchingTemplates[0]}
+                        product={selectedProduct}
+                        useCase={selectedUseCase}
+                        variant={variant}
+                        selected={templateKey(matchingTemplates[0]) === selectedTemplateKey && variant.id === selectedVariantId}
+                        recommended={variant.id === recommendedVariantId}
+                        onSelect={handleTemplateSelect}
+                        disabled={isApproved}
+                      />
+                    ))
+                  ) : matchingTemplates.length > 0 ? (
                     matchingTemplates.map((template) => (
                       <TemplateCard
                         key={templateKey(template)}
@@ -261,9 +280,9 @@ export default function SelectionPage() {
                   ) : (
                     <StateMessage
                       tone="empty"
-                      kicker={uiText.selection.emptyTemplates.kicker}
-                      title={uiText.selection.emptyTemplates.title}
-                      description={uiText.selection.emptyTemplates.description}
+                      kicker={uiText.selection.emptyDesigns.kicker}
+                      title={uiText.selection.emptyDesigns.title}
+                      description={uiText.selection.emptyDesigns.description}
                     />
                   )}
                 </div>
@@ -301,7 +320,6 @@ export default function SelectionPage() {
                 issueLabel={issueLabel}
                 onIssueSelect={focusValidationIssue}
                 onChangeDesign={() => setWizardStepIndex(designStepIndex)}
-                onVariantSelect={handleVariantSelect}
                 onTextFieldChange={handleTextFieldChange}
                 onAssetFieldChange={handleAssetFieldChange}
                 onAssetAdjustmentChange={handleAssetAdjustmentChange}

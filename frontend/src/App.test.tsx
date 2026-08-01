@@ -12,6 +12,7 @@ test('renders the registry selection flow and keeps only available products visi
   let persistedTextValues: Record<string, string> = {};
   let persistedElementAdjustments: Record<string, { offset_x: number; offset_y: number; scale: number }> = {};
   let persistedAssetValues: Record<string, string> = {};
+  let persistedVariantId: string | null = null;
   const uploadedAssets: Record<
     string,
     {
@@ -191,9 +192,9 @@ test('renders the registry selection flow and keeps only available products visi
         ...sharedTemplateModel,
         schema_version: 1,
         id: 'proof_a6_card',
-        version: '1.0.0',
-        name: 'Google Reviews Classic',
-        preview_asset: 'template_google_reviews_classic.png',
+        version: '1.6.0',
+        name: 'Google Reviews Host',
+        preview_asset: 'template_google_reviews_bold.png',
         product_id: 'a6_card',
         use_case_ids: ['google_reviews'],
         active: true,
@@ -212,16 +213,16 @@ test('renders the registry selection flow and keeps only available products visi
             max_length: 60,
             max_lines: 3,
           },
-        {
-          id: 'logo',
-          type: 'logo',
-          required: false,
-          max_length: null,
-          max_lines: null,
-        },
-        {
-          id: 'qrTarget',
-          type: 'url',
+          {
+            id: 'logo',
+            type: 'logo',
+            required: false,
+            max_length: null,
+            max_lines: null,
+          },
+          {
+            id: 'qrTarget',
+            type: 'url',
             required: true,
             max_length: null,
             max_lines: null,
@@ -229,126 +230,28 @@ test('renders the registry selection flow and keeps only available products visi
         ],
         variants: [
           {
-            id: 'logo-focused',
-            name: 'Logo',
+            id: 'bold',
+            name: 'Bold',
             active: true,
-            preview_asset: 'template_google_reviews_classic.png',
+            preview_asset: 'template_google_reviews_bold.png',
           },
           {
-            id: 'text-focused',
-            name: 'Text',
+            id: 'minimum',
+            name: 'Minimum',
             active: true,
-            preview_asset: 'booking.png',
-          },
-        ],
-      },
-      {
-        ...sharedTemplateModel,
-        schema_version: 1,
-        id: 'proof_a6_card',
-        version: '1.1.0',
-        name: 'Google Reviews Bold',
-        preview_asset: 'booking.png',
-        product_id: 'a6_card',
-        use_case_ids: ['google_reviews'],
-        active: true,
-        fields: [
-          {
-            id: 'businessName',
-            type: 'text',
-            required: true,
-            max_length: 40,
-            max_lines: 1,
+            preview_asset: 'template_google_reviews_minimum.png',
           },
           {
-            id: 'headline',
-            type: 'text',
-            required: true,
-            max_length: 60,
-            max_lines: 3,
-          },
-        {
-          id: 'logo',
-          type: 'logo',
-          required: false,
-          max_length: null,
-          max_lines: null,
-        },
-        {
-          id: 'qrTarget',
-          type: 'url',
-            required: true,
-            max_length: null,
-            max_lines: null,
-          },
-        ],
-        variants: [
-          {
-            id: 'logo-focused',
-            name: 'Logo',
+            id: 'warm',
+            name: 'Warm',
             active: true,
-            preview_asset: 'booking.png',
+            preview_asset: 'template_google_reviews_warm.png',
           },
           {
-            id: 'text-focused',
-            name: 'Text',
+            id: 'premium',
+            name: 'Premium',
             active: true,
-            preview_asset: 'template_google_reviews_minimal.png',
-          },
-        ],
-      },
-      {
-        ...sharedTemplateModel,
-        schema_version: 1,
-        id: 'proof_a6_card',
-        version: '1.2.0',
-        name: 'Google Reviews Minimal',
-        preview_asset: 'template_google_reviews_minimal.png',
-        product_id: 'a6_card',
-        use_case_ids: ['google_reviews'],
-        active: true,
-        fields: [
-          {
-            id: 'businessName',
-            type: 'text',
-            required: true,
-            max_length: 40,
-            max_lines: 1,
-          },
-          {
-            id: 'headline',
-            type: 'text',
-            required: true,
-            max_length: 60,
-            max_lines: 3,
-          },
-        {
-          id: 'logo',
-          type: 'logo',
-          required: false,
-          max_length: null,
-          max_lines: null,
-        },
-        {
-          id: 'qrTarget',
-          type: 'url',
-            required: true,
-            max_length: null,
-            max_lines: null,
-          },
-        ],
-        variants: [
-          {
-            id: 'logo-focused',
-            name: 'Logo',
-            active: true,
-            preview_asset: 'template_google_reviews_minimal.png',
-          },
-          {
-            id: 'text-focused',
-            name: 'Text',
-            active: true,
-            preview_asset: 'template_google_reviews_classic.png',
+            preview_asset: 'template_google_reviews_premium.png',
           },
         ],
       },
@@ -458,6 +361,7 @@ test('renders the registry selection flow and keeps only available products visi
         const selection = JSON.parse(String(init?.body ?? '{}'));
         persistedTextValues = {};
         persistedAssetValues = {};
+        persistedVariantId = selection.variant_id ?? 'logo-focused';
         return {
           ok: true,
           json: async () => ({
@@ -467,9 +371,9 @@ test('renders the registry selection flow and keeps only available products visi
             product_id: selection.product_id,
             template_id: selection.template_id,
             template_version: selection.template_version,
-            variant_id: selection.variant_id ?? 'logo-focused',
+            variant_id: persistedVariantId,
             layout_state: {
-              variant_id: selection.variant_id ?? 'logo-focused',
+              variant_id: persistedVariantId,
               element_adjustments: persistedElementAdjustments,
               text_values: {},
               asset_values: {},
@@ -479,7 +383,7 @@ test('renders the registry selection flow and keeps only available products visi
       }
       if (url.endsWith('/api/drafts/current/layout')) {
         const body = JSON.parse(String(init?.body ?? '{}'));
-        const nextVariantId = body.variant_id ?? 'logo-focused';
+        const nextVariantId = body.variant_id ?? persistedVariantId ?? 'logo-focused';
         const nextTextValues = {
           ...persistedTextValues,
           ...(body.text_values ?? {}),
@@ -499,6 +403,7 @@ test('renders the registry selection flow and keeps only available products visi
         };
         persistedTextValues = nextTextValues;
         persistedElementAdjustments = nextElementAdjustments;
+        persistedVariantId = nextVariantId;
         return {
           ok: true,
           json: async () => ({
@@ -598,24 +503,26 @@ test('renders the registry selection flow and keeps only available products visi
   expect(screen.queryByText('Hidden Card')).not.toBeInTheDocument();
 
   await waitFor(() => {
-    expect(screen.getByRole('button', { name: /Google Reviews Classic/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Bold auswählen/i })).toBeInTheDocument();
   });
-  expect(screen.getByRole('button', { name: /Google Reviews Bold/i })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: /Google Reviews Minimal/i })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Minimum auswählen/i })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Warm auswählen/i })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Premium auswählen/i })).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /Wedding Reviews/i })).not.toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole('button', { name: /Google Reviews Classic/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Bold auswählen/i }));
 
   await waitFor(() => {
     expect(screen.getByRole('heading', { name: 'Personalisiere deine Karte' })).toBeInTheDocument();
   });
+  expect(screen.getByText('Design: Bold')).toBeInTheDocument();
   expect(screen.getByText(/Gespeichert/)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Weiter zur Prüfung' })).toBeEnabled();
   expect(screen.getByRole('textbox', { name: 'Unternehmensname' })).toBeInTheDocument();
   expect(screen.getByRole('textbox', { name: 'Überschrift' })).toBeInTheDocument();
   expect(screen.getByRole('textbox', { name: 'QR-Ziel' })).toBeInTheDocument();
-  expect(screen.getByRole('tab', { name: 'Logo' })).toBeInTheDocument();
-  expect(screen.getByRole('tab', { name: 'Text' })).toBeInTheDocument();
+  expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  expect(screen.queryByText('Layoutvarianten')).not.toBeInTheDocument();
   expect(screen.queryByText(/zu klein für dieses Produkt/)).not.toBeInTheDocument();
 
   const headlineInput = screen.getByRole('textbox', { name: 'Überschrift' });
@@ -1293,7 +1200,7 @@ test('approves a draft and locks editing afterward', async () => {
   await waitFor(() => {
     expect(screen.getByRole('heading', { name: 'Personalisiere deine Karte' })).toBeInTheDocument();
   });
-  expect(screen.getByText('Design: Classic')).toBeInTheDocument();
+  expect(screen.getByText('Design: Logo')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /A6 Card/i })).not.toBeInTheDocument();
 
   expect(screen.getByText(/Gespeichert/)).toBeInTheDocument();
@@ -1364,8 +1271,8 @@ test('renders registry field copy for the review link and offers no example-link
       {
         schema_version: 1,
         id: 'proof_a6_card',
-        version: '1.2.0',
-        name: 'Google Reviews Bold',
+        version: '1.6.0',
+        name: 'Google Reviews Host',
         description: 'Kräftige Google-Bewertungsvorlage.',
         preview_asset: 'template_google_reviews_bold.png',
         product_id: 'a6_card',
@@ -1421,7 +1328,14 @@ test('renders registry field copy for the review link and offers no example-link
             default_value: '',
           },
         ],
-        variants: [],
+        variants: [
+          {
+            id: 'bold',
+            name: 'Bold',
+            active: true,
+            preview_asset: 'template_google_reviews_bold.png',
+          },
+        ],
         elements: [],
         page_width_mm: 111,
         page_height_mm: 154,
@@ -1438,13 +1352,13 @@ test('renders registry field copy for the review link and offers no example-link
     use_case_id: 'google_reviews',
     product_id: 'a6_card',
     template_id: 'proof_a6_card',
-    template_version: '1.2.0',
-    variant_id: null,
+    template_version: '1.6.0',
+    variant_id: 'bold',
     approved_at: null,
     approval_snapshot: null,
     approval_checklist: null,
     layout_state: {
-      variant_id: '',
+      variant_id: 'bold',
       element_adjustments: {},
       text_values: { businessName: 'Studio Sonnenschein', headline: 'Scanne den QR-Code', qrTarget: '' },
       asset_values: {},

@@ -5,6 +5,7 @@
   "name": "Google Reviews Minimum",
   "description": "Sehr reduzierte Google-Bewertungsvorlage mit viel Ruhe.",
   "preview_asset": "template_google_reviews_minimum.png",
+  "background_asset": "backgrounds/proof_a6_card-1.3.0-minimum.svg",
   "product_id": "a6_card",
   "use_case_ids": ["google_reviews"],
   "active": true,

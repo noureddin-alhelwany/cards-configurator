@@ -1,7 +1,7 @@
 import type { ProductDefinition, TemplateDefinition, TemplateVariantDefinition, UseCaseDefinition } from '../registries/types';
 import DesignRenderer from '../design/DesignRenderer';
 import { buildTemplatePreviewFixture } from './selectionPreview';
-import { activeVariants, templateStyleDescription } from './selectionRules';
+import { designStyleDescription } from './selectionRules';
 import { uiText } from '../ui/text';
 import { previewAssetPath } from './previewAssets';
 
@@ -43,46 +43,66 @@ export function TemplateCard({ template, product, useCase, selected, recommended
       <div className="template-card__body">
         <p className="template-card__eyebrow">{uiText.common.templateFallback}</p>
         <h3>{template.name ?? uiText.common.templateFallback}</h3>
-        <p>{template.description ?? templateStyleDescription(template)}</p>
+        <p>{template.description ?? designStyleDescription(template)}</p>
       </div>
     </button>
   );
 }
 
-type TemplateVariantButtonsProps = {
+type DesignCardProps = {
   template: TemplateDefinition;
-  selectedVariantId: string | null;
-  onSelect: (variant: TemplateVariantDefinition) => void;
+  product: ProductDefinition | null;
+  useCase: UseCaseDefinition | null;
+  variant: TemplateVariantDefinition;
+  selected: boolean;
+  recommended?: boolean;
+  onSelect: (template: TemplateDefinition, variant: TemplateVariantDefinition) => void;
   disabled?: boolean;
 };
 
-export function TemplateVariantButtons({ template, selectedVariantId, onSelect, disabled = false }: TemplateVariantButtonsProps) {
-  const variants = activeVariants(template);
-
-  // A single option is not a choice — the template decides the layout in that case.
-  if (variants.length < 2) {
-    return null;
+export function DesignCard({
+  template,
+  product,
+  useCase,
+  variant,
+  selected,
+  recommended = false,
+  onSelect,
+  disabled = false,
+}: DesignCardProps) {
+  const previewFixture = buildTemplatePreviewFixture(template, product, useCase);
+  if (previewFixture) {
+    previewFixture.layout_state.variant_id = variant.id;
   }
 
   return (
-    <div className="template-variant-grid" role="tablist" aria-label="Layoutvarianten">
-      {variants.map((variant) => (
-        <button
-          key={variant.id}
-          type="button"
-          role="tab"
-          aria-selected={variant.id === selectedVariantId}
-          className={`template-variant-pill${variant.id === selectedVariantId ? ' template-variant-pill--selected' : ''}`}
-          disabled={disabled}
-          onClick={() => onSelect(variant)}
-        >
-          <span className="template-variant-pill__preview" aria-hidden="true">
-            {variant.preview_asset ? <img src={previewAssetPath(variant.preview_asset)} alt="" /> : <span>Variante</span>}
-          </span>
-          <span className="template-variant-pill__label">{variant.name}</span>
-        </button>
-      ))}
-    </div>
+    <button
+      type="button"
+      className={`template-card${selected ? ' template-card--selected' : ''}`}
+      aria-pressed={selected}
+      disabled={disabled}
+      onClick={() => onSelect(template, variant)}
+      aria-label={`${variant.name} auswählen`}
+    >
+      <div className="template-card__preview">
+        {variant.preview_asset ? (
+          <img className="template-card__image" src={previewAssetPath(variant.preview_asset)} alt="" />
+        ) : previewFixture ? (
+          <div className="template-card__preview-stage">
+            <DesignRenderer fixture={previewFixture} />
+          </div>
+        ) : null}
+        <div className="template-card__badges" aria-hidden="true">
+          {recommended ? <span className="template-card__badge">Empfohlen</span> : null}
+          {selected ? <span className="template-card__badge template-card__badge--selected">Ausgewählt</span> : null}
+        </div>
+      </div>
+      <div className="template-card__body">
+        <p className="template-card__eyebrow">{uiText.selection.sections.design}</p>
+        <h3>{variant.name}</h3>
+        <p>{designStyleDescription({ ...template, name: variant.name, description: null })}</p>
+      </div>
+    </button>
   );
 }
 

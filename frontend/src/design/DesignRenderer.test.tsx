@@ -211,6 +211,25 @@ function fixtureWithBackground(asset = 'backgrounds/proof_a6_card-1.6.0-bold.svg
   return fixture;
 }
 
+function fixtureWithVariantBackground() {
+  const fixture = fixtureWithQr();
+  fixture.template.background_asset = 'backgrounds/proof_a6_card-1.6.0-bold.svg';
+  fixture.template.variants = [
+    {
+      id: 'classic',
+      name: 'Classic',
+      active: true,
+      preview_asset: null,
+      background_asset: 'backgrounds/proof_a6_card-1.6.0-warm.svg',
+      accent_color: '#315a86',
+      headline_font_family: 'Proof Sans',
+      headline_font_weight: 700,
+    },
+  ];
+  fixture.layout_state.variant_id = 'classic';
+  return fixture;
+}
+
 test('background artwork is the bottom layer and is hidden from assistive tech', () => {
   const { container } = render(<DesignRenderer fixture={fixtureWithBackground()} variant="production" />);
 
@@ -235,6 +254,14 @@ test('the readiness handshake counts the background image', () => {
   // Out of lockstep, Playwright screenshots the card before the artwork has decoded and
   // writes a plausible-looking but wrong print file, with no error anywhere.
   expect(expectedAssetCount(withArtwork)).toBe(expectedAssetCount(withoutArtwork) + 1);
+});
+
+test('variant-specific background artwork overrides the template fallback', () => {
+  const { container } = render(<DesignRenderer fixture={fixtureWithVariantBackground()} variant="production" />);
+
+  const background = container.querySelector<HTMLImageElement>('[data-testid="design-background"]');
+  expect(background?.getAttribute('src')).toBe('/proof-assets/backgrounds/proof_a6_card-1.6.0-warm.svg');
+  expect(expectedAssetCount(fixtureWithVariantBackground())).toBe(expectedAssetCount(fixtureWithQr()) + 1);
 });
 
 test('the background reports itself ready under the id the count expects', () => {

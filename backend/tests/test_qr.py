@@ -36,23 +36,29 @@ def _bundle():
 
 def _template():
     bundle = _bundle()
-    return next(t for t in bundle.templates if t.id == "proof_a6_card" and t.version == "1.2.0")
+    return next(t for t in bundle.templates if t.id == "proof_a6_card" and t.version == "1.6.0")
 
 
 def _draft(text_values: dict[str, str]):
     from cards_configurator_backend.drafts.schemas import DraftState
 
+    default_text_values = {
+        "businessName": "Studio One",
+        "headline": "Scanne den QR-Code",
+        "body": "Kurz und klar.",
+    }
+    default_text_values.update(text_values)
     return DraftState(
         id=1,
         name="draft",
         use_case_id="google_reviews",
         product_id="a6_card",
         template_id="proof_a6_card",
-        template_version="1.2.0",
+        template_version="1.6.0",
         layout_state=LayoutState(
             variant_id="",
             element_adjustments={},
-            text_values=text_values,
+            text_values=default_text_values,
             asset_values={},
         ),
     )
@@ -90,7 +96,7 @@ def test_resolve_prefers_the_customer_url_over_the_template_default() -> None:
 def _report_for(url: str, *, box_width_mm: float | None = None):
     """Validate a draft, optionally shrinking the QR box so a finding is guaranteed."""
     bundle = _bundle()
-    template = next(t for t in bundle.templates if t.version == "1.2.0")
+    template = next(t for t in bundle.templates if t.version == "1.6.0")
     if box_width_mm is not None:
         qr_element = next(e for e in template.elements if e.kind == "qr")
         qr_element.box_mm.width_mm = box_width_mm
@@ -152,7 +158,7 @@ def test_quiet_zone_finding_never_blocks_the_customer() -> None:
     qr_element = next(e for e in template.elements if e.kind == "qr")
     tiny_zone = qr_element.model_copy(update={"quiet_zone_mm": 0.1})
     bundle = _bundle()
-    live_template = next(t for t in bundle.templates if t.version == "1.2.0")
+    live_template = next(t for t in bundle.templates if t.version == "1.6.0")
     live_template.elements[live_template.elements.index(qr_element)] = tiny_zone
 
     report = validate_current_draft(REPO_ROOT / "data", bundle, _draft({"qrTarget": SHORT_URL}))

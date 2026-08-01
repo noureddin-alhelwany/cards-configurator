@@ -87,6 +87,10 @@ export type TemplateVariantDefinition = {
   name: string;
   active: boolean;
   preview_asset: string | null;
+  background_asset?: string | null;
+  accent_color?: string | null;
+  headline_font_family?: string | null;
+  headline_font_weight?: number | null;
 };
 
 export type TemplateDefinition = {

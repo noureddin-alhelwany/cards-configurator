@@ -35,7 +35,7 @@ export function buildWizardSteps() {
 
 export type WizardStep = ReturnType<typeof buildWizardSteps>[number];
 
-export function templateStyleDescription(template: TemplateDefinition) {
+export function designStyleDescription(template: TemplateDefinition) {
   if (template.description) {
     return template.description;
   }
@@ -61,12 +61,12 @@ export function templateStyleDescription(template: TemplateDefinition) {
 const TEMPLATE_STYLE_KEYWORDS = ['Classic', 'Bold', 'Minimal', 'Minimum', 'Warm', 'Premium'] as const;
 
 /**
- * Short style name for the compact content-step header ("Design: Bold").
+ * Short design name for the compact content-step header ("Design: Bold").
  *
- * The five `proof_a6_card` registry entries share one id and use `version` as a style
+ * The six `proof_a6_card` registry entries share one id and use `version` as a design
  * axis, so the readable style sits in the template name rather than in the version.
  */
-export function templateStyleName(template: TemplateDefinition) {
+export function designStyleName(template: TemplateDefinition) {
   const name = (template.name ?? '').trim();
   if (!name) {
     return uiText.common.templateFallback;
@@ -75,13 +75,16 @@ export function templateStyleName(template: TemplateDefinition) {
   return matched ?? name.split(/\s+/).pop() ?? uiText.common.templateFallback;
 }
 
-export function activeVariants(template: TemplateDefinition) {
-  return template.variants.filter((variant) => variant.active);
+export function selectedDesignName(template: TemplateDefinition, variantId: string | null) {
+  const selectedVariant = activeVariant(template, variantId);
+  if (selectedVariant) {
+    return selectedVariant.name;
+  }
+  return designStyleName(template);
 }
 
-/** A variant picker is only meaningful when there is more than one option to pick. */
-export function hasVariantChoice(template: TemplateDefinition) {
-  return activeVariants(template).length > 1;
+export function activeVariants(template: TemplateDefinition) {
+  return template.variants.filter((variant) => variant.active);
 }
 
 export function fieldLabel(field: TemplateDefinition['fields'][number], index: number) {
@@ -254,6 +257,28 @@ export function activeVariant(template: TemplateDefinition, variantId: string | 
     template.variants.find((variant) => variant.active && variant.id === variantId) ??
     template.variants.find((variant) => variant.active) ??
     null
+  );
+}
+
+const GOOGLE_REVIEWS_TEMPLATE_ID = 'proof_a6_card';
+const GOOGLE_REVIEWS_HOST_VERSION = '1.6.0';
+const GOOGLE_REVIEWS_LEGACY_VERSIONS = new Set(['1.2.0', '1.3.0', '1.4.0', '1.5.0']);
+
+export function isLegacyGoogleReviewsTemplate(template: TemplateDefinition) {
+  return (
+    template.id === GOOGLE_REVIEWS_TEMPLATE_ID &&
+    template.product_id === 'a6_card' &&
+    template.use_case_ids.includes('google_reviews') &&
+    GOOGLE_REVIEWS_LEGACY_VERSIONS.has(template.version)
+  );
+}
+
+export function isGoogleReviewsHostTemplate(template: TemplateDefinition) {
+  return (
+    template.id === GOOGLE_REVIEWS_TEMPLATE_ID &&
+    template.product_id === 'a6_card' &&
+    template.use_case_ids.includes('google_reviews') &&
+    template.version === GOOGLE_REVIEWS_HOST_VERSION
   );
 }
 

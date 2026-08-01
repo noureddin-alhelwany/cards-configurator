@@ -14,7 +14,7 @@ def _data_url(mime_type: str, raw: bytes) -> AssetDataUrl:
 
 
 def build_proof_fixture(bundle: RegistryBundle, proof_assets_dir: Path) -> ProofFixture:
-    template = next(template for template in bundle.templates if template.id == "proof_a6_card" and template.version == "1.2.0")
+    template = next(template for template in bundle.templates if template.id == "proof_a6_card" and template.version == "1.6.0")
     product = next(product for product in bundle.products if product.id == template.product_id)
     use_case = next(use_case for use_case in bundle.use_cases if use_case.id in template.use_case_ids)
 

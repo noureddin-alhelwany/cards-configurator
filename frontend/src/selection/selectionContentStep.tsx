@@ -1,12 +1,11 @@
-import type { TemplateDefinition, TemplateVariantDefinition } from '../registries/types';
+import type { TemplateDefinition } from '../registries/types';
 import type { ElementAdjustment, ValidationIssue } from '../design/types';
 import type { AssetMetadata } from './selectionHelpers';
 import { uiText } from '../ui/text';
 import { ContentFieldSections } from './selectionFields';
 import { TemplateImageAdjustmentDialog } from './selectionImageDialog';
-import { TemplateVariantButtons } from './selectionCards';
 import { SelectionStepAlerts } from './selectionPanels';
-import { friendlyValidationMessage, hasVariantChoice, templateStyleName } from './selectionRules';
+import { friendlyValidationMessage, selectedDesignName } from './selectionRules';
 import type { DraftLayoutValues } from './selectionTypes';
 
 type SelectionContentPanelProps = {
@@ -26,7 +25,6 @@ type SelectionContentPanelProps = {
   issueLabel: (issue: ValidationIssue) => string;
   onIssueSelect: (issue: ValidationIssue) => void;
   onChangeDesign: () => void;
-  onVariantSelect: (variant: TemplateVariantDefinition) => Promise<void> | void;
   onTextFieldChange: (fieldId: string, value: string) => Promise<void> | void;
   onAssetFieldChange: (fieldId: string, kind: 'logo' | 'image', file: File | null) => Promise<void> | void;
   onAssetAdjustmentChange: (fieldId: string, adjustment: ElementAdjustment) => Promise<void> | void;
@@ -61,7 +59,6 @@ export function SelectionContentPanel({
   issueLabel,
   onIssueSelect,
   onChangeDesign,
-  onVariantSelect,
   onTextFieldChange,
   onAssetFieldChange,
   onAssetAdjustmentChange,
@@ -82,7 +79,7 @@ export function SelectionContentPanel({
         <p className="content-step__design">
           <span>
             {uiText.selection.content.designPrefix}
-            {templateStyleName(selectedTemplate)}
+            {selectedDesignName(selectedTemplate, selectedVariantId)}
           </span>
           <button type="button" className="content-step__link" onClick={onChangeDesign}>
             {uiText.selection.content.designChange}
@@ -110,22 +107,6 @@ export function SelectionContentPanel({
       ) : null}
 
       <form className="content-form" onSubmit={(event) => event.preventDefault()}>
-        {hasVariantChoice(selectedTemplate) ? (
-          <section className="content-section" aria-labelledby="content-variants-title">
-            <div className="content-section__head">
-              <h3 id="content-variants-title" className="content-section__title">
-                {uiText.selection.content.variants}
-              </h3>
-            </div>
-            <TemplateVariantButtons
-              template={selectedTemplate}
-              selectedVariantId={selectedVariantId}
-              onSelect={onVariantSelect}
-              disabled={isApproved}
-            />
-          </section>
-        ) : null}
-
         <ContentFieldSections
           template={selectedTemplate}
           layoutValues={layoutValues}

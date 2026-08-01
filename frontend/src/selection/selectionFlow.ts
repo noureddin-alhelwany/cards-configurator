@@ -7,9 +7,11 @@ import type { TemplateVariantDefinition } from '../registries/types';
 import { assetElementForField, clamp, defaultAdjustmentsForTemplate, type AssetMetadata } from './selectionHelpers';
 import {
   activeVariant,
+  activeVariants,
   buildWizardSteps,
   fieldDefaultValue,
   fieldLabel,
+  isLegacyGoogleReviewsTemplate,
   templateKey,
   templateRecommendationIndex,
   trimSuggestion,
@@ -259,12 +261,16 @@ export function primaryUseCaseIdForProduct(bundle: RegistryBundle, productId: st
 }
 
 export function visibleTemplates(bundle: RegistryBundle, selectedUseCaseId: string | null) {
-  if (!selectedUseCaseId) {
-    return bundle.templates.filter((template) => template.active);
-  }
-
   return bundle.templates.filter(
-    (template) => template.active && template.use_case_ids.includes(selectedUseCaseId),
+    (template) => {
+      if (!template.active || isLegacyGoogleReviewsTemplate(template)) {
+        return false;
+      }
+      if (!selectedUseCaseId) {
+        return true;
+      }
+      return template.use_case_ids.includes(selectedUseCaseId);
+    },
   );
 }
 
@@ -462,6 +468,7 @@ export function useSelectionFlow() {
   );
   const visibleBlockingIssues = visibleValidationIssues.filter((issue) => issue.blocking);
   const recommendedTemplateKey = matchingTemplates[0] ? templateKey(matchingTemplates[0]) : null;
+  const recommendedVariantId = matchingTemplates[0] ? activeVariants(matchingTemplates[0])[0]?.id ?? null : null;
   const recommendedProductId = recommendedProducts[0]?.id ?? null;
   const previewMode: PreviewMode = selectionState.previewState.live ? 'live' : selectionState.previewState.mockup ? 'mockup' : 'hidden';
 
@@ -622,7 +629,7 @@ export function useSelectionFlow() {
     setWizardStepIndex((current) => Math.max(0, current - 1));
   }
 
-  async function handleTemplateSelect(template: TemplateDefinition) {
+  async function handleTemplateSelect(template: TemplateDefinition, variant?: TemplateVariantDefinition) {
     if (!selectedUseCaseId || !selectedProductId || isApproved) {
       return;
     }
@@ -632,8 +639,9 @@ export function useSelectionFlow() {
       return;
     }
     const fallbackVariant =
-      template.variants.find((variant) => variant.active && variant.id === selectedVariantId) ??
-      template.variants.find((variant) => variant.active) ??
+      variant ??
+      template.variants.find((candidate) => candidate.active && candidate.id === selectedVariantId) ??
+      template.variants.find((candidate) => candidate.active) ??
       null;
     const response = await saveTemplateSelection({
       use_case_id: selectedUseCaseId,
@@ -667,16 +675,6 @@ export function useSelectionFlow() {
     }
     setApprovalChecklist(emptyApprovalChecklist());
     setApprovalError(null);
-  }
-
-  async function handleVariantSelect(variant: TemplateVariantDefinition) {
-    if (!selectedTemplate || isApproved) {
-      return;
-    }
-    const response = await saveLayoutValues({ variant_id: variant.id });
-    setSelectedVariantId(response.layout_state.variant_id || variant.id);
-    setLayoutValues(layoutValuesFromState(response.layout_state));
-    setDraft(response);
   }
 
   async function handleTextFieldChange(fieldId: string, value: string) {
@@ -884,13 +882,13 @@ export function useSelectionFlow() {
     visibleValidationIssues,
     visibleBlockingIssues,
     recommendedTemplateKey,
+    recommendedVariantId,
     recommendedProductId,
     previewMode,
     isApproved,
     approvalReady,
     handleProductSelect,
     handleTemplateSelect,
-    handleVariantSelect,
     handleTextFieldChange,
     handleAssetFieldChange,
     handleAssetAdjustmentChange,

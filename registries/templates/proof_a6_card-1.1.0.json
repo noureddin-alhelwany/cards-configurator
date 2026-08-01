@@ -5,6 +5,7 @@
   "name": "Terminbuchungskarte",
   "description": "Direkte Terminbuchung mit klarer Zielseite und QR-Fokus.",
   "preview_asset": "booking.png",
+  "background_asset": "backgrounds/proof_a6_card-1.1.0-booking.svg",
   "product_id": "appointment_booking_card",
   "use_case_ids": ["appointment_booking"],
   "active": true,

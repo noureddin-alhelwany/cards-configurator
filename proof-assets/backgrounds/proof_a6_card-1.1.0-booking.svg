@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="111mm" height="154mm" viewBox="0 0 111 154" role="img" aria-label="Terminbuchung Background">
+  <defs>
+    <linearGradient id="bookingBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbf6ef" />
+      <stop offset="48%" stop-color="#f4e8d8" />
+      <stop offset="100%" stop-color="#e9d8c2" />
+    </linearGradient>
+    <linearGradient id="bookingBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#315a86" />
+      <stop offset="100%" stop-color="#5c7ea9" />
+    </linearGradient>
+  </defs>
+  <rect width="111" height="154" fill="url(#bookingBg)" />
+  <path d="M0 24C22 10 40 12 59 22C77 31 91 34 111 22V0H0Z" fill="rgba(49,90,134,0.12)" />
+  <path d="M-8 122C12 112 27 111 43 118C61 126 80 129 119 116V154H-8Z" fill="rgba(49,90,134,0.08)" />
+  <rect x="14" y="18" width="32" height="28" rx="5" fill="none" stroke="url(#bookingBlue)" stroke-width="1.6" opacity="0.42" />
+  <rect x="18" y="22" width="24" height="4" rx="2" fill="url(#bookingBlue)" opacity="0.42" />
+  <rect x="18" y="30" width="7" height="7" rx="1.8" fill="#ffffff" opacity="0.68" />
+  <rect x="27" y="30" width="7" height="7" rx="1.8" fill="#ffffff" opacity="0.68" />
+  <rect x="36" y="30" width="7" height="7" rx="1.8" fill="#ffffff" opacity="0.68" />
+  <rect x="18" y="39" width="7" height="7" rx="1.8" fill="#ffffff" opacity="0.68" />
+  <rect x="27" y="39" width="7" height="7" rx="1.8" fill="#ffffff" opacity="0.68" />
+  <circle cx="87" cy="25" r="17" fill="rgba(49,90,134,0.13)" />
+  <circle cx="87" cy="25" r="9" fill="rgba(255,255,255,0.45)" />
+  <path d="M76 102C89 95 97 92 111 89V154H77Z" fill="rgba(49,90,134,0.16)" />
+  <path d="M63 0C77 16 84 33 85 51C86 72 80 88 69 101" fill="none" stroke="rgba(49,90,134,0.18)" stroke-width="1.4" stroke-linecap="round" />
+</svg>

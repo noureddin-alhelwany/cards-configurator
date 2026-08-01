@@ -28,7 +28,7 @@ def test_validation_reports_missing_required_fields(tmp_path: Path, monkeypatch)
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.2.0',
+                'template_version': '1.6.0',
             },
         )
         assert response.status_code == 200
@@ -53,7 +53,7 @@ def test_validation_reports_text_overflow(tmp_path: Path, monkeypatch) -> None:
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.2.0',
+                'template_version': '1.6.0',
             },
         )
         client.patch(
@@ -61,6 +61,7 @@ def test_validation_reports_text_overflow(tmp_path: Path, monkeypatch) -> None:
             json={
                 'text_values': {
                     'businessName': 'Studio One',
+                    'body': 'Kurz und klar.',
                     'headline': 'This is an intentionally long headline that should overflow the available text box significantly and trigger validation warnings.',
                     'qrTarget': 'example.com/review',
                 },
@@ -89,7 +90,7 @@ def test_validation_flags_warning_and_blocking_logo_dpi(tmp_path: Path, monkeypa
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.2.0',
+                'template_version': '1.6.0',
             },
         )
 
@@ -104,6 +105,7 @@ def test_validation_flags_warning_and_blocking_logo_dpi(tmp_path: Path, monkeypa
             json={
                 'text_values': {
                     'businessName': 'Studio One',
+                    'body': 'Kurz und klar.',
                     'headline': 'Short headline',
                     'qrTarget': 'example.com/review',
                 },
@@ -149,7 +151,7 @@ def test_validation_blocks_small_qr_codes(tmp_path: Path, monkeypatch) -> None:
 
     app = create_app()
     bundle = load_registry_bundle(get_settings().registries_dir)
-    template = next(template for template in bundle.templates if template.id == 'proof_a6_card' and template.version == '1.2.0')
+    template = next(template for template in bundle.templates if template.id == 'proof_a6_card' and template.version == '1.6.0')
     for element in template.elements:
         if element.kind == 'qr':
             element.box_mm.width_mm = 10
@@ -163,7 +165,19 @@ def test_validation_blocks_small_qr_codes(tmp_path: Path, monkeypatch) -> None:
                 'use_case_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
-                'template_version': '1.2.0',
+                'template_version': '1.6.0',
+            },
+        )
+
+        client.patch(
+            '/api/drafts/current/layout',
+            json={
+                'text_values': {
+                    'businessName': 'Studio One',
+                    'body': 'Kurz und klar.',
+                    'headline': 'Short headline',
+                    'qrTarget': 'example.com/review',
+                },
             },
         )
 

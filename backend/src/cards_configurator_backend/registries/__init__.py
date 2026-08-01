@@ -1,4 +1,5 @@
 from .loader import load_registry_bundle
+from .svg_import import extract_slot_boxes, update_template_from_svg
 from .schemas import (
     AssetDataUrl,
     BoxMm,
@@ -38,4 +39,6 @@ __all__ = [
     "TextElementDefinition",
     "UseCaseDefinition",
     "load_registry_bundle",
+    "extract_slot_boxes",
+    "update_template_from_svg",
 ]

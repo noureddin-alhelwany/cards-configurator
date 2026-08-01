@@ -25,15 +25,15 @@ there being no construct for "same layout, different look", which the skin model
 
 | # | Step | State | Where |
 |---|---|---|---|
-| 0 | Text-free SVG background artwork per style | **todo** | `proof-assets/backgrounds/` |
+| 0 | Text-free SVG background artwork per style | **done** | `proof-assets/backgrounds/` |
 | 1 | Print surface: `variant` prop, `@page`, `_print_pdf`, real geometry check | **done** | `DesignRenderer.tsx`, `rendering/service.py` |
 | 2 | One auto-fit heuristic, shared contract fixture | **done** | `design/textFit.ts`, `quality.py`, `registries/fixtures/text_fit_cases.json` |
 | 3 | QR fidelity: `border=0`, colour, quiet-zone plate, real URL validated | **done** | `urls.py`, `quality.py`, `DesignRenderer.tsx` |
 | 4 | Effective DPI for `contain`/`cover`, clamps on read and on write | **done** | `quality.py`, `drafts/service.py` |
 | 5 | `background_asset`: field, bottom layer, readiness lockstep, loader diagnostics | **done** | `registries/{schemas,loader}.py`, `design/renderReadiness.ts` |
 | 6 | `valign` (+ `min_font_size_mm`, pulled forward into step 2) | **done** | `registries/schemas.py`, `DesignRenderer.tsx` |
-| 7 | Skin model on `TemplateVariantDefinition` + `scripts/import_template_svg.py` | **todo** | authoring time only |
-| 8 | One real template `proof_a6_card-1.6.0.json` with four skins | **todo** | `registries/templates/` |
+| 7 | Skin model on `TemplateVariantDefinition` + `scripts/import_template_svg.py` | **done** | `registries/{schemas,svg_import}.py`, `frontend/src/design/{variantResolution.ts,DesignRenderer.tsx,renderReadiness.ts}` |
+| 8 | One real template `proof_a6_card-1.6.0.json` with four skins | **done** | `registries/templates/proof_a6_card-1.6.0.json` |
 | H | Runtime: Dockerfile from `requirements.lock`, pinned Chromium, real engine version | **todo** | `Dockerfile`, `rendering/service.py` |
 | 9 | Real bold weight: `@font-face` from `fonts[]`, `fonts.check()` gate | deferred | after the first slice |
 | 10 | Template-conditional branding fallback, remaining templates as new versions | deferred | after the first slice |
@@ -131,18 +131,18 @@ it is read nowhere, and bumping it would imply a migration history that does not
 ## Open TODOs
 
 ### Step 0 + 7 — artwork and the skin model
-- [ ] Four text-free SVG backgrounds, 111×154mm, one colour world per mockup, with **named
+- [x] Five text-free SVG backgrounds, 111×154mm, one colour world per mockup, with **named
       slot placeholders** (`id="slot-headline"`, …).
-- [ ] Optional style fields on `TemplateVariantDefinition` (today inert: only `id`, `name`,
+- [x] Optional style fields on `TemplateVariantDefinition` (today inert: only `id`, `name`,
       `active`, `preview_asset`): `background_asset`, accent colour, headline typeface.
-- [ ] Skin resolution in the renderer, so the layout and its slots exist **once**.
-- [ ] `scripts/import_template_svg.py` reads slot geometry from the named placeholders at
+- [x] Skin resolution in the renderer, so the layout and its slots exist **once**.
+- [x] `scripts/import_template_svg.py` reads slot geometry from the named placeholders at
       **authoring time** and writes the template JSON. No runtime parser, no new runtime
       dependency; geometry can no longer drift from the artwork, and the generator can read
       colour, size and alignment from the slot style.
 
 ### Step 8 — the first real template
-- [ ] `proof_a6_card-1.6.0.json` with four skins instead of four clones: wordmark slot
+- [x] `proof_a6_card-1.6.0.json` with four skins instead of four clones: wordmark slot
       (`businessName` finally drawn), website and Instagram fields plus slots, `body` field,
       tight centred slots, light QR plate, style picker re-enabled.
 - [ ] Do **not** touch 1.2.0–1.5.0: that keeps the 18 existing orders and the `"1.2.0"` pin in

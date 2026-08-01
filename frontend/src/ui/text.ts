@@ -32,7 +32,7 @@ export const uiText = {
       },
       design: {
         title: 'Design',
-        description: 'Eine Vorlage für das Produkt auswählen.',
+        description: 'Ein Design für das Produkt auswählen.',
         hint: 'Wähle ein Design, das zum Produkt passt.',
       },
       content: {
@@ -71,10 +71,10 @@ export const uiText = {
       content: '3. Inhalte',
       review: '4. Prüfen',
     },
-    emptyTemplates: {
+    emptyDesigns: {
       kicker: 'Design',
-      title: 'Keine passenden Templates',
-      description: 'Wähle einen anderen Use Case oder ein anderes Produkt, damit wieder Vorlagen erscheinen.',
+      title: 'Keine passenden Designs',
+      description: 'Wähle einen anderen Use Case oder ein anderes Produkt, damit wieder Designs erscheinen.',
     },
     preview: {
       liveTitle: 'Live-Vorschau',
@@ -93,7 +93,6 @@ export const uiText = {
       title: 'Personalisiere deine Karte',
       designPrefix: 'Design: ',
       designChange: 'Design ändern',
-      variants: 'Layoutvarianten',
       charUnit: 'Zeichen',
       lineLimit: 'Maximal {count} Zeilen',
       optional: 'optional',
@@ -108,9 +107,9 @@ export const uiText = {
       suggestionsLabel: 'Vorschläge für {field}',
     },
     productChange: {
-      title: 'Produktwechsel setzt die aktuelle Vorlage zurück.',
+      title: 'Produktwechsel setzt das aktuelle Design zurück.',
       bodyPrefix: 'Beim Wechsel auf',
-      bodySuffix: 'gehen die gewählte Vorlage, Variante und lokale Eingaben für diesen Entwurf verloren.',
+      bodySuffix: 'gehen das gewählte Design und lokale Eingaben für diesen Entwurf verloren.',
     },
     review: {
       eyebrow: 'Freigabe',

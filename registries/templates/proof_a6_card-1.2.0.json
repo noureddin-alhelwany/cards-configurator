@@ -5,6 +5,7 @@
   "name": "Google Reviews Bold",
   "description": "Kontrastreichere Google-Bewertungsvorlage mit deutlicher Typografie.",
   "preview_asset": "template_google_reviews_bold.png",
+  "background_asset": "backgrounds/proof_a6_card-1.2.0-bold.svg",
   "product_id": "a6_card",
   "use_case_ids": ["google_reviews"],
   "active": true,

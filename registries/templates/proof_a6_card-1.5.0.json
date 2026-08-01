@@ -5,6 +5,7 @@
   "name": "Google Reviews Premium",
   "description": "Hochwertige Google-Bewertungsvorlage mit edler Anmutung.",
   "preview_asset": "template_google_reviews_premium.png",
+  "background_asset": "backgrounds/proof_a6_card-1.5.0-premium.svg",
   "product_id": "a6_card",
   "use_case_ids": ["google_reviews"],
   "active": true,

@@ -12,6 +12,7 @@ import type {
 import { resolveQrValue } from './qr';
 import { estimateTextFit } from './textFit';
 import { BACKGROUND_ASSET_ID, markRenderError } from './renderReadiness';
+import { activeTemplateVariant, resolveTemplateBackgroundAsset } from './variantResolution';
 import './DesignRenderer.css';
 
 /**
@@ -225,6 +226,8 @@ export default function DesignRenderer({ fixture, onAssetReady, validationIssues
   const production = variant === 'production';
   const { page_width_mm: pageWidth, page_height_mm: pageHeight } = fixture.template;
   const encodedQrValue = resolveQrValue(fixture.template, fixture.layout_state);
+  const selectedVariant = activeTemplateVariant(fixture.template, fixture.layout_state.variant_id);
+  const backgroundAsset = resolveTemplateBackgroundAsset(fixture.template, fixture.layout_state);
   return (
     <div className={`design-stage-shell${production ? ' design-stage-shell--production' : ''}`}>
       {/* `@page size` cannot read a CSS custom property, so the rule is emitted from the
@@ -242,14 +245,15 @@ export default function DesignRenderer({ fixture, onAssetReady, validationIssues
             '--page-width': `${pageWidth}mm`,
             '--page-height': `${pageHeight}mm`,
             '--bleed': `${fixture.template.bleed_mm}mm`,
+            '--variant-accent-color': selectedVariant?.accent_color ?? undefined,
+            '--variant-headline-font-family': selectedVariant?.headline_font_family ?? undefined,
+            '--variant-headline-font-weight': selectedVariant?.headline_font_weight?.toString() ?? undefined,
           } as CSSProperties
         }
       >
         {/* Bleed and trim markers orient the user in the preview. On the printed card they
             would be ink where the sheet gets cut. */}
-        {fixture.template.background_asset
-          ? renderBackground(fixture.template.background_asset, onAssetReady)
-          : null}
+        {backgroundAsset ? renderBackground(backgroundAsset, onAssetReady) : null}
         {production ? null : (
           <>
             <div className="design-stage__bleed" aria-hidden="true" />

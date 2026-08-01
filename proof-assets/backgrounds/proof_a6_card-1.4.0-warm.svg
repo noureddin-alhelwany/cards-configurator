@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="111mm" height="154mm" viewBox="0 0 111 154" role="img" aria-label="Google Reviews Warm Background">
+  <defs>
+    <linearGradient id="warmBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f9efe2" />
+      <stop offset="45%" stop-color="#efddc7" />
+      <stop offset="100%" stop-color="#e4c8ac" />
+    </linearGradient>
+    <linearGradient id="leaf" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8f9f73" />
+      <stop offset="100%" stop-color="#6c8155" />
+    </linearGradient>
+  </defs>
+  <rect width="111" height="154" fill="url(#warmBg)" />
+  <path d="M0 30C14 20 31 14 53 14C74 14 91 20 111 31V0H0Z" fill="rgba(255,255,255,0.42)" />
+  <path d="M0 128C12 118 25 114 42 115C63 116 82 122 111 139V154H0Z" fill="rgba(143,90,42,0.10)" />
+  <path d="M74 22C80 31 83 41 83 52C83 65 79 76 72 86C65 96 56 103 45 107C48 96 50 85 50 75C50 56 58 37 74 22Z" fill="url(#leaf)" opacity="0.28" />
+  <path d="M73 24C63 36 59 49 59 63C59 78 64 92 73 103" fill="none" stroke="rgba(108,129,85,0.48)" stroke-width="1.4" stroke-linecap="round" />
+  <path d="M60 47C55 44 51 40 48 36" fill="none" stroke="rgba(108,129,85,0.32)" stroke-width="1.1" stroke-linecap="round" />
+  <path d="M59 60C53 59 47 57 41 54" fill="none" stroke="rgba(108,129,85,0.32)" stroke-width="1.1" stroke-linecap="round" />
+  <path d="M57 74C51 74 45 75 39 78" fill="none" stroke="rgba(108,129,85,0.32)" stroke-width="1.1" stroke-linecap="round" />
+  <circle cx="20" cy="27" r="11" fill="rgba(255,255,255,0.44)" />
+  <circle cx="89" cy="124" r="14" fill="rgba(108,129,85,0.14)" />
+</svg>

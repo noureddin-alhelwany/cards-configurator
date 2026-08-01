@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="111mm" height="154mm" viewBox="0 0 111 154" role="img" aria-label="Google Reviews Premium Background">
+  <defs>
+    <linearGradient id="premiumBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d9c6ad" />
+      <stop offset="24%" stop-color="#f4ebdd" />
+      <stop offset="70%" stop-color="#efe4d2" />
+      <stop offset="100%" stop-color="#dac7af" />
+    </linearGradient>
+    <linearGradient id="premiumInk" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#26455f" />
+      <stop offset="100%" stop-color="#1d2d3b" />
+    </linearGradient>
+    <linearGradient id="premiumGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c59b45" />
+      <stop offset="100%" stop-color="#f1d082" />
+    </linearGradient>
+  </defs>
+  <rect width="111" height="154" fill="url(#premiumBg)" />
+  <rect x="4" y="4" width="103" height="146" rx="5" fill="none" stroke="rgba(38,69,95,0.2)" stroke-width="0.9" />
+  <rect x="8" y="8" width="95" height="138" rx="4" fill="none" stroke="rgba(197,155,69,0.28)" stroke-width="0.8" />
+  <path d="M0 0H31C26 10 24 20 25 30C27 44 24 58 17 71C10 83 6 97 8 114C10 130 13 143 18 154H0Z" fill="rgba(38,69,95,0.18)" />
+  <path d="M111 0H80C86 13 88 25 87 37C85 51 89 63 97 75C105 87 109 102 108 121C107 137 104 146 101 154H111Z" fill="rgba(197,155,69,0.12)" />
+  <circle cx="86" cy="26" r="15" fill="rgba(255,255,255,0.32)" />
+  <circle cx="86" cy="26" r="8" fill="url(#premiumGold)" />
+  <path d="M58 122C68 116 78 113 91 112" fill="none" stroke="url(#premiumGold)" stroke-width="1.6" stroke-linecap="round" />
+  <path d="M47 36C59 39 70 39 82 36" fill="none" stroke="rgba(38,69,95,0.16)" stroke-width="1.3" stroke-linecap="round" />
+  <path d="M20 102C31 95 42 92 54 93" fill="none" stroke="rgba(38,69,95,0.12)" stroke-width="1.2" stroke-linecap="round" />
+  <path d="M21 20C31 26 39 34 45 46" fill="none" stroke="rgba(197,155,69,0.24)" stroke-width="1.5" stroke-linecap="round" />
+</svg>

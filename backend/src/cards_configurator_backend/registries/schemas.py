@@ -141,6 +141,10 @@ class TemplateVariantDefinition(BaseModel):
     name: str
     active: bool = True
     preview_asset: str | None = None
+    background_asset: str | None = None
+    accent_color: str | None = None
+    headline_font_family: str | None = None
+    headline_font_weight: int | None = None
 
 
 class TemplateFieldDefinition(BaseModel):
