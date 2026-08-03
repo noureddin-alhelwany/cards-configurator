@@ -199,8 +199,10 @@ test('renders the internal template tool with separate preview and source layers
   expect(await screen.findByText('Templates und Design-Overlays')).toBeInTheDocument();
   expect(fetchMock).toHaveBeenCalledWith('/api/registries');
   expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog');
-  expect(screen.getByLabelText('Globale Schrift')).toBeInTheDocument();
-  expect(await screen.findByRole('option', { name: 'Inter' })).toBeInTheDocument();
+  expect(screen.getByText('Globale Schrift')).toBeInTheDocument();
+  expect(screen.getByLabelText('Schrift suchen')).toBeInTheDocument();
+  expect(screen.getByLabelText('Kategorie')).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: /Inter/ })).toBeInTheDocument();
   expect(screen.queryByText('Scanne den QR-Code')).not.toBeInTheDocument();
   expect(screen.getByLabelText('Preview anzeigen')).toBeInTheDocument();
   expect(screen.getByLabelText('Preview-Deckkraft')).toBeInTheDocument();
@@ -250,7 +252,7 @@ test('renders the internal template tool with separate preview and source layers
     expect(previewText?.textContent).toContain('Hallo Fix');
   });
   const previewTextBefore = document.querySelector<HTMLElement>('.template-tool-zone-editor__zone-text--static');
-  expect(previewTextBefore?.style.fontFamily).toContain('Proof Sans');
+  expect(previewTextBefore?.style.fontFamily).toContain('Inter');
   expect(document.querySelector('.template-tool-zone-editor__list')).toBeNull();
 
   const initialLeft = draggableZoneElement.style.left;
@@ -265,10 +267,10 @@ test('renders the internal template tool with separate preview and source layers
   expect(screen.queryByLabelText('Technischer Key')).not.toBeInTheDocument();
   expect(screen.queryByLabelText('Sichtbare Bezeichnung')).not.toBeInTheDocument();
 
-  fireEvent.change(screen.getByLabelText('Globale Schrift'), { target: { value: 'inter' } });
-  await waitFor(() => {
-    expect(screen.getByLabelText('Globale Schrift')).toHaveValue('inter');
-  });
+  fireEvent.change(screen.getByLabelText('Schrift suchen'), { target: { value: 'Inter' } });
+  fireEvent.change(screen.getByLabelText('Kategorie'), { target: { value: 'sans-serif' } });
+  expect(await screen.findByRole('button', { name: /Inter/ })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /Inter/ }));
   expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog/inter');
   await waitFor(() => {
     const previewText = document.querySelector<HTMLElement>('.template-tool-zone-editor__zone-text--static');

@@ -117,6 +117,16 @@ function fontOptionsFromDefinitions(fonts: Array<{ id?: string; family: string }
   }));
 }
 
+function fontCategoryLabel(category: string | null | undefined) {
+  if (!category) {
+    return 'Sonstige';
+  }
+  return category
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 function normalizeZones(template: TemplateDefinition, fonts: FontOption[]): EditableZone[] {
   const fontIdByFamily = Object.fromEntries(fonts.map((font) => [font.family, font.id]));
   return (template.safe_areas ?? []).map((safeArea, index) => ({
@@ -352,6 +362,7 @@ export default function TemplateToolPage() {
   const [testValues, setTestValues] = useState<Record<string, string>>({});
   const [globalFontFamilyId, setGlobalFontFamilyId] = useState<string | null>(null);
   const [fontSearch, setFontSearch] = useState('');
+  const [fontCategory, setFontCategory] = useState<string>('');
   const [fontFacesById, setFontFacesById] = useState<Record<string, FontDefinition>>({});
 
   useEffect(() => {
@@ -490,19 +501,49 @@ export default function TemplateToolPage() {
     return fonts;
   }, [fontCatalog, selectedTemplate?.fonts]);
 
+  const fontCategories = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          fontCatalog
+            .map((font) => font.category)
+            .filter((category): category is string => Boolean(category)),
+        ),
+      ).sort((a, b) => a.localeCompare(b)),
+    [fontCatalog],
+  );
+
+  const filteredFontCatalog = useMemo(() => {
+    const query = fontSearch.trim().toLowerCase();
+    return fontCatalog.filter((font) => {
+      if (fontCategory && font.category !== fontCategory) {
+        return false;
+      }
+      if (!query) {
+        return true;
+      }
+      return font.family.toLowerCase().includes(query) || font.id.toLowerCase().includes(query);
+    });
+  }, [fontCategory, fontCatalog, fontSearch]);
+
+  const selectedFontEntry = useMemo(
+    () => fontCatalog.find((font) => font.id === globalFontFamilyId) ?? null,
+    [fontCatalog, globalFontFamilyId],
+  );
+
   useEffect(() => {
+    if (fontCatalog.length > 0) {
+      if (fontCatalog.some((font) => font.id === globalFontFamilyId)) {
+        return;
+      }
+      setGlobalFontFamilyId(fontCatalog[0].id);
+      return;
+    }
     if (globalFontFamilyId || availableFonts.length === 0) {
       return;
     }
     setGlobalFontFamilyId(availableFonts[0].id);
-  }, [availableFonts, globalFontFamilyId]);
-  const filteredFonts = useMemo(() => {
-    const query = fontSearch.trim().toLowerCase();
-    if (!query) {
-      return availableFonts;
-    }
-    return availableFonts.filter((font) => font.family.toLowerCase().includes(query) || font.id.toLowerCase().includes(query));
-  }, [availableFonts, fontSearch]);
+  }, [availableFonts, fontCatalog, globalFontFamilyId]);
 
   useEffect(() => {
     if (!selectedTemplate) {
@@ -689,24 +730,6 @@ export default function TemplateToolPage() {
               </label>
 
               <label className="template-tool-control template-tool-control--wide">
-                <span>Globale Schrift</span>
-                <select
-                  value={globalFontFamilyId ?? ''}
-                  onChange={(event) => setGlobalFontFamilyId(event.target.value === '' ? null : event.target.value)}
-                  disabled={filteredFonts.length === 0}
-                >
-                  {filteredFonts.length > 0 ? (
-                    filteredFonts.map((font) => (
-                      <option key={font.id} value={font.id}>
-                        {font.family}
-                      </option>
-                    ))
-                  ) : (
-                    <option value="">Keine Schrift verfügbar</option>
-                  )}
-                </select>
-              </label>
-              <label className="template-tool-control template-tool-control--wide">
                 <span>Schrift suchen</span>
                 <input
                   type="search"
@@ -715,6 +738,54 @@ export default function TemplateToolPage() {
                   placeholder="Fontsource durchsuchen"
                 />
               </label>
+              <label className="template-tool-control template-tool-control--wide">
+                <span>Kategorie</span>
+                <select
+                  value={fontCategory}
+                  onChange={(event) => setFontCategory(event.target.value)}
+                  disabled={fontCatalog.length === 0}
+                >
+                  <option value="">Alle Kategorien</option>
+                  {fontCategories.map((category) => (
+                    <option key={category} value={category}>
+                      {fontCategoryLabel(category)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="template-tool-font-browser">
+              <div className="template-tool-card__heading">
+                <div>
+                  <h3>Globale Schrift</h3>
+                  <p>{selectedFontEntry ? selectedFontEntry.family : 'Keine Schrift gewählt'}</p>
+                </div>
+                <p className="template-tool-card__meta">
+                  {filteredFontCatalog.length} von {fontCatalog.length}
+                </p>
+              </div>
+              <div className="template-tool-font-browser__list" role="listbox" aria-label="Fontsource-Fonts">
+                {filteredFontCatalog.length > 0 ? (
+                  filteredFontCatalog.map((font) => {
+                    const selected = font.id === globalFontFamilyId;
+                    return (
+                      <button
+                        key={font.id}
+                        type="button"
+                        className={`template-tool-font-browser__item${selected ? ' template-tool-font-browser__item--selected' : ''}`}
+                        onClick={() => setGlobalFontFamilyId(font.id)}
+                      >
+                        <span className="template-tool-font-browser__name">{font.family}</span>
+                        <span className="template-tool-font-browser__meta">
+                          {fontCategoryLabel(font.category)}{font.variable ? ' · Variable' : ''}
+                        </span>
+                      </button>
+                    );
+                  })
+                ) : (
+                  <p className="template-tool-font-browser__empty">Keine Fonts für diese Filter gefunden.</p>
+                )}
+              </div>
             </div>
             {fontCatalogError ? <p className="template-tool-status template-tool-status--warning">{fontCatalogError}</p> : null}
 
