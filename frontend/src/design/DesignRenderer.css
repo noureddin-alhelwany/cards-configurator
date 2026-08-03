@@ -75,10 +75,7 @@
 
 .design-stage__trim {
   position: absolute;
-  left: var(--bleed);
-  top: var(--bleed);
-  right: var(--bleed);
-  bottom: var(--bleed);
+  inset: 0;
   box-sizing: border-box;
   background:
     repeating-linear-gradient(
