@@ -1,0 +1,279 @@
+import '@testing-library/jest-dom/vitest';
+import { afterEach, expect, test, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import App from '../App';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  window.history.pushState({}, '', '/');
+});
+
+test('renders the internal template tool with separate preview and source layers', async () => {
+  const qrDataUrl = 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23ffffff%22/%3E%3C/svg%3E';
+  const bundle = {
+    use_cases: [
+      {
+        id: 'google_reviews',
+        name: 'Google Reviews',
+        description: 'Collect review requests after service.',
+        preview_asset: 'review.png',
+        active: true,
+      },
+    ],
+    products: [
+      {
+        id: 'a6_card',
+        name: 'A6 Card',
+        description: null,
+        trim_width_mm: 105,
+        trim_height_mm: 148,
+        bleed_mm: 3,
+        recommended_dpi: 450,
+        warning_dpi: 300,
+        minimum_dpi: 225,
+        qr_min_width_mm: 18,
+        qr_min_module_mm: 0.42,
+        preview_asset: 'a6_preview.png',
+        active: true,
+      },
+    ],
+    templates: [
+      {
+        schema_version: 1,
+        id: 'proof_a6_card',
+        version: '1.6.0',
+        name: 'Google Reviews Host',
+        description: null,
+        product_id: 'a6_card',
+        use_case_ids: ['google_reviews'],
+        active: true,
+        page_width_mm: 111,
+        page_height_mm: 154,
+        bleed_mm: 3,
+        background_asset: 'source/template_google_reviews_bold.png',
+        background_asset_sha256: null,
+        source_asset: 'source/template_google_reviews_bold.png',
+        preview_asset: 'preview/template_google_reviews_bold.png',
+        font_family: 'Proof Sans',
+        fonts: [
+          {
+            id: 'proof-sans',
+            family: 'Proof Sans',
+            file: '/fonts/ProofSans.ttf',
+            weight: 400,
+            style: 'normal',
+          },
+          {
+            id: 'proof-serif',
+            family: 'Proof Serif',
+            file: '/fonts/ProofSerif.ttf',
+            weight: 400,
+            style: 'normal',
+          },
+        ],
+        safe_areas: [],
+        text_rules: [],
+        qr_rules: [],
+        fields: [
+          {
+            id: 'headline',
+            type: 'text',
+            required: false,
+            max_length: 60,
+            max_lines: 3,
+            label: 'Headline',
+            help_text: null,
+            group: 'Texte',
+            placeholder: null,
+            suggestions: [],
+            default_value: 'Scanne den QR-Code',
+          },
+          {
+            id: 'qrTarget',
+            type: 'url',
+            required: false,
+            max_length: null,
+            max_lines: null,
+            label: 'QR-Ziel',
+            help_text: null,
+            group: 'QR',
+            placeholder: null,
+            suggestions: [],
+            default_value: 'example.com/review',
+          },
+        ],
+        elements: [
+          {
+            kind: 'text',
+            id: 'headline',
+            box_mm: { x_mm: 10, y_mm: 12, width_mm: 70, height_mm: 20 },
+            z_index: 1,
+            text: 'Scanne den QR-Code',
+            font_family: 'Proof Sans',
+            font_size_mm: 6.8,
+            font_weight: 700,
+            color: '#1f1a17',
+            line_height: 1.05,
+            align: 'left',
+            valign: 'top',
+            min_font_size_mm: null,
+          },
+          {
+            kind: 'qr',
+            id: 'proof-qr',
+            box_mm: { x_mm: 72, y_mm: 72, width_mm: 22, height_mm: 22 },
+            z_index: 2,
+            value: 'example.com/review',
+            color: '#1f1a17',
+            background: '#ffffff',
+            error_correction: 'm',
+            quiet_zone_mm: 4,
+          },
+        ],
+        variants: [
+          {
+            id: 'bold',
+            name: 'Bold',
+            active: true,
+            preview_asset: 'preview/template_google_reviews_bold.png',
+            source_asset: 'source/template_google_reviews_bold.png',
+          },
+          {
+            id: 'warm',
+            name: 'Warm',
+            active: true,
+            preview_asset: 'preview/template_google_reviews_warm.png',
+          },
+        ],
+      },
+    ],
+    diagnostics: [],
+  };
+
+  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    const requestUrl = input instanceof Request ? input.url : String(input);
+    if (requestUrl === '/api/registries') {
+      return {
+        ok: true,
+        json: async () => bundle,
+      } as Response;
+    }
+    if (requestUrl.startsWith('/api/qr')) {
+      return {
+        ok: true,
+        json: async () => ({
+          value: 'https://example.com/review',
+          data_url: qrDataUrl,
+        }),
+      } as Response;
+    }
+    throw new Error(`Unexpected fetch: ${String(input)}`);
+  });
+
+  vi.stubGlobal('fetch', fetchMock);
+  window.history.pushState({}, '', '/template-tool');
+
+  render(<App />);
+
+  expect(await screen.findByText('Templates und Design-Overlays')).toBeInTheDocument();
+  expect(fetchMock).toHaveBeenCalledWith('/api/registries');
+  expect(screen.getByLabelText('Globale Schrift')).toBeInTheDocument();
+  expect(screen.queryByText('Scanne den QR-Code')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Preview anzeigen')).toBeInTheDocument();
+  expect(screen.getByLabelText('Preview-Deckkraft')).toBeInTheDocument();
+  expect(screen.getByLabelText('Source anzeigen')).toBeInTheDocument();
+  expect(screen.getByLabelText('Source-Deckkraft')).toBeInTheDocument();
+  expect(screen.getAllByText('50%').length).toBeGreaterThanOrEqual(2);
+
+  const previewImage = await screen.findByTestId('template-tool-preview-image');
+  expect(previewImage).toHaveAttribute('src', '/proof-assets/preview/template_google_reviews_bold.png');
+  const sourceOverlay = await screen.findByTestId('template-tool-overlay');
+  expect(sourceOverlay).toHaveAttribute('src', '/proof-assets/source/template_google_reviews_bold.png');
+
+  expect(screen.getByTestId('proof-canvas').querySelector('.design-stage__document')).not.toBeNull();
+  expect(screen.queryByAltText('QR: https://example.com/review')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByLabelText('Hilfslinien anzeigen'));
+  expect(screen.getByTestId('proof-canvas').querySelector('.design-stage__document')).toBeNull();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Textzone erstellen' }));
+
+  const stage = document.querySelector('.template-tool-zone-editor__canvas-content') as HTMLElement | null;
+  expect(stage).not.toBeNull();
+  const stageElement = stage as HTMLElement;
+  Object.defineProperty(stageElement, 'getBoundingClientRect', {
+    value: () => ({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: 1110,
+      bottom: 1540,
+      width: 1110,
+      height: 1540,
+      toJSON: () => ({}),
+    }),
+  });
+
+  const draggableZone = document.querySelector('[data-testid^="template-tool-zone-zone-dynamicText"]') as HTMLElement | null;
+  expect(draggableZone).not.toBeNull();
+  const draggableZoneElement = draggableZone as HTMLElement;
+  expect(draggableZoneElement.querySelector('.template-tool-zone-editor__zone-text--static')).not.toBeNull();
+
+  fireEvent.change(screen.getByLabelText('Textinhalt'), { target: { value: 'Hallo Fix' } });
+  expect(screen.getByLabelText('Textinhalt')).toHaveValue('Hallo Fix');
+  await waitFor(() => {
+    const previewText = document.querySelector<HTMLElement>('.template-tool-zone-editor__zone-text--static');
+    expect(previewText).not.toBeNull();
+    expect(previewText?.textContent).toContain('Hallo Fix');
+  });
+  const previewTextBefore = document.querySelector<HTMLElement>('.template-tool-zone-editor__zone-text--static');
+  expect(previewTextBefore?.style.fontFamily).toContain('Proof Sans');
+  expect(document.querySelector('.template-tool-zone-editor__list')).toBeNull();
+
+  const initialLeft = draggableZoneElement.style.left;
+  const initialTop = draggableZoneElement.style.top;
+  fireEvent.mouseDown(draggableZoneElement, { clientX: 100, clientY: 100 });
+  fireEvent.mouseMove(window, { clientX: 211, clientY: 254 });
+  fireEvent.mouseUp(window);
+  expect(draggableZoneElement.style.left).not.toBe(initialLeft);
+  expect(draggableZoneElement.style.top).not.toBe(initialTop);
+  expect(draggableZoneElement.querySelector('.template-tool-zone-editor__zone-text--static')).toHaveTextContent('Hallo Fix');
+  expect(screen.queryByLabelText('Element-ID')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Technischer Key')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Sichtbare Bezeichnung')).not.toBeInTheDocument();
+
+  fireEvent.change(screen.getByLabelText('Globale Schrift'), { target: { value: 'proof-serif' } });
+  await waitFor(() => {
+    expect(screen.getByLabelText('Globale Schrift')).toHaveValue('proof-serif');
+  });
+
+  fireEvent.click(screen.getByRole('button', { name: 'Löschen' }));
+  await waitFor(() => {
+    expect(screen.queryByLabelText('dynamicText skalieren')).not.toBeInTheDocument();
+  });
+
+  fireEvent.click(screen.getByRole('button', { name: 'QR-Code erstellen' }));
+  await screen.findByText('QR-Konfiguration');
+  fireEvent.change(screen.getByLabelText('Test-URL'), {
+    target: { value: 'https://example.com/review' },
+  });
+  fireEvent.change(screen.getByLabelText('Fehlerkorrektur'), { target: { value: 'h' } });
+  fireEvent.change(screen.getByLabelText('Ruhezone mm'), { target: { value: '4' } });
+  fireEvent.change(screen.getByLabelText('Farbe'), { target: { value: '#ffffff' } });
+  fireEvent.change(screen.getByLabelText('Hintergrund'), { target: { value: '#ffffff' } });
+  expect(screen.getByLabelText('Fehlerkorrektur')).toHaveValue('h');
+  expect(screen.getByText('Der Kontrast zwischen QR-Farbe und Hintergrund ist zu gering.')).toBeInTheDocument();
+  expect(screen.queryByAltText('QR: https://example.com/review')).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByLabelText('Preview anzeigen'));
+  expect(screen.queryByTestId('template-tool-preview-image')).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByLabelText('Preview anzeigen'));
+  expect(screen.getByTestId('template-tool-preview-image')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByLabelText('Source anzeigen'));
+
+  await waitFor(() => {
+    expect(screen.queryByTestId('template-tool-overlay')).not.toBeInTheDocument();
+  });
+});
