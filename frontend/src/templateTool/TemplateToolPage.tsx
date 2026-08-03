@@ -555,11 +555,18 @@ export default function TemplateToolPage() {
   }, [deferredFontSearch, fontCategory, fontCatalog]);
 
   const visibleFontCatalog = useMemo(
-    () => filteredFontCatalog.slice(0, fontVisibleCount),
-    [filteredFontCatalog, fontVisibleCount],
+    () => {
+      const queryActive = deferredFontSearch.trim().length > 0 || fontCategory.length > 0;
+      if (queryActive) {
+        return filteredFontCatalog;
+      }
+      return filteredFontCatalog.slice(0, fontVisibleCount);
+    },
+    [deferredFontSearch, filteredFontCatalog, fontVisibleCount, fontCategory],
   );
 
-  const hasMoreFonts = visibleFontCatalog.length < filteredFontCatalog.length;
+  const hasMoreFonts =
+    deferredFontSearch.trim().length === 0 && fontCategory.length === 0 && visibleFontCatalog.length < filteredFontCatalog.length;
 
   useEffect(() => {
     if (!selectedTemplate) {
@@ -706,45 +713,107 @@ export default function TemplateToolPage() {
               );
             })}
           </div>
-        </aside>
 
-        <div className="template-tool-main-column">
-          <section className="template-tool-card template-tool-card--main">
-          <div className="template-tool-card__heading">
-            <div>
-              <h2>{selectedTemplate ? templateLabel(selectedTemplate) : uiText.templateTool.controls.template}</h2>
-              {selectedTemplate ? (
-                <p>
-                  {selectedTemplate.product_id}
-                  {selectedProduct ? ` · ${selectedProduct.name}` : ''}
-                </p>
-              ) : null}
+          <div className="template-tool-sidebar-section">
+            <div className="template-tool-card__heading">
+              <div>
+                <h3>Einstellungen</h3>
+                <p>Vorlage, Vorschau und Produktion</p>
+              </div>
             </div>
-            {selectedTemplate ? (
-              <p className="template-tool-card__meta">
-                {selectedUseCase ? selectedUseCase.name : 'Anwendungsfall fehlt'}
-              </p>
-            ) : null}
+            <div className="template-tool-controls template-tool-controls--stack">
+              <div className="template-tool-control-group template-tool-control-group--primary">
+                <label className="template-tool-control">
+                  <span>{uiText.templateTool.controls.variant}</span>
+                  <select
+                    value={selectedVariantId ?? ''}
+                    onChange={(event) => setSelectedVariantId(event.target.value)}
+                  >
+                    {selectedTemplate
+                      ? activeRegistryVariants(selectedTemplate).map((variant) => (
+                          <option key={variant.id} value={variant.id}>
+                            {variant.name}
+                          </option>
+                        ))
+                      : null}
+                  </select>
+                </label>
+              </div>
+              <div className="template-tool-control-group template-tool-control-group--toggles">
+                <div className="template-tool-control-cluster">
+                  <span className="template-tool-control-cluster__label">Vorschau</span>
+                  <label className="template-tool-control template-tool-control--toggle">
+                    <span>{uiText.templateTool.controls.previewVisible}</span>
+                    <input
+                      type="checkbox"
+                      checked={previewVisible}
+                      onChange={(event) => setPreviewVisible(event.target.checked)}
+                    />
+                  </label>
+                  <label className="template-tool-control">
+                    <span>{uiText.templateTool.controls.previewOpacity}</span>
+                    <input
+                      aria-label={uiText.templateTool.controls.previewOpacity}
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={previewOpacity}
+                      onChange={(event) => setPreviewOpacity(Number(event.target.value))}
+                    />
+                    <span className="template-tool-control__value">{previewOpacity}%</span>
+                  </label>
+                </div>
+
+                <div className="template-tool-control-cluster">
+                  <span className="template-tool-control-cluster__label">Source</span>
+                  <label className="template-tool-control template-tool-control--toggle">
+                    <span>{uiText.templateTool.controls.sourceVisible}</span>
+                    <input
+                      type="checkbox"
+                      checked={sourceVisible}
+                      onChange={(event) => setSourceVisible(event.target.checked)}
+                    />
+                  </label>
+                  <label className="template-tool-control">
+                    <span>{uiText.templateTool.controls.sourceOpacity}</span>
+                    <input
+                      aria-label={uiText.templateTool.controls.sourceOpacity}
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={sourceOpacity}
+                      onChange={(event) => setSourceOpacity(Number(event.target.value))}
+                    />
+                    <span className="template-tool-control__value">{sourceOpacity}%</span>
+                  </label>
+                </div>
+
+                <div className="template-tool-control-cluster">
+                  <span className="template-tool-control-cluster__label">Hilfen</span>
+                  <label className="template-tool-control template-tool-control--toggle">
+                    <span>{uiText.templateTool.controls.guidesVisible}</span>
+                    <input
+                      type="checkbox"
+                      checked={guidesVisible}
+                      onChange={(event) => setGuidesVisible(event.target.checked)}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="template-tool-controls template-tool-controls--stack">
-            <div className="template-tool-control-group template-tool-control-group--primary">
-              <label className="template-tool-control">
-                <span>{uiText.templateTool.controls.variant}</span>
-                <select
-                  value={selectedVariantId ?? ''}
-                  onChange={(event) => setSelectedVariantId(event.target.value)}
-                >
-                  {selectedTemplate
-                    ? activeRegistryVariants(selectedTemplate).map((variant) => (
-                        <option key={variant.id} value={variant.id}>
-                          {variant.name}
-                        </option>
-                      ))
-                    : null}
-                </select>
-              </label>
-
+          <div className="template-tool-sidebar-section">
+            <div className="template-tool-card__heading">
+              <div>
+                <h3>Globale Schrift</h3>
+                <p>{selectedFontEntry ? selectedFontEntry.family : 'Globale Schrift auswählen'}</p>
+              </div>
+              <p className="template-tool-card__meta">
+                {visibleFontCatalog.length} von {filteredFontCatalog.length}
+              </p>
+            </div>
+            <div className="template-tool-controls template-tool-controls--stack">
               <label className="template-tool-control template-tool-control--wide">
                 <span>Schrift suchen</span>
                 <input
@@ -771,15 +840,6 @@ export default function TemplateToolPage() {
               </label>
             </div>
             <div className="template-tool-font-browser">
-              <div className="template-tool-card__heading">
-                <div>
-                  <h3>Globale Schrift</h3>
-                  <p>{selectedFontEntry ? selectedFontEntry.family : 'Keine Schrift gewählt'}</p>
-                </div>
-                <p className="template-tool-card__meta">
-                  {visibleFontCatalog.length} von {filteredFontCatalog.length}
-                </p>
-              </div>
               <div className="template-tool-font-browser__list" role="listbox" aria-label="Fontsource-Fonts">
                 {visibleFontCatalog.length > 0 ? (
                   visibleFontCatalog.map((font) => {
@@ -816,68 +876,26 @@ export default function TemplateToolPage() {
               ) : null}
             </div>
             {fontCatalogError ? <p className="template-tool-status template-tool-status--warning">{fontCatalogError}</p> : null}
+          </div>
+        </aside>
 
-            <div className="template-tool-control-group template-tool-control-group--toggles">
-              <div className="template-tool-control-cluster">
-                <span className="template-tool-control-cluster__label">Vorschau</span>
-                <label className="template-tool-control template-tool-control--toggle">
-                  <span>{uiText.templateTool.controls.previewVisible}</span>
-                  <input
-                    type="checkbox"
-                    checked={previewVisible}
-                    onChange={(event) => setPreviewVisible(event.target.checked)}
-                  />
-                </label>
-                <label className="template-tool-control">
-                  <span>{uiText.templateTool.controls.previewOpacity}</span>
-                  <input
-                    aria-label={uiText.templateTool.controls.previewOpacity}
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={previewOpacity}
-                    onChange={(event) => setPreviewOpacity(Number(event.target.value))}
-                  />
-                  <span className="template-tool-control__value">{previewOpacity}%</span>
-                </label>
-              </div>
-
-              <div className="template-tool-control-cluster">
-                <span className="template-tool-control-cluster__label">Source</span>
-                <label className="template-tool-control template-tool-control--toggle">
-                  <span>{uiText.templateTool.controls.sourceVisible}</span>
-                  <input
-                    type="checkbox"
-                    checked={sourceVisible}
-                    onChange={(event) => setSourceVisible(event.target.checked)}
-                  />
-                </label>
-                <label className="template-tool-control">
-                  <span>{uiText.templateTool.controls.sourceOpacity}</span>
-                  <input
-                    aria-label={uiText.templateTool.controls.sourceOpacity}
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={sourceOpacity}
-                    onChange={(event) => setSourceOpacity(Number(event.target.value))}
-                  />
-                  <span className="template-tool-control__value">{sourceOpacity}%</span>
-                </label>
-              </div>
-
-              <div className="template-tool-control-cluster">
-                <span className="template-tool-control-cluster__label">Hilfen</span>
-                <label className="template-tool-control template-tool-control--toggle">
-                  <span>{uiText.templateTool.controls.guidesVisible}</span>
-                  <input
-                    type="checkbox"
-                    checked={guidesVisible}
-                    onChange={(event) => setGuidesVisible(event.target.checked)}
-                  />
-                </label>
-              </div>
+        <div className="template-tool-main-column">
+          <section className="template-tool-card template-tool-card--main">
+          <div className="template-tool-card__heading">
+            <div>
+              <h2>{selectedTemplate ? templateLabel(selectedTemplate) : uiText.templateTool.controls.template}</h2>
+              {selectedTemplate ? (
+                <p>
+                  {selectedTemplate.product_id}
+                  {selectedProduct ? ` · ${selectedProduct.name}` : ''}
+                </p>
+              ) : null}
             </div>
+            {selectedTemplate ? (
+              <p className="template-tool-card__meta">
+                {selectedUseCase ? selectedUseCase.name : 'Anwendungsfall fehlt'}
+              </p>
+            ) : null}
           </div>
 
           {previewFixture && selectedTemplate ? (
