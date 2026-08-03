@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { buildTemplatePreviewFixture } from '../selection/selectionPreview';
 import { loadRegistries } from '../registries/loadRegistries';
 import type { RegistryBundle, TemplateDefinition } from '../registries/types';
@@ -25,6 +25,8 @@ const DEFAULT_PREVIEW_OPACITY = 50;
 const DEFAULT_SOURCE_OPACITY = 50;
 const TEMPLATE_TOOL_STAGE_SCALE = 2;
 const DEFAULT_TEXT_FONT = 'Proof Sans';
+const FONT_BROWSER_INITIAL_COUNT = 24;
+const FONT_BROWSER_PAGE_SIZE = 24;
 
 type FontOption = {
   id: string;
@@ -364,6 +366,7 @@ export default function TemplateToolPage() {
   const [fontSearch, setFontSearch] = useState('');
   const [fontCategory, setFontCategory] = useState<string>('');
   const [fontFacesById, setFontFacesById] = useState<Record<string, FontDefinition>>({});
+  const [fontVisibleCount, setFontVisibleCount] = useState(FONT_BROWSER_INITIAL_COUNT);
 
   useEffect(() => {
     let active = true;
@@ -513,23 +516,12 @@ export default function TemplateToolPage() {
     [fontCatalog],
   );
 
-  const filteredFontCatalog = useMemo(() => {
-    const query = fontSearch.trim().toLowerCase();
-    return fontCatalog.filter((font) => {
-      if (fontCategory && font.category !== fontCategory) {
-        return false;
-      }
-      if (!query) {
-        return true;
-      }
-      return font.family.toLowerCase().includes(query) || font.id.toLowerCase().includes(query);
-    });
-  }, [fontCategory, fontCatalog, fontSearch]);
-
   const selectedFontEntry = useMemo(
     () => fontCatalog.find((font) => font.id === globalFontFamilyId) ?? null,
     [fontCatalog, globalFontFamilyId],
   );
+
+  const deferredFontSearch = useDeferredValue(fontSearch);
 
   useEffect(() => {
     if (fontCatalog.length > 0) {
@@ -544,6 +536,30 @@ export default function TemplateToolPage() {
     }
     setGlobalFontFamilyId(availableFonts[0].id);
   }, [availableFonts, fontCatalog, globalFontFamilyId]);
+
+  useEffect(() => {
+    setFontVisibleCount(FONT_BROWSER_INITIAL_COUNT);
+  }, [deferredFontSearch, fontCategory]);
+
+  const filteredFontCatalog = useMemo(() => {
+    const query = deferredFontSearch.trim().toLowerCase();
+    return fontCatalog.filter((font) => {
+      if (fontCategory && font.category !== fontCategory) {
+        return false;
+      }
+      if (!query) {
+        return true;
+      }
+      return font.family.toLowerCase().includes(query) || font.id.toLowerCase().includes(query);
+    });
+  }, [deferredFontSearch, fontCategory, fontCatalog]);
+
+  const visibleFontCatalog = useMemo(
+    () => filteredFontCatalog.slice(0, fontVisibleCount),
+    [filteredFontCatalog, fontVisibleCount],
+  );
+
+  const hasMoreFonts = visibleFontCatalog.length < filteredFontCatalog.length;
 
   useEffect(() => {
     if (!selectedTemplate) {
@@ -761,12 +777,12 @@ export default function TemplateToolPage() {
                   <p>{selectedFontEntry ? selectedFontEntry.family : 'Keine Schrift gewählt'}</p>
                 </div>
                 <p className="template-tool-card__meta">
-                  {filteredFontCatalog.length} von {fontCatalog.length}
+                  {visibleFontCatalog.length} von {filteredFontCatalog.length}
                 </p>
               </div>
               <div className="template-tool-font-browser__list" role="listbox" aria-label="Fontsource-Fonts">
-                {filteredFontCatalog.length > 0 ? (
-                  filteredFontCatalog.map((font) => {
+                {visibleFontCatalog.length > 0 ? (
+                  visibleFontCatalog.map((font) => {
                     const selected = font.id === globalFontFamilyId;
                     return (
                       <button
@@ -789,6 +805,15 @@ export default function TemplateToolPage() {
                   <p className="template-tool-font-browser__empty">Keine Fonts für diese Filter gefunden.</p>
                 )}
               </div>
+              {hasMoreFonts ? (
+                <button
+                  type="button"
+                  className="template-tool-reset template-tool-font-browser__more"
+                  onClick={() => setFontVisibleCount((current) => current + FONT_BROWSER_PAGE_SIZE)}
+                >
+                  Weitere Fonts laden
+                </button>
+              ) : null}
             </div>
             {fontCatalogError ? <p className="template-tool-status template-tool-status--warning">{fontCatalogError}</p> : null}
 
