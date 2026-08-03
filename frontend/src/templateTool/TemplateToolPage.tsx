@@ -5,6 +5,7 @@ import type { RegistryBundle, TemplateDefinition } from '../registries/types';
 import type { FontDefinition, SafeAreaVariableDefinition } from '../design/types';
 import { uiText } from '../ui/text';
 import DesignPreviewFrame from '../design/DesignPreviewFrame';
+import { ensureFontDefinitionsLoaded } from '../design/fonts';
 import {
   activeRegistryProduct,
   activeRegistryTemplates,
@@ -577,6 +578,9 @@ export default function TemplateToolPage() {
     if (globalFontFamilyId) {
       neededFontIds.add(globalFontFamilyId);
     }
+    for (const font of visibleFontCatalog) {
+      neededFontIds.add(font.id);
+    }
     for (const zone of zones) {
       for (const variable of zone.variables ?? []) {
         if (variable.font_family_id) {
@@ -604,6 +608,7 @@ export default function TemplateToolPage() {
           }
           return next;
         });
+        void ensureFontDefinitionsLoaded(faces);
       })
       .catch(() => {
         if (active) {
@@ -614,7 +619,7 @@ export default function TemplateToolPage() {
     return () => {
       active = false;
     };
-  }, [fontFacesById, globalFontFamilyId, selectedTemplate, zones]);
+  }, [fontFacesById, globalFontFamilyId, selectedTemplate, visibleFontCatalog, zones]);
 
   const selectedFontDefinitions = useMemo(() => {
     const definitions = [...(selectedTemplate?.fonts ?? [])];

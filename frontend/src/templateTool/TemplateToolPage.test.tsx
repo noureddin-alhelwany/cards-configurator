@@ -179,6 +179,18 @@ test('renders the internal template tool with separate preview and source layers
         }),
       } as Response;
     }
+    if (requestUrl === '/api/font-catalog/libre-baskerville') {
+      return {
+        ok: true,
+        json: async () => ({
+          id: 'libre-baskerville',
+          family: 'Libre Baskerville',
+          file: '/fonts/libre-baskerville.woff2',
+          weight: 400,
+          style: 'normal',
+        }),
+      } as Response;
+    }
     if (requestUrl.startsWith('/api/qr')) {
       return {
         ok: true,
@@ -199,6 +211,7 @@ test('renders the internal template tool with separate preview and source layers
   expect(await screen.findByText('Templates und Design-Overlays')).toBeInTheDocument();
   expect(fetchMock).toHaveBeenCalledWith('/api/registries');
   expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog');
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog/libre-baskerville'));
   expect(screen.getByText('Globale Schrift')).toBeInTheDocument();
   expect(screen.getByLabelText('Schrift suchen')).toBeInTheDocument();
   expect(screen.getByLabelText('Kategorie')).toBeInTheDocument();

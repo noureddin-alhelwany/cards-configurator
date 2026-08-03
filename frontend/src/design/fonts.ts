@@ -33,11 +33,15 @@ export function resolveFontFamilyName(
 }
 
 export async function ensureTemplateFontsLoaded(template: TemplateDefinition) {
+  await ensureFontDefinitionsLoaded(template.fonts);
+}
+
+export async function ensureFontDefinitionsLoaded(fonts: FontDefinition[]) {
   if (typeof document === 'undefined' || typeof FontFace === 'undefined') {
     return;
   }
 
-  const faces = template.fonts.map((font) => {
+  const faces = fonts.map((font) => {
     const key = fontKey(font);
     if (loadedFontKeys.has(key)) {
       return null;
