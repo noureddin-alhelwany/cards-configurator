@@ -118,6 +118,7 @@ export type SafeAreaVariableDefinition = {
   font_size_mm: number;
   min_font_size_mm: number | null;
   line_height: number;
+  letter_spacing_em?: number | null;
   color: string;
   align: 'left' | 'center' | 'right';
   max_length: number | null;

@@ -279,6 +279,7 @@ function createVariable(
     font_size_mm: kind === 'dynamicText' ? 6.8 : 4.4,
     min_font_size_mm: kind === 'dynamicText' ? 4.5 : 3.2,
     line_height: kind === 'dynamicText' ? 1.05 : 1.15,
+    letter_spacing_em: 0,
     color: '#1f1a17',
     align: 'left',
     max_length: null,
@@ -304,6 +305,7 @@ function isSameVariableContent(a: SafeAreaVariableDefinition | null | undefined,
     a.font_size_mm === b.font_size_mm &&
     a.min_font_size_mm === b.min_font_size_mm &&
     a.line_height === b.line_height &&
+    a.letter_spacing_em === b.letter_spacing_em &&
     a.color === b.color &&
     a.align === b.align &&
     a.max_length === b.max_length &&
@@ -640,6 +642,23 @@ export default function ZoneEditor({
                     />
                   </label>
                   <label className="template-tool-control">
+                    <span>Buchstabenabstand em</span>
+                    <input
+                      type="number"
+                      min="-1"
+                      max="1"
+                      step="0.01"
+                      value={selectedVariable?.letter_spacing_em ?? ''}
+                      onChange={(event) =>
+                        selectedVariable
+                          ? updateVariable(selectedZone, selectedVariable.id, {
+                              letter_spacing_em: Number(event.target.value),
+                            })
+                          : undefined
+                      }
+                    />
+                  </label>
+                  <label className="template-tool-control">
                     <span>Farbe</span>
                     <input
                       type="color"
@@ -900,6 +919,7 @@ export default function ZoneEditor({
                           fontSize: `${zoneVariable?.font_size_mm ?? 4.4}mm`,
                           fontWeight: zoneVariable?.font_weight ?? 400,
                           lineHeight: zoneVariable?.line_height ?? 1.15,
+                          letterSpacing: `${zoneVariable?.letter_spacing_em ?? 0}em`,
                           textAlign: zoneVariable?.align ?? 'left',
                         }}
                       >
