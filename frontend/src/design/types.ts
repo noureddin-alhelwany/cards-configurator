@@ -19,10 +19,15 @@ export type LayoutState = {
 };
 
 export type FontDefinition = {
+  id?: string;
   family: string;
   file: string;
   weight: number;
   style: 'normal' | 'italic';
+};
+
+export type DesignTypography = {
+  global_font_family_id?: string | null;
 };
 
 export type TextElementDefinition = {
@@ -32,6 +37,7 @@ export type TextElementDefinition = {
   z_index: number;
   text: string;
   font_family: string;
+  font_family_id?: string | null;
   font_size_mm: number;
   font_weight: number;
   color: string;
@@ -74,6 +80,7 @@ export type QrElementDefinition = {
   value: string;
   color: string;
   background: string;
+  error_correction?: 'm' | 'q' | 'h';
   quiet_zone_mm: number;
 };
 
@@ -82,14 +89,70 @@ export type TemplateElementDefinition =
   | ImageElementDefinition
   | QrElementDefinition;
 
+export type SafeAreaDefinition = {
+  id: string;
+  box_mm: BoxMm;
+  label: string | null;
+  kind?: 'dynamicText' | 'fixedText' | 'qr';
+  qr?: QrZoneDefinition | null;
+  variables?: SafeAreaVariableDefinition[];
+};
+
+export type TextOverflowMode = 'shrink' | 'wrap' | 'error';
+
+export type QrZoneDefinition = {
+  error_correction: 'm' | 'q' | 'h';
+  color: string;
+  background: string;
+  quiet_zone_mm: number;
+};
+
+export type SafeAreaVariableDefinition = {
+  id: string;
+  kind: 'dynamicText' | 'fixedText' | 'qr';
+  key: string;
+  label: string;
+  font_family: string;
+  font_family_id?: string | null;
+  font_weight: number;
+  font_size_mm: number;
+  min_font_size_mm: number | null;
+  line_height: number;
+  color: string;
+  align: 'left' | 'center' | 'right';
+  max_length: number | null;
+  max_lines: number | null;
+  overflow: TextOverflowMode;
+  required: boolean;
+  default_value: string | null;
+};
+
+export type TextRuleDefinition = {
+  version: number;
+  field_id: string;
+  max_lines: number | null;
+  overflow: 'shrink' | 'wrap' | 'error';
+  min_font_size_mm: number | null;
+};
+
+export type QrRuleDefinition = {
+  version: number;
+  field_id: string;
+  preset: 'standard' | 'rounded-safe';
+  minimum_width_mm: number | null;
+  minimum_quiet_zone_modules: number | null;
+};
+
 export type TemplateVariantDefinition = {
   id: string;
   name: string;
   active: boolean;
   preview_asset: string | null;
+  source_asset?: string | null;
   background_asset?: string | null;
   accent_color?: string | null;
   headline_font_family?: string | null;
+  headline_font_family_id?: string | null;
   headline_font_weight?: number | null;
 };
 
@@ -106,11 +169,17 @@ export type TemplateDefinition = {
   page_width_mm: number;
   page_height_mm: number;
   bleed_mm: number;
+  reference_asset?: string | null;
   preview_asset: string | null;
+  source_asset?: string | null;
   /** Full-bleed artwork drawn under every element, served from `/proof-assets/`. */
   background_asset: string | null;
   background_asset_sha256: string | null;
-  font_family: string;
+  font_family?: string | null;
+  typography?: DesignTypography;
+  safe_areas?: SafeAreaDefinition[];
+  text_rules?: TextRuleDefinition[];
+  qr_rules?: QrRuleDefinition[];
   fonts: FontDefinition[];
   elements: TemplateElementDefinition[];
   variants: TemplateVariantDefinition[];

@@ -3,6 +3,7 @@ import OrderProductionPage from './orders/OrderProductionPage';
 import OrderPage from './orders/OrderPage';
 import ProofPage from './proof/ProofPage';
 import SelectionPage from './selection/SelectionPage';
+import TemplateToolPage from './templateTool/TemplateToolPage';
 
 export default function App() {
   const [pathname, setPathname] = useState(window.location.pathname);
@@ -18,6 +19,10 @@ export default function App() {
 
   if (pathname.startsWith('/render/proof')) {
     return <ProofPage />;
+  }
+
+  if (pathname.startsWith('/template-tool') || pathname.startsWith('/internal/template-tool')) {
+    return <TemplateToolPage />;
   }
 
   if (pathname.startsWith('/render/orders/')) {

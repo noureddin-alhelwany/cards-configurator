@@ -5,6 +5,7 @@ import type { ElementAdjustment, ValidationIssue } from '../design/types';
 import type { OrderDetail } from '../orders/types';
 import type { TemplateVariantDefinition } from '../registries/types';
 import { assetElementForField, clamp, defaultAdjustmentsForTemplate, type AssetMetadata } from './selectionHelpers';
+import { loadRegistries } from '../registries/loadRegistries';
 import {
   activeVariant,
   activeVariants,
@@ -110,14 +111,6 @@ export function wizardStepIndexFromDraft(draft: DraftState): number {
     return 1;
   }
   return 2;
-}
-
-async function loadRegistries(): Promise<RegistryBundle> {
-  const response = await fetch('/api/registries');
-  if (!response.ok) {
-    throw new Error(`Failed to load registries: ${response.status}`);
-  }
-  return (await response.json()) as RegistryBundle;
 }
 
 async function loadCurrentDraft(): Promise<DraftState> {

@@ -1,11 +1,14 @@
-import type { CSSProperties } from 'react';
+import { useEffect, type CSSProperties } from 'react';
 import type {
   ImageElementDefinition,
   LayoutState,
   ProofFixture,
   QrElementDefinition,
+  SafeAreaDefinition,
   TemplateElementDefinition,
   TemplateFieldDefinition,
+  TemplateDefinition,
+  TemplateVariantDefinition,
   TextElementDefinition,
   ValidationIssue,
 } from './types';
@@ -13,6 +16,8 @@ import { resolveQrValue } from './qr';
 import { estimateTextFit } from './textFit';
 import { BACKGROUND_ASSET_ID, markRenderError } from './renderReadiness';
 import { activeTemplateVariant, resolveTemplateBackgroundAsset } from './variantResolution';
+import { ensureTemplateFontsLoaded, resolveEffectiveFontFamilyId, resolveFontFamilyName } from './fonts';
+import { documentBoxStyle } from './workspaceGeometry';
 import './DesignRenderer.css';
 
 /**
@@ -30,16 +35,8 @@ type Props = {
   onAssetReady?: (assetId: string) => void;
   validationIssues?: ValidationIssue[];
   variant?: RenderVariant;
+  showGuides?: boolean;
 };
-
-function mmBoxStyle(box: { x_mm: number; y_mm: number; width_mm: number; height_mm: number }): CSSProperties {
-  return {
-    left: `${box.x_mm}mm`,
-    top: `${box.y_mm}mm`,
-    width: `${box.width_mm}mm`,
-    height: `${box.height_mm}mm`,
-  };
-}
 
 function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
@@ -76,12 +73,18 @@ function renderTextElement(
   layoutState: LayoutState,
   validationIssues: ValidationIssue[] | undefined,
   fields: TemplateFieldDefinition[],
+  template: TemplateDefinition,
   variant: RenderVariant,
 ) {
   const adjustment = adjustmentFor(layoutState, element.id);
   const field = fieldForElement(fields, element.id);
   const textValue = layoutState.text_values[element.id] ?? element.text;
   const { scale: fitScale, rawScale } = textFitFor(element, textValue, field?.max_lines ?? null);
+  const fontFamilyId = resolveEffectiveFontFamilyId(
+    element.font_family_id,
+    template.typography?.global_font_family_id ?? null,
+  );
+  const fontFamily = resolveFontFamilyName(template, fontFamilyId, element.font_family);
   // Validation outlines are a preview affordance; they must never be printed.
   const issue = variant === 'production' ? null : issueForElement(validationIssues, element.id);
   // `opacity` below 1 creates a compositing layer that Chrome may flatten to raster.
@@ -101,11 +104,11 @@ function renderTextElement(
       key={element.id}
       className={`design-element design-element--text${reduced ? ' design-element--text--reduced' : ''}${issue ? ` design-element--issue design-element--issue--${issue.severity}` : ''}`}
       style={{
-        ...mmBoxStyle(element.box_mm),
+        ...documentBoxStyle(element.box_mm),
         ...verticalStyle,
         zIndex: element.z_index,
         color: element.color,
-        fontFamily: element.font_family,
+        fontFamily: fontFamily ?? element.font_family,
         fontSize: `${element.font_size_mm * fitScale}mm`,
         fontWeight: element.font_weight,
         lineHeight: element.line_height,
@@ -145,7 +148,7 @@ function renderImageElement(
       key={element.id}
       className={`design-element design-element--image${issue ? ` design-element--issue design-element--issue--${issue.severity}` : ''}`}
       style={{
-        ...mmBoxStyle(element.box_mm),
+        ...documentBoxStyle(element.box_mm),
         zIndex: element.z_index,
         objectFit: element.fit,
         filter,
@@ -222,12 +225,105 @@ function renderBackground(asset: string, onAssetReady?: (assetId: string) => voi
   );
 }
 
-export default function DesignRenderer({ fixture, onAssetReady, validationIssues, variant = 'screen' }: Props) {
+function renderGuideLayer(safeAreas: SafeAreaDefinition[] | undefined) {
+  return (
+    <div className="design-stage__guide-layer" aria-hidden="true">
+      <div className="design-stage__document" />
+      <div className="design-stage__bleed" />
+      <div className="design-stage__trim" />
+      {safeAreas?.map((safeArea) => (
+        <div
+          key={safeArea.id}
+          className={`design-stage__safe-area design-stage__safe-area--${safeArea.kind ?? 'fixedText'}`}
+          data-testid={`design-stage-safe-area-${safeArea.id}`}
+          style={documentBoxStyle(safeArea.box_mm)}
+        >
+          <span className="design-stage__safe-area-label">{safeArea.label ?? safeArea.kind ?? 'safeArea'}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function renderTemplateElement(
+  element: TemplateElementDefinition,
+  fixture: ProofFixture,
+  variant: RenderVariant,
+  validationIssues: ValidationIssue[] | undefined,
+  onAssetReady?: (assetId: string) => void,
+  encodedQrValue?: string,
+) {
+  if (element.kind === 'text') {
+    return renderTextElement(
+      element,
+      fixture.layout_state,
+      validationIssues,
+      fixture.template.fields,
+      fixture.template,
+      variant,
+    );
+  }
+
+  if (element.kind === 'image') {
+    const assetDataUrl = fixture.assets[element.asset_key]?.data_url;
+    // Draw nothing rather than an <img> without a src: the browser would paint a
+    // broken-image glyph plus the alt text onto the card, and that lands in the PDF.
+    // Historical order snapshots can still declare elements whose asset is gone.
+    if (!assetDataUrl) {
+      return null;
+    }
+    return renderImageElement(element, fixture.layout_state, assetDataUrl, variant, onAssetReady, validationIssues);
+  }
+
+  return renderQrElement(element, fixture.assets.qr?.data_url, encodedQrValue ?? '', onAssetReady);
+}
+
+function renderElementLayer(
+  fixture: ProofFixture,
+  variant: RenderVariant,
+  validationIssues: ValidationIssue[] | undefined,
+  onAssetReady?: (assetId: string) => void,
+  encodedQrValue?: string,
+) {
+  return fixture.template.elements.map((element: TemplateElementDefinition) =>
+    renderTemplateElement(element, fixture, variant, validationIssues, onAssetReady, encodedQrValue),
+  );
+}
+
+function canvasStyle(
+  pageWidth: number,
+  pageHeight: number,
+  bleed: number,
+  selectedVariant: TemplateVariantDefinition | null | undefined,
+) {
+  return {
+    '--page-width': `${pageWidth}mm`,
+    '--page-height': `${pageHeight}mm`,
+    '--bleed': `${bleed}mm`,
+    '--variant-accent-color': selectedVariant?.accent_color ?? undefined,
+    '--variant-headline-font-family': selectedVariant?.headline_font_family ?? undefined,
+    '--variant-headline-font-weight': selectedVariant?.headline_font_weight?.toString() ?? undefined,
+  } as CSSProperties;
+}
+
+export default function DesignRenderer({
+  fixture,
+  onAssetReady,
+  validationIssues,
+  variant = 'screen',
+  showGuides = true,
+}: Props) {
   const production = variant === 'production';
+  const guidesVisible = showGuides && !production;
   const { page_width_mm: pageWidth, page_height_mm: pageHeight } = fixture.template;
   const encodedQrValue = resolveQrValue(fixture.template, fixture.layout_state);
   const selectedVariant = activeTemplateVariant(fixture.template, fixture.layout_state.variant_id);
   const backgroundAsset = resolveTemplateBackgroundAsset(fixture.template, fixture.layout_state);
+
+  useEffect(() => {
+    void ensureTemplateFontsLoaded(fixture.template);
+  }, [fixture.template]);
+
   return (
     <div className={`design-stage-shell${production ? ' design-stage-shell--production' : ''}`}>
       {/* `@page size` cannot read a CSS custom property, so the rule is emitted from the
@@ -240,42 +336,11 @@ export default function DesignRenderer({ fixture, onAssetReady, validationIssues
       <div
         data-testid="proof-canvas"
         className={`design-stage${production ? ' design-stage--production' : ''}`}
-        style={
-          {
-            '--page-width': `${pageWidth}mm`,
-            '--page-height': `${pageHeight}mm`,
-            '--bleed': `${fixture.template.bleed_mm}mm`,
-            '--variant-accent-color': selectedVariant?.accent_color ?? undefined,
-            '--variant-headline-font-family': selectedVariant?.headline_font_family ?? undefined,
-            '--variant-headline-font-weight': selectedVariant?.headline_font_weight?.toString() ?? undefined,
-          } as CSSProperties
-        }
+        style={canvasStyle(pageWidth, pageHeight, fixture.template.bleed_mm, selectedVariant)}
       >
-        {/* Bleed and trim markers orient the user in the preview. On the printed card they
-            would be ink where the sheet gets cut. */}
         {backgroundAsset ? renderBackground(backgroundAsset, onAssetReady) : null}
-        {production ? null : (
-          <>
-            <div className="design-stage__bleed" aria-hidden="true" />
-            <div className="design-stage__trim" aria-hidden="true" />
-          </>
-        )}
-        {fixture.template.elements.map((element: TemplateElementDefinition) => {
-          if (element.kind === 'text') {
-            return renderTextElement(element, fixture.layout_state, validationIssues, fixture.template.fields, variant);
-          }
-          if (element.kind === 'image') {
-            const assetDataUrl = fixture.assets[element.asset_key]?.data_url;
-            // Draw nothing rather than an <img> without a src: the browser would paint a
-            // broken-image glyph plus the alt text onto the card, and that lands in the PDF.
-            // Historical order snapshots can still declare elements whose asset is gone.
-            if (!assetDataUrl) {
-              return null;
-            }
-            return renderImageElement(element, fixture.layout_state, assetDataUrl, variant, onAssetReady, validationIssues);
-          }
-          return renderQrElement(element, fixture.assets.qr?.data_url, encodedQrValue, onAssetReady);
-        })}
+        {renderElementLayer(fixture, variant, validationIssues, onAssetReady, encodedQrValue)}
+        {guidesVisible ? renderGuideLayer(fixture.template.safe_areas) : null}
       </div>
     </div>
   );

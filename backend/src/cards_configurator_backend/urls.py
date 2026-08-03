@@ -56,7 +56,7 @@ def resolve_qr_value(template: TemplateDefinition, layout_state: LayoutState) ->
     return qr_element.value if qr_element is not None else ""
 
 
-def build_qr_svg(value: str, *, dark: str = QR_DARK_DEFAULT) -> bytes:
+def build_qr_svg(value: str, *, dark: str = QR_DARK_DEFAULT, error_correction: str = QR_ERROR_LEVEL) -> bytes:
     """Render the QR symbol as SVG with no built-in border.
 
     `border=0` makes the element box the symbol itself, so one module is exactly
@@ -67,15 +67,15 @@ def build_qr_svg(value: str, *, dark: str = QR_DARK_DEFAULT) -> bytes:
     The quiet zone is drawn by the renderer as a light plate around the box, expressed in
     millimetres, which is the unit the schema and the validator speak.
     """
-    qr = segno.make(normalize_url(value), error=QR_ERROR_LEVEL)
+    qr = segno.make(normalize_url(value), error=error_correction)
     buffer = BytesIO()
     # `light=None` keeps the symbol background transparent; the plate provides the light.
     qr.save(buffer, kind="svg", border=0, dark=dark, light=None)
     return buffer.getvalue()
 
 
-def build_qr_data_url(value: str, *, dark: str = QR_DARK_DEFAULT) -> str:
-    encoded = base64.b64encode(build_qr_svg(value, dark=dark)).decode("ascii")
+def build_qr_data_url(value: str, *, dark: str = QR_DARK_DEFAULT, error_correction: str = QR_ERROR_LEVEL) -> str:
+    encoded = base64.b64encode(build_qr_svg(value, dark=dark, error_correction=error_correction)).decode("ascii")
     return f"data:image/svg+xml;base64,{encoded}"
 
 

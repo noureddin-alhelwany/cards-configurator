@@ -2,9 +2,9 @@
 
 ## Summary
 
-- Todo: 0
+- Todo: 7
 - In progress: 0
-- Done: 61
+- Done: 79
 - Blocked: 0
 
 ## Backlog

@@ -134,6 +134,7 @@ def get_order_fixture(session: Session, data_dir: Path, order_id: str) -> ProofF
             data_url=build_qr_data_url(
                 qr_value,
                 dark=qr_element.color if qr_element is not None else QR_DARK_DEFAULT,
+                error_correction=qr_element.error_correction if qr_element is not None else "m",
             ),
         )
     return ProofFixture(template=template, product=product, use_case=use_case, layout_state=layout_state, assets=assets)

@@ -192,3 +192,23 @@ def test_quiet_zone_background_defaults_to_light() -> None:
         value=SHORT_URL,
     )
     assert element.background == "#ffffff"
+
+
+def test_low_contrast_qr_codes_are_reported() -> None:
+    template = _template()
+    qr_element = next(e for e in template.elements if e.kind == "qr")
+    qr_element.color = "#ffffff"
+    qr_element.background = "#ffffff"
+
+    bundle = _bundle()
+    live_template = next(t for t in bundle.templates if t.version == "1.6.0")
+    live_qr_element = next(e for e in live_template.elements if e.kind == "qr")
+    live_qr_element.color = "#ffffff"
+    live_qr_element.background = "#ffffff"
+
+    report = validate_current_draft(REPO_ROOT / "data", bundle, _draft({"qrTarget": SHORT_URL}))
+    issue = next(issue for issue in report.issues if issue.code == "qr_contrast_too_low")
+
+    assert report.blocking is True
+    assert issue.blocking is True
+    assert issue.details["minimum_contrast_ratio"] == pytest.approx(3.0)

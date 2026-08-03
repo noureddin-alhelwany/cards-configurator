@@ -132,6 +132,43 @@ export const uiText = {
       orderUnavailable: 'Der Auftrag konnte nicht erstellt werden.',
     },
   },
+  templateTool: {
+    loading: {
+      kicker: 'Internes Werkzeug',
+      title: 'Template Tool',
+      description: 'Die Design-Registries werden geladen.',
+    },
+    error: {
+      kicker: 'Template Tool',
+      title: 'Registries konnten nicht geladen werden',
+      description: 'Die interne Oberfläche konnte die Konfigurationen nicht laden.',
+    },
+    header: {
+      kicker: 'Intern',
+      title: 'Templates und Design-Overlays',
+      lead: 'Hier lassen sich Preview und Source auf derselben Geometrie prüfen.',
+    },
+    preview: {
+      editingLabel: 'Bearbeitungsansicht',
+      editingHint: 'Die Vorschau rendert Preview und Source live auf derselben Geometrie wie die Produktion.',
+    },
+    controls: {
+      template: 'Template',
+      variant: 'Design',
+      guides: 'Hilfslinien',
+      guidesVisible: 'Hilfslinien anzeigen',
+      previewVisible: 'Preview anzeigen',
+      previewOpacity: 'Preview-Deckkraft',
+      sourceVisible: 'Source anzeigen',
+      sourceOpacity: 'Source-Deckkraft',
+      selectedPreview: 'Aktuelle Preview',
+      selectedSource: 'Aktuelle Source',
+    },
+    empty: {
+      title: 'Keine aktiven Templates',
+      description: 'Aktiviere mindestens ein Design in den Registries, damit die interne Oberfläche etwas anzeigen kann.',
+    },
+  },
   order: {
     loading: {
       kicker: 'Auftrag wird geladen',

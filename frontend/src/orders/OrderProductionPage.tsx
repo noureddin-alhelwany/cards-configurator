@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import DesignRenderer from '../design/DesignRenderer';
 import type { ProofFixture } from '../design/types';
 import { expectedAssetCount } from '../design/renderReadiness';
+import { ensureTemplateFontsLoaded } from '../design/fonts';
 import { brandingFallbackDataUrl, businessNameFromLayout, logoAssetKeys } from '../design/branding';
 import './OrderProductionPage.css';
 import StateMessage from '../ui/StateMessage';
@@ -64,16 +65,21 @@ export default function OrderProductionPage({ orderId }: { orderId: string }) {
 
   useEffect(() => {
     let active = true;
-    const fontsReadyPromise = document.fonts?.ready ?? Promise.resolve();
-    fontsReadyPromise.then(() => {
-      if (active) {
-        setFontsReady(true);
-      }
-    });
+    if (fixture) {
+      setFontsReady(false);
+      void ensureTemplateFontsLoaded(fixture.template).then(() => {
+        if (active) {
+          setFontsReady(true);
+        }
+      });
+      return () => {
+        active = false;
+      };
+    }
     return () => {
       active = false;
     };
-  }, []);
+  }, [fixture]);
 
   useEffect(() => {
     if (fixture && fontsReady && assetLoads >= expectedAssetCount(fixture)) {

@@ -30,6 +30,13 @@ function buildFixture(): ProofFixture {
       page_height_mm: 154,
       bleed_mm: 3,
       font_family: 'Proof Sans',
+      safe_areas: [
+        {
+          id: 'content',
+          box_mm: { x_mm: 12, y_mm: 12, width_mm: 87, height_mm: 130 },
+          label: 'Safe Area',
+        },
+      ],
       fonts: [],
       variants: [],
       fields: [
@@ -111,11 +118,23 @@ const blockingIssue = [
 test('screen variant draws the print guides and the validation outline', () => {
   const { container } = render(<DesignRenderer fixture={buildFixture()} validationIssues={blockingIssue} />);
 
+  expect(container.querySelector('.design-stage__document')).not.toBeNull();
   expect(container.querySelector('.design-stage__bleed')).not.toBeNull();
   expect(container.querySelector('.design-stage__trim')).not.toBeNull();
+  expect(container.querySelector('[data-testid="design-stage-safe-area-content"]')).not.toBeNull();
   expect(container.querySelector('.design-element--issue')).not.toBeNull();
   expect(container.querySelector('.design-stage--production')).toBeNull();
   expect(container.querySelector('[data-testid="print-page-size"]')).toBeNull();
+});
+
+test('screen variant can hide the print guides', () => {
+  const { container } = render(<DesignRenderer fixture={buildFixture()} validationIssues={blockingIssue} showGuides={false} />);
+
+  expect(container.querySelector('.design-stage__document')).toBeNull();
+  expect(container.querySelector('.design-stage__bleed')).toBeNull();
+  expect(container.querySelector('.design-stage__trim')).toBeNull();
+  expect(container.querySelector('[data-testid="design-stage-safe-area-content"]')).toBeNull();
+  expect(container.querySelector('.design-element--issue')).not.toBeNull();
 });
 
 test('production variant emits none of the preview chrome', () => {
@@ -126,6 +145,8 @@ test('production variant emits none of the preview chrome', () => {
   // Trim guides would be printed ink on the cut line; the radius clips artwork at the corners.
   expect(container.querySelector('.design-stage__bleed')).toBeNull();
   expect(container.querySelector('.design-stage__trim')).toBeNull();
+  expect(container.querySelector('.design-stage__document')).toBeNull();
+  expect(container.querySelector('[data-testid="design-stage-safe-area-content"]')).toBeNull();
   // A validation outline must never reach the customer's card.
   expect(container.querySelector('.design-element--issue')).toBeNull();
   expect(container.querySelector('.design-stage--production')).not.toBeNull();
@@ -205,7 +226,7 @@ test('the QR falls back to the template value when the field is empty', () => {
   expect(image?.alt).toBe('QR: https://example.com/review');
 });
 
-function fixtureWithBackground(asset = 'backgrounds/proof_a6_card-1.6.0-bold.svg') {
+function fixtureWithBackground(asset = 'template_google_reviews_bold_preview.png') {
   const fixture = fixtureWithQr();
   fixture.template.background_asset = asset;
   return fixture;
@@ -213,14 +234,14 @@ function fixtureWithBackground(asset = 'backgrounds/proof_a6_card-1.6.0-bold.svg
 
 function fixtureWithVariantBackground() {
   const fixture = fixtureWithQr();
-  fixture.template.background_asset = 'backgrounds/proof_a6_card-1.6.0-bold.svg';
+  fixture.template.background_asset = 'template_google_reviews_bold_preview.png';
   fixture.template.variants = [
     {
       id: 'classic',
       name: 'Classic',
       active: true,
       preview_asset: null,
-      background_asset: 'backgrounds/proof_a6_card-1.6.0-warm.svg',
+      background_asset: 'template_google_reviews_warm_preview.png',
       accent_color: '#315a86',
       headline_font_family: 'Proof Sans',
       headline_font_weight: 700,
@@ -238,7 +259,7 @@ test('background artwork is the bottom layer and is hidden from assistive tech',
   expect(background).not.toBeNull();
   // Served as a URL, not embedded: `fixture.assets` is keyed by field id and travels
   // through /api/registries, where megabytes of base64 do not belong.
-  expect(background?.getAttribute('src')).toBe('/proof-assets/backgrounds/proof_a6_card-1.6.0-bold.svg');
+  expect(background?.getAttribute('src')).toBe('/proof-assets/template_google_reviews_bold_preview.png');
   // First child, so every element paints on top of it without relying on z-index.
   expect(stage?.firstElementChild).toBe(background);
   // Presentational: it carries no information, and it must stay out of getByRole('img').
@@ -260,7 +281,7 @@ test('variant-specific background artwork overrides the template fallback', () =
   const { container } = render(<DesignRenderer fixture={fixtureWithVariantBackground()} variant="production" />);
 
   const background = container.querySelector<HTMLImageElement>('[data-testid="design-background"]');
-  expect(background?.getAttribute('src')).toBe('/proof-assets/backgrounds/proof_a6_card-1.6.0-warm.svg');
+  expect(background?.getAttribute('src')).toBe('/proof-assets/template_google_reviews_warm_preview.png');
   expect(expectedAssetCount(fixtureWithVariantBackground())).toBe(expectedAssetCount(fixtureWithQr()) + 1);
 });
 

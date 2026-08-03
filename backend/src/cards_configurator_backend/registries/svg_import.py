@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree as ET
 
+from .artwork_geometry import geometry_compatible, probe_artwork_geometry
 from .schemas import BoxMm
 
 
@@ -60,15 +61,15 @@ def _coerce_template_variant(payload: dict[str, Any], variant_id: str, variant_n
     if not isinstance(variants, list):
         raise ValueError("template JSON field 'variants' must be a list")
 
-    for variant in variants:
-        if isinstance(variant, dict) and variant.get("id") == variant_id:
+    for existing_variant in variants:
+        if isinstance(existing_variant, dict) and existing_variant.get("id") == variant_id:
             if variant_name is not None:
-                variant["name"] = variant_name
-            return variant
+                existing_variant["name"] = variant_name
+            return existing_variant
 
-    variant: dict[str, Any] = {"id": variant_id, "name": variant_name or variant_id, "active": True}
-    variants.append(variant)
-    return variant
+    new_variant: dict[str, Any] = {"id": variant_id, "name": variant_name or variant_id, "active": True}
+    variants.append(new_variant)
+    return new_variant
 
 
 def update_template_from_svg(
@@ -77,6 +78,9 @@ def update_template_from_svg(
     output_path: Path,
     *,
     slot_prefix: str = "slot-",
+    reference_path: Path | None = None,
+    reference_asset: str | None = None,
+    source_asset: str | None = None,
     background_asset: str | None = None,
     variant_id: str | None = None,
     variant_name: str | None = None,
@@ -88,6 +92,19 @@ def update_template_from_svg(
     payload = json.loads(template_path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("template JSON must contain an object")
+
+    background_geometry = probe_artwork_geometry(svg_path)
+    if background_geometry is None:
+        raise ValueError(f"background artwork '{svg_path}' could not be read")
+
+    if reference_path is not None:
+        reference_geometry = probe_artwork_geometry(reference_path)
+        if reference_geometry is None:
+            raise ValueError(f"reference artwork '{reference_path}' could not be read")
+        if not geometry_compatible(reference_geometry, background_geometry):
+            raise ValueError(
+                "reference and background artwork must share the same dimensions and orientation"
+            )
 
     slot_boxes = extract_slot_boxes(svg_path, slot_prefix=slot_prefix)
     elements = payload.get("elements", [])
@@ -105,15 +122,21 @@ def update_template_from_svg(
             continue
         element["box_mm"] = box.model_dump()
 
-    if background_asset is not None:
-        payload["background_asset"] = background_asset
+    asset_value = source_asset if source_asset is not None else background_asset
+
+    if reference_asset is not None:
+        payload["reference_asset"] = reference_asset
+    if asset_value is not None:
+        payload["source_asset"] = asset_value
+        payload["background_asset"] = asset_value
 
     if variant_id is not None:
         variant = _coerce_template_variant(payload, variant_id, variant_name)
         if preview_asset is not None:
             variant["preview_asset"] = preview_asset
-        if background_asset is not None:
-            variant["background_asset"] = background_asset
+        if asset_value is not None:
+            variant["source_asset"] = asset_value
+            variant["background_asset"] = asset_value
         if accent_color is not None:
             variant["accent_color"] = accent_color
         if headline_font_family is not None:
@@ -130,6 +153,9 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--svg", required=True, type=Path, help="SVG artboard with named slot placeholders")
     parser.add_argument("--output", required=True, type=Path, help="Path for the updated template JSON")
     parser.add_argument("--slot-prefix", default="slot-", help="Prefix used for placeholder ids")
+    parser.add_argument("--reference-path", type=Path, help="Reference artwork file to validate against the background")
+    parser.add_argument("--reference-asset", help="Reference asset to write into the template")
+    parser.add_argument("--source-asset", help="Source asset to write into the template")
     parser.add_argument("--background-asset", help="Background asset to write into the template")
     parser.add_argument("--variant-id", help="Variant id to create or update")
     parser.add_argument("--variant-name", help="Variant name to create or update")
@@ -148,6 +174,9 @@ def main(argv: list[str] | None = None) -> int:
         args.svg,
         args.output,
         slot_prefix=args.slot_prefix,
+        reference_path=args.reference_path,
+        reference_asset=args.reference_asset,
+        source_asset=args.source_asset,
         background_asset=args.background_asset,
         variant_id=args.variant_id,
         variant_name=args.variant_name,

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ProductDefinition, TemplateDefinition, UseCaseDefinition } from '../registries/types';
 import type { ElementAdjustment, ProofFixture, ValidationIssue } from '../design/types';
-import DesignRenderer from '../design/DesignRenderer';
+import DesignPreviewFrame from '../design/DesignPreviewFrame';
 import { defaultTemplateVariantId } from '../design/variantResolution';
 import { defaultAdjustmentsForTemplate } from './selectionHelpers';
 import { emptyPreviewAsset, placeholderQrDataUrl } from './previewAssets';
@@ -13,16 +13,23 @@ export function buildTemplatePreviewFixture(
   template: TemplateDefinition,
   product: ProductDefinition | null,
   useCase: UseCaseDefinition | null,
+  options?: {
+    textMode?: 'demo' | 'blank';
+  },
 ): ProofFixture | null {
   if (!product || !useCase) {
     return null;
   }
 
+  const textMode = options?.textMode ?? 'demo';
+
   const text_values = Object.fromEntries(
     template.fields
       .filter((field) => field.type === 'text' || field.type === 'url')
       .map((field, index) => {
-        return [field.id, trimSuggestion(fieldDefaultValue(field, index, useCase), field.max_length)];
+        const value =
+          textMode === 'blank' ? '' : trimSuggestion(fieldDefaultValue(field, index, useCase), field.max_length);
+        return [field.id, value];
       }),
   );
 
@@ -103,6 +110,7 @@ export function TemplateLivePreview({
   const qrValue = qrFieldId ? layoutValues.text_values[qrFieldId] ?? '' : '';
   const qrElement = template.elements.find((element) => element.kind === 'qr');
   const qrColor = qrElement && qrElement.kind === 'qr' ? qrElement.color : null;
+  const qrErrorCorrection = qrElement && qrElement.kind === 'qr' ? qrElement.error_correction ?? 'm' : 'm';
 
   useEffect(() => {
     let active = true;
@@ -120,7 +128,7 @@ export function TemplateLivePreview({
     // Ask for the template's own QR colour so the preview matches the printed card.
     const url = `/api/qr?value=${encodeURIComponent(qrValue)}${
       qrColor ? `&dark=${encodeURIComponent(qrColor)}` : ''
-    }`;
+    }&error_correction=${encodeURIComponent(qrErrorCorrection)}`;
     fetch(url)
       .then(async (response) => {
         if (!response.ok) {
@@ -146,7 +154,7 @@ export function TemplateLivePreview({
     return () => {
       active = false;
     };
-  }, [qrFieldId, qrValue, qrColor]);
+  }, [qrColor, qrErrorCorrection, qrFieldId, qrValue]);
 
   const hasPreviewContent =
     template.fields.some((field) => field.type === 'text' || field.type === 'url' || field.type === 'logo' || field.type === 'image') ||
@@ -215,7 +223,7 @@ export function TemplateLivePreview({
           {proofFixture ? (
             <div className={`template-live-preview__stage${expanded ? ' template-live-preview__stage--expanded' : ''}`}>
               {qrLoading ? <p className="template-live-preview__loading">{uiText.selection.preview.loading}</p> : null}
-              <DesignRenderer fixture={proofFixture} validationIssues={validationIssues} />
+              <DesignPreviewFrame fixture={proofFixture} validationIssues={validationIssues} />
             </div>
           ) : (
             <p className="template-field__hint">{uiText.selection.preview.liveHint}</p>
@@ -225,9 +233,7 @@ export function TemplateLivePreview({
       {showMockup && proofFixture ? (
         <div className="template-mockup">
           <p className="template-detail__group-title">{uiText.selection.preview.mockupTitle}</p>
-          <div className="template-mockup__frame">
-            <DesignRenderer fixture={proofFixture} validationIssues={validationIssues} />
-          </div>
+          <DesignPreviewFrame className="template-mockup__frame" fixture={proofFixture} validationIssues={validationIssues} />
         </div>
       ) : null}
       {qrField && qrError ? <p className="content-field__error">{qrError}</p> : null}

@@ -29,6 +29,13 @@ from .urls import QR_DARK_DEFAULT, build_qr_data_url, normalize_url
 router = APIRouter(prefix="/api", tags=["system"])
 
 
+def _load_current_registry_bundle(request: Request):
+    settings = get_settings()
+    bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
+    request.app.state.registry_bundle = bundle
+    return bundle
+
+
 @router.get("/healthz")
 def healthz() -> dict[str, str]:
     return {"status": "ok", "service": "cards-configurator-backend"}
@@ -36,19 +43,14 @@ def healthz() -> dict[str, str]:
 
 @router.get("/registries")
 def registries(request: Request) -> dict[str, object]:
-    bundle = getattr(request.app.state, "registry_bundle", None)
-    if bundle is None:
-        settings = get_settings()
-        bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
+    bundle = _load_current_registry_bundle(request)
     return bundle.model_dump()
 
 
 @router.get("/render/proof-fixture")
 def render_proof_fixture(request: Request) -> dict[str, object]:
     settings = get_settings()
-    bundle = getattr(request.app.state, "registry_bundle", None)
-    if bundle is None:
-        bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
+    bundle = _load_current_registry_bundle(request)
     fixture = build_proof_fixture(bundle, settings.proof_assets_dir)
     return fixture.model_dump()
 
@@ -65,9 +67,7 @@ def current_draft() -> DraftState:
 @router.get("/drafts/current/validation")
 def current_draft_validation(request: Request) -> dict[str, object]:
     settings = get_settings()
-    bundle = getattr(request.app.state, "registry_bundle", None)
-    if bundle is None:
-        bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
+    bundle = _load_current_registry_bundle(request)
 
     session = get_session_factory()()
     try:
@@ -81,9 +81,7 @@ def current_draft_validation(request: Request) -> dict[str, object]:
 @router.post("/drafts/current/template", response_model=DraftState)
 def select_template(request: Request, selection: TemplateSelectionRequest) -> DraftState:
     settings = get_settings()
-    bundle = getattr(request.app.state, "registry_bundle", None)
-    if bundle is None:
-        bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
+    bundle = _load_current_registry_bundle(request)
 
     session = get_session_factory()()
     try:
@@ -95,9 +93,7 @@ def select_template(request: Request, selection: TemplateSelectionRequest) -> Dr
 @router.post("/drafts/current/approval", response_model=DraftState)
 def approve_current_draft(request: Request, body: ApprovalRequest) -> DraftState:
     settings = get_settings()
-    bundle = getattr(request.app.state, "registry_bundle", None)
-    if bundle is None:
-        bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
+    bundle = _load_current_registry_bundle(request)
 
     session = get_session_factory()()
     try:
@@ -205,9 +201,7 @@ def order_fixture(order_id: str) -> dict[str, object]:
 @router.post("/orders", response_model=OrderDetail)
 async def create_order_from_current_draft(request: Request) -> OrderDetail:
     settings = get_settings()
-    bundle = getattr(request.app.state, "registry_bundle", None)
-    if bundle is None:
-        bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
+    bundle = _load_current_registry_bundle(request)
 
     session = get_session_factory()()
     try:
@@ -230,12 +224,12 @@ def patch_layout(request: Request, body: LayoutStateUpdateRequest) -> DraftState
 
 
 @router.get("/qr")
-def qr_preview(value: str, dark: str = QR_DARK_DEFAULT) -> dict[str, str]:
+def qr_preview(value: str, dark: str = QR_DARK_DEFAULT, error_correction: str = "m") -> dict[str, str]:
     # `dark` lets the live preview request the template's own QR colour, so the preview and
     # the printed card agree. Defaults to the production default, so the signature stays
     # backwards compatible.
     normalized = normalize_url(value)
-    return {"value": normalized, "data_url": build_qr_data_url(normalized, dark=dark)}
+    return {"value": normalized, "data_url": build_qr_data_url(normalized, dark=dark, error_correction=error_correction)}
 
 
 @router.post("/assets")

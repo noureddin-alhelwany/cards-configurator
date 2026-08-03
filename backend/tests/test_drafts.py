@@ -31,7 +31,7 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
         payload = response.json()
         assert payload['template_id'] == 'proof_a6_card'
         assert payload['template_version'] == '1.6.0'
-        # The host template auto-selects its first active skin.
+        # The host template auto-selects its first active design.
         assert payload['variant_id'] == 'bold'
         assert payload['layout_state']['variant_id'] == 'bold'
 

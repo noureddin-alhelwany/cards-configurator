@@ -49,10 +49,27 @@
   z-index: 0;
 }
 
+.design-stage__guide-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.design-stage__document,
 .design-stage__bleed {
   position: absolute;
   inset: 0;
-  border: 0.4mm solid rgba(132, 92, 57, 0.18);
+  box-sizing: border-box;
+  border-radius: inherit;
+}
+
+.design-stage__document {
+  border: 0.25mm solid rgba(94, 70, 47, 1);
+}
+
+.design-stage__bleed {
+  border: 0.28mm solid rgba(132, 92, 57, 0.92);
   pointer-events: none;
 }
 
@@ -62,8 +79,75 @@
   top: var(--bleed);
   right: var(--bleed);
   bottom: var(--bleed);
-  border: 0.4mm dashed rgba(132, 92, 57, 0.35);
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(
+        90deg,
+        rgba(132, 92, 57, 1) 0,
+        rgba(132, 92, 57, 1) 6mm,
+        transparent 6mm,
+        transparent 10mm
+      )
+      top / 100% 1.1mm no-repeat,
+    repeating-linear-gradient(
+        90deg,
+        rgba(132, 92, 57, 1) 0,
+        rgba(132, 92, 57, 1) 6mm,
+        transparent 6mm,
+        transparent 10mm
+      )
+      bottom / 100% 1.1mm no-repeat,
+    repeating-linear-gradient(
+        180deg,
+        rgba(132, 92, 57, 1) 0,
+        rgba(132, 92, 57, 1) 6mm,
+        transparent 6mm,
+        transparent 10mm
+      )
+      left / 1.1mm 100% no-repeat,
+    repeating-linear-gradient(
+        180deg,
+        rgba(132, 92, 57, 1) 0,
+        rgba(132, 92, 57, 1) 6mm,
+        transparent 6mm,
+        transparent 10mm
+      )
+      right / 1.1mm 100% no-repeat;
   pointer-events: none;
+}
+
+.design-stage__safe-area {
+  position: absolute;
+  border: 0.35mm dashed rgba(74, 112, 81, 1);
+  border-radius: 1.5mm;
+  box-sizing: border-box;
+}
+
+.design-stage__safe-area--dynamicText {
+  border-color: rgba(111, 83, 154, 1);
+}
+
+.design-stage__safe-area--fixedText {
+  border-color: rgba(132, 92, 57, 1);
+}
+
+.design-stage__safe-area--qr {
+  border-color: rgba(58, 106, 86, 1);
+}
+
+.design-stage__safe-area-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translateY(-100%);
+  display: inline-block;
+  padding: 0.5mm 1.5mm;
+  border-radius: 999px;
+  background: rgba(248, 246, 241, 1);
+  color: rgba(60, 88, 67, 1);
+  font-size: 2.4mm;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .design-element {
@@ -136,7 +220,12 @@
   }
 
   .design-stage__bleed,
+  .design-stage__document,
   .design-stage__trim {
+    display: none;
+  }
+
+  .design-stage__guide-layer {
     display: none;
   }
 

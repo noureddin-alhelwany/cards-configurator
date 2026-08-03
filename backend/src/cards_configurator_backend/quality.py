@@ -23,6 +23,7 @@ from .urls import QR_QUIET_ZONE_MODULES, qr_module_count, resolve_qr_value
 # Mirrored in `frontend/src/design/textFit.ts` under the same names so one grep finds both.
 AVG_GLYPH_WIDTH_EM = 0.55
 DEFAULT_MIN_FIT_SCALE = 0.7
+QR_MIN_CONTRAST_RATIO = 3.0
 
 
 class QualityReport(BaseModel):
@@ -77,6 +78,49 @@ def _image_element_by_asset_key(template: TemplateDefinition, asset_key: str) ->
 
 def _qr_elements(template: TemplateDefinition) -> list[QrElementDefinition]:
     return [element for element in template.elements if element.kind == "qr"]
+
+
+def _hex_to_rgb(color: str) -> tuple[float, float, float] | None:
+    value = color.strip().lstrip("#")
+    if len(value) == 3:
+        try:
+            red = int(value[0] * 2, 16)
+            green = int(value[1] * 2, 16)
+            blue = int(value[2] * 2, 16)
+        except ValueError:
+            return None
+        return red / 255, green / 255, blue / 255
+    if len(value) == 6:
+        try:
+            red = int(value[0:2], 16)
+            green = int(value[2:4], 16)
+            blue = int(value[4:6], 16)
+        except ValueError:
+            return None
+        return red / 255, green / 255, blue / 255
+    return None
+
+
+def _relative_luminance(color: str) -> float | None:
+    rgb = _hex_to_rgb(color)
+    if rgb is None:
+        return None
+
+    def _channel(value: float) -> float:
+        return value / 12.92 if value <= 0.03928 else ((value + 0.055) / 1.055) ** 2.4
+
+    red, green, blue = rgb
+    return 0.2126 * _channel(red) + 0.7152 * _channel(green) + 0.0722 * _channel(blue)
+
+
+def _contrast_ratio(foreground: str, background: str) -> float | None:
+    foreground_luminance = _relative_luminance(foreground)
+    background_luminance = _relative_luminance(background)
+    if foreground_luminance is None or background_luminance is None:
+        return None
+    lighter = max(foreground_luminance, background_luminance)
+    darker = min(foreground_luminance, background_luminance)
+    return (lighter + 0.05) / (darker + 0.05)
 
 
 def effective_image_scale(element: ImageElementDefinition, adjustment: ElementAdjustment) -> float:
@@ -300,6 +344,23 @@ def validate_current_draft(data_dir: Path, bundle: RegistryBundle, draft: DraftS
                         f"{required_quiet_zone_mm:.2f}mm ({QR_QUIET_ZONE_MODULES} modules)",
                         blocking=False,
                         details={**shared_details, "editable": False},
+                    )
+                )
+
+            contrast_ratio = _contrast_ratio(qr_element.color, qr_element.background)
+            if contrast_ratio is not None and contrast_ratio < QR_MIN_CONTRAST_RATIO:
+                issues.append(
+                    _issue(
+                        "qr_contrast_too_low",
+                        qr_element.id,
+                        f"QR code '{qr_element.id}' has insufficient contrast",
+                        details={
+                            **shared_details,
+                            "color": qr_element.color,
+                            "background": qr_element.background,
+                            "contrast_ratio": round(contrast_ratio, 2),
+                            "minimum_contrast_ratio": QR_MIN_CONTRAST_RATIO,
+                        },
                     )
                 )
 

@@ -35,6 +35,7 @@ def build_proof_fixture(bundle: RegistryBundle, proof_assets_dir: Path) -> Proof
     qr_bytes = build_qr_svg(
         resolve_qr_value(template, layout_state),
         dark=qr_element.color if qr_element is not None else QR_DARK_DEFAULT,
+        error_correction=qr_element.error_correction if qr_element is not None else "m",
     )
 
     return ProofFixture(

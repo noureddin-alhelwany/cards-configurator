@@ -26,7 +26,13 @@ def _write_png(path: Path, size: tuple[int, int]) -> None:
     path.write_bytes(buffer.getvalue())
 
 
-def _build_registries(tmp_path: Path, *, background: str | None, sha256: str | None = None) -> Path:
+def _build_registries(
+    tmp_path: Path,
+    *,
+    background: str | None,
+    reference: str | None = None,
+    sha256: str | None = None,
+) -> Path:
     registries_dir = tmp_path / "registries"
     for name in ("use_cases", "products", "templates"):
         (registries_dir / name).mkdir(parents=True, exist_ok=True)
@@ -93,6 +99,8 @@ def _build_registries(tmp_path: Path, *, background: str | None, sha256: str | N
     }
     if background is not None:
         template["background_asset"] = background
+    if reference is not None:
+        template["reference_asset"] = reference
     if sha256 is not None:
         template["background_asset_sha256"] = sha256
     (registries_dir / "templates" / "template.json").write_text(json.dumps(template), encoding="utf-8")
@@ -244,6 +252,31 @@ def test_replaced_artwork_trips_the_digest_wire(tmp_path: Path) -> None:
     assert changed.details["actual_sha256"] != declared
     # A warning, not a refusal: the running shop keeps working while someone looks.
     assert len(bundle.templates) == 1
+
+
+def test_reference_artwork_mismatch_blocks_the_template(tmp_path: Path) -> None:
+    """Reference and production background must share size and orientation."""
+    assets_dir = tmp_path / "assets"
+    (assets_dir / "backgrounds").mkdir(parents=True)
+    (assets_dir / "reference").mkdir(parents=True)
+    (assets_dir / "backgrounds" / "background.svg").write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="111mm" height="154mm" viewBox="0 0 111 154"/>',
+        encoding="utf-8",
+    )
+    (assets_dir / "reference" / "reference.svg").write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="154mm" height="111mm" viewBox="0 0 154 111"/>',
+        encoding="utf-8",
+    )
+    registries_dir = _build_registries(
+        tmp_path,
+        background="backgrounds/background.svg",
+        reference="reference/reference.svg",
+    )
+
+    bundle = load_registry_bundle(registries_dir, assets_dir)
+
+    assert any(issue.code == "template_reference_background_mismatch" for issue in bundle.diagnostics)
+    assert bundle.templates == []
 
 
 def test_the_shipped_registries_load_without_diagnostics() -> None:

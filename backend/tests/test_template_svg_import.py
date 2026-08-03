@@ -34,7 +34,7 @@ def test_extract_slot_boxes_reads_named_placeholders(tmp_path: Path) -> None:
     }
 
 
-def test_update_template_from_svg_writes_slot_boxes_and_variant_skin(tmp_path: Path) -> None:
+def test_update_template_from_svg_writes_slot_boxes_and_variant_design(tmp_path: Path) -> None:
     template_path = tmp_path / "template.json"
     svg_path = tmp_path / "template.svg"
     output_path = tmp_path / "updated.json"
@@ -109,8 +109,107 @@ def test_update_template_from_svg_writes_slot_boxes_and_variant_skin(tmp_path: P
         "name": "Classic",
         "active": True,
         "preview_asset": "template_google_reviews_classic.png",
+        "source_asset": "backgrounds/proof_a6_card-1.6.0-classic.svg",
         "background_asset": "backgrounds/proof_a6_card-1.6.0-classic.svg",
         "accent_color": "#315a86",
         "headline_font_family": "Proof Sans",
         "headline_font_weight": 700,
     }
+
+
+def test_update_template_from_svg_writes_reference_artwork_and_checks_geometry(tmp_path: Path) -> None:
+    template_path = tmp_path / "template.json"
+    background_svg = tmp_path / "background.svg"
+    reference_svg = tmp_path / "reference.svg"
+    output_path = tmp_path / "updated.json"
+
+    template_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "id": "proof_a6_card",
+                "version": "1.6.0",
+                "product_id": "a6_card",
+                "use_case_ids": ["google_reviews"],
+                "page_width_mm": 111,
+                "page_height_mm": 154,
+                "bleed_mm": 3,
+                "font_family": "Proof Sans",
+                "fonts": [{"family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
+                "elements": [],
+                "variants": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    background_svg.write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="111mm" height="154mm" viewBox="0 0 111 154"></svg>',
+        encoding="utf-8",
+    )
+    reference_svg.write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="111mm" height="154mm" viewBox="0 0 111 154"></svg>',
+        encoding="utf-8",
+    )
+
+    update_template_from_svg(
+        template_path,
+        background_svg,
+        output_path,
+        reference_path=reference_svg,
+        reference_asset="reference/proof_a6_card-reference.svg",
+        background_asset="backgrounds/proof_a6_card-background.svg",
+    )
+
+    updated = json.loads(output_path.read_text(encoding="utf-8"))
+    assert updated["reference_asset"] == "reference/proof_a6_card-reference.svg"
+    assert updated["source_asset"] == "backgrounds/proof_a6_card-background.svg"
+    assert updated["background_asset"] == "backgrounds/proof_a6_card-background.svg"
+
+
+def test_update_template_from_svg_rejects_mismatched_reference_geometry(tmp_path: Path) -> None:
+    template_path = tmp_path / "template.json"
+    background_svg = tmp_path / "background.svg"
+    reference_svg = tmp_path / "reference.svg"
+    output_path = tmp_path / "updated.json"
+
+    template_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "id": "proof_a6_card",
+                "version": "1.6.0",
+                "product_id": "a6_card",
+                "use_case_ids": ["google_reviews"],
+                "page_width_mm": 111,
+                "page_height_mm": 154,
+                "bleed_mm": 3,
+                "font_family": "Proof Sans",
+                "fonts": [{"family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
+                "elements": [],
+                "variants": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    background_svg.write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="111mm" height="154mm" viewBox="0 0 111 154"></svg>',
+        encoding="utf-8",
+    )
+    reference_svg.write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="154mm" height="111mm" viewBox="0 0 154 111"></svg>',
+        encoding="utf-8",
+    )
+
+    try:
+        update_template_from_svg(
+            template_path,
+            background_svg,
+            output_path,
+            reference_path=reference_svg,
+            reference_asset="reference/proof_a6_card-reference.svg",
+            background_asset="backgrounds/proof_a6_card-background.svg",
+        )
+    except ValueError as exc:
+        assert "same dimensions and orientation" in str(exc)
+    else:
+        raise AssertionError("mismatched reference artwork should be rejected")

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import DesignRenderer from '../design/DesignRenderer';
 import type { ProofFixture } from '../design/types';
 import { expectedAssetCount } from '../design/renderReadiness';
+import { ensureTemplateFontsLoaded } from '../design/fonts';
 import './ProofPage.css';
 import { uiText } from '../ui/text';
 
@@ -43,15 +44,21 @@ export default function ProofPage() {
 
   useEffect(() => {
     let active = true;
-    document.fonts.ready.then(() => {
-      if (active) {
-        setFontsReady(true);
-      }
-    });
+    if (fixture) {
+      setFontsReady(false);
+      void ensureTemplateFontsLoaded(fixture.template).then(() => {
+        if (active) {
+          setFontsReady(true);
+        }
+      });
+      return () => {
+        active = false;
+      };
+    }
     return () => {
       active = false;
     };
-  }, []);
+  }, [fixture]);
 
   useEffect(() => {
     if (fixture && fontsReady && assetLoads >= expectedAssetCount(fixture)) {
