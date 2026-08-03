@@ -262,6 +262,12 @@
   font-weight: 700;
 }
 
+.template-tool-font-browser__preview {
+  color: #3f3025;
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
 .template-tool-font-browser__meta,
 .template-tool-font-browser__empty {
   color: #6f5a48;

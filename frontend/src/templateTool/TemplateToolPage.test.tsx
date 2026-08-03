@@ -203,6 +203,7 @@ test('renders the internal template tool with separate preview and source layers
   expect(screen.getByLabelText('Schrift suchen')).toBeInTheDocument();
   expect(screen.getByLabelText('Kategorie')).toBeInTheDocument();
   expect(await screen.findByRole('button', { name: /Inter/ })).toBeInTheDocument();
+  expect(screen.getAllByText('AaBb 123').length).toBeGreaterThanOrEqual(2);
   expect(screen.queryByText('Scanne den QR-Code')).not.toBeInTheDocument();
   expect(screen.getByLabelText('Preview anzeigen')).toBeInTheDocument();
   expect(screen.getByLabelText('Preview-Deckkraft')).toBeInTheDocument();

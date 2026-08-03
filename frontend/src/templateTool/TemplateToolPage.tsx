@@ -776,6 +776,9 @@ export default function TemplateToolPage() {
                         onClick={() => setGlobalFontFamilyId(font.id)}
                       >
                         <span className="template-tool-font-browser__name">{font.family}</span>
+                        <span className="template-tool-font-browser__preview" style={{ fontFamily: font.family }}>
+                          AaBb 123
+                        </span>
                         <span className="template-tool-font-browser__meta">
                           {fontCategoryLabel(font.category)}{font.variable ? ' · Variable' : ''}
                         </span>
