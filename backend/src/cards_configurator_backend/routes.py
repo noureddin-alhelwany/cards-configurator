@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import httpx
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 
@@ -17,7 +18,15 @@ from .drafts import (
     save_template_selection,
     update_layout_state,
 )
-from .orders import OrderDetail, OrderSummary, create_order, get_order, get_order_fixture, list_orders
+from .fontsource import load_fontsource_catalog, load_fontsource_font_face
+from .orders import (
+    OrderDetail,
+    OrderSummary,
+    create_order,
+    get_order,
+    get_order_fixture,
+    list_orders,
+)
 from .orders.schemas import RenderJobState
 from .quality import validate_current_draft
 from .registries.loader import load_registry_bundle
@@ -45,6 +54,19 @@ def healthz() -> dict[str, str]:
 def registries(request: Request) -> dict[str, object]:
     bundle = _load_current_registry_bundle(request)
     return bundle.model_dump()
+
+
+@router.get("/font-catalog")
+def font_catalog() -> list[dict[str, object]]:
+    return load_fontsource_catalog()
+
+
+@router.get("/font-catalog/{font_id}")
+def font_catalog_font(font_id: str) -> dict[str, object]:
+    try:
+        return load_fontsource_font_face(font_id)
+    except (httpx.HTTPError, TypeError) as exc:
+        raise HTTPException(status_code=404, detail=f"Fontsource font '{font_id}' is unavailable") from exc
 
 
 @router.get("/render/proof-fixture")
@@ -80,7 +102,6 @@ def current_draft_validation(request: Request) -> dict[str, object]:
 
 @router.post("/drafts/current/template", response_model=DraftState)
 def select_template(request: Request, selection: TemplateSelectionRequest) -> DraftState:
-    settings = get_settings()
     bundle = _load_current_registry_bundle(request)
 
     session = get_session_factory()()

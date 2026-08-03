@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { buildTemplatePreviewFixture } from '../selection/selectionPreview';
 import { loadRegistries } from '../registries/loadRegistries';
 import type { RegistryBundle, TemplateDefinition } from '../registries/types';
-import type { SafeAreaVariableDefinition } from '../design/types';
+import type { FontDefinition, SafeAreaVariableDefinition } from '../design/types';
 import { uiText } from '../ui/text';
 import DesignPreviewFrame from '../design/DesignPreviewFrame';
 import {
@@ -13,6 +13,7 @@ import {
   activeRegistryVariants,
 } from '../registries/registrySelection';
 import ZoneEditor, { type EditableZone, type ZoneKind } from './ZoneEditor';
+import { loadFontCatalog, loadFontFace, type FontCatalogEntry } from '../fontCatalog';
 import './TemplateToolPage.css';
 
 type LoadState = {
@@ -25,7 +26,7 @@ const DEFAULT_SOURCE_OPACITY = 50;
 const TEMPLATE_TOOL_STAGE_SCALE = 2;
 const DEFAULT_TEXT_FONT = 'Proof Sans';
 
-type TemplateFontOption = {
+type FontOption = {
   id: string;
   family: string;
 };
@@ -79,7 +80,7 @@ function createZoneVariable(
   zoneId: string,
   kind: 'dynamicText' | 'fixedText' | 'qr',
   index: number,
-  fonts: TemplateDefinition['fonts'],
+  fonts: FontOption[],
   key: string,
 ): SafeAreaVariableDefinition {
   const defaultFont = fonts[0] ?? null;
@@ -89,7 +90,7 @@ function createZoneVariable(
     key,
     label: kind === 'qr' ? 'QR-Code' : `${kind === 'fixedText' ? 'Fester Text' : 'Dynamischer Text'} ${index + 1}`,
     font_family: defaultFont?.family ?? DEFAULT_TEXT_FONT,
-    font_family_id: defaultFont?.id ?? defaultFont?.family ?? null,
+    font_family_id: null,
     font_weight: kind === 'dynamicText' ? 700 : 400,
     font_size_mm: kind === 'dynamicText' ? 6.8 : 4.4,
     min_font_size_mm: kind === 'dynamicText' ? 4.5 : 3.2,
@@ -109,8 +110,15 @@ function defaultFieldIdForKind(template: TemplateDefinition, kind: 'dynamicText'
   return template.fields.find((field) => allowedTypes.includes(field.type))?.id ?? `${kind}_1`;
 }
 
-function normalizeZones(template: TemplateDefinition): EditableZone[] {
-  const fontIdByFamily = Object.fromEntries(template.fonts.map((font) => [font.family, font.id ?? font.family]));
+function fontOptionsFromDefinitions(fonts: Array<{ id?: string; family: string }>): FontOption[] {
+  return fonts.map((font) => ({
+    id: font.id ?? font.family,
+    family: font.family,
+  }));
+}
+
+function normalizeZones(template: TemplateDefinition, fonts: FontOption[]): EditableZone[] {
+  const fontIdByFamily = Object.fromEntries(fonts.map((font) => [font.family, font.id]));
   return (template.safe_areas ?? []).map((safeArea, index) => ({
     ...safeArea,
     id: safeArea.id || `zone-${index + 1}`,
@@ -132,13 +140,13 @@ function normalizeZones(template: TemplateDefinition): EditableZone[] {
         ? {
             ...sourceVariable,
             kind,
-            font_family_id: sourceVariable.font_family_id ?? fontIdByFamily[sourceVariable.font_family] ?? null,
+            font_family_id: null,
           }
         : createZoneVariable(
             safeArea.id || `zone-${index + 1}`,
             kind,
             0,
-            template.fonts,
+            fonts,
             defaultFieldIdForKind(template, kind),
           );
 
@@ -152,7 +160,7 @@ function createZone(
   index: number,
   pageWidthMm: number,
   pageHeightMm: number,
-  fonts: TemplateDefinition['fonts'],
+  fonts: FontOption[],
   key: string,
 ): EditableZone {
   const defaults =
@@ -193,6 +201,7 @@ function buildPreviewFixture(
   selectedVariant: ReturnType<typeof activeRegistryVariant>,
   testValues: Record<string, string>,
   globalFontFamilyId: string | null,
+  fontDefinitions: FontDefinition[],
 ) {
   const fixture = buildTemplatePreviewFixture(selectedTemplate, selectedProduct, selectedUseCase, {
     textMode: 'blank',
@@ -211,6 +220,7 @@ function buildPreviewFixture(
   fixture.layout_state.text_values = previewTextValues;
   fixture.template = {
     ...fixture.template,
+    fonts: fontDefinitions,
     typography: {
       ...fixture.template.typography,
       global_font_family_id: globalFontFamilyId,
@@ -263,7 +273,7 @@ function renderTemplateToolStage({
   zones: EditableZone[];
   selectedZoneId: string | null;
   testValues: Record<string, string>;
-  availableFonts: TemplateFontOption[];
+  availableFonts: FontOption[];
   globalFontFamilyId: string | null;
   guidesVisible: boolean;
   previewVisible: boolean;
@@ -328,6 +338,8 @@ function renderTemplateToolStage({
 
 export default function TemplateToolPage() {
   const [state, setState] = useState<LoadState>({ bundle: null, error: null });
+  const [fontCatalog, setFontCatalog] = useState<FontCatalogEntry[]>([]);
+  const [fontCatalogError, setFontCatalogError] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [previewVisible, setPreviewVisible] = useState(true);
@@ -339,6 +351,8 @@ export default function TemplateToolPage() {
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [testValues, setTestValues] = useState<Record<string, string>>({});
   const [globalFontFamilyId, setGlobalFontFamilyId] = useState<string | null>(null);
+  const [fontSearch, setFontSearch] = useState('');
+  const [fontFacesById, setFontFacesById] = useState<Record<string, FontDefinition>>({});
 
   useEffect(() => {
     let active = true;
@@ -352,6 +366,28 @@ export default function TemplateToolPage() {
       .catch(() => {
         if (active) {
           setState({ bundle: null, error: uiText.templateTool.error.description });
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    loadFontCatalog()
+      .then((catalog) => {
+        if (active) {
+          setFontCatalog(catalog);
+          setFontCatalogError(null);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setFontCatalog([]);
+          setFontCatalogError('Fontsource-Liste konnte nicht geladen werden.');
         }
       });
 
@@ -396,10 +432,9 @@ export default function TemplateToolPage() {
       setTestValues({});
       return;
     }
-    setGlobalFontFamilyId(
-      selectedTemplate.typography?.global_font_family_id ?? selectedTemplate.fonts[0]?.id ?? selectedTemplate.fonts[0]?.family ?? null,
-    );
-    const nextZones = normalizeZones(selectedTemplate);
+    const nextGlobalFont = selectedTemplate.typography?.global_font_family_id ?? selectedTemplate.fonts[0]?.id ?? null;
+    setGlobalFontFamilyId(nextGlobalFont);
+    const nextZones = normalizeZones(selectedTemplate, fontOptionsFromDefinitions(selectedTemplate.fonts));
     setZones(nextZones);
     setSelectedZoneId(nextZones[0]?.id ?? null);
   }, [selectedTemplate]);
@@ -442,10 +477,90 @@ export default function TemplateToolPage() {
 
   const previewAsset = resolvePreviewAsset(selectedTemplate, selectedVariant);
   const sourceAsset = resolveSourceAsset(selectedTemplate, selectedVariant);
-  const availableFonts = (selectedTemplate?.fonts ?? []).map((font) => ({
-    id: font.id ?? font.family,
-    family: font.family,
-  }));
+  const availableFonts = useMemo<FontOption[]>(() => {
+    const fonts = fontOptionsFromDefinitions(selectedTemplate?.fonts ?? []);
+    for (const font of fontCatalog) {
+      if (!fonts.some((existing) => (existing.id ?? existing.family) === font.id)) {
+        fonts.push({
+          id: font.id,
+          family: font.family,
+        });
+      }
+    }
+    return fonts;
+  }, [fontCatalog, selectedTemplate?.fonts]);
+
+  useEffect(() => {
+    if (globalFontFamilyId || availableFonts.length === 0) {
+      return;
+    }
+    setGlobalFontFamilyId(availableFonts[0].id);
+  }, [availableFonts, globalFontFamilyId]);
+  const filteredFonts = useMemo(() => {
+    const query = fontSearch.trim().toLowerCase();
+    if (!query) {
+      return availableFonts;
+    }
+    return availableFonts.filter((font) => font.family.toLowerCase().includes(query) || font.id.toLowerCase().includes(query));
+  }, [availableFonts, fontSearch]);
+
+  useEffect(() => {
+    if (!selectedTemplate) {
+      return;
+    }
+
+    const neededFontIds = new Set<string>();
+    if (globalFontFamilyId) {
+      neededFontIds.add(globalFontFamilyId);
+    }
+    for (const zone of zones) {
+      for (const variable of zone.variables ?? []) {
+        if (variable.font_family_id) {
+          neededFontIds.add(variable.font_family_id);
+        }
+      }
+    }
+
+    const templateFontIds = new Set((selectedTemplate.fonts ?? []).map((font) => font.id ?? font.family));
+    const missingFontIds = [...neededFontIds].filter((fontId) => !templateFontIds.has(fontId) && !fontFacesById[fontId]);
+    if (missingFontIds.length === 0) {
+      return;
+    }
+
+    let active = true;
+    void Promise.all(missingFontIds.map((fontId) => loadFontFace(fontId)))
+      .then((faces) => {
+        if (!active) {
+          return;
+        }
+        setFontFacesById((current) => {
+          const next = { ...current };
+          for (const face of faces) {
+            next[face.id ?? face.family] = face;
+          }
+          return next;
+        });
+      })
+      .catch(() => {
+        if (active) {
+          setFontCatalogError('Ein ausgewählter Fontsource-Face konnte nicht geladen werden.');
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [fontFacesById, globalFontFamilyId, selectedTemplate, zones]);
+
+  const selectedFontDefinitions = useMemo(() => {
+    const definitions = [...(selectedTemplate?.fonts ?? [])];
+    for (const face of Object.values(fontFacesById)) {
+      if (!definitions.some((font) => (font.id ?? font.family) === (face.id ?? face.family))) {
+        definitions.push(face);
+      }
+    }
+    return definitions;
+  }, [fontFacesById, selectedTemplate?.fonts]);
 
   const previewFixture = useMemo(() => {
     if (!selectedTemplate || !selectedProduct || !selectedUseCase) {
@@ -459,8 +574,9 @@ export default function TemplateToolPage() {
       selectedVariant,
       testValues,
       globalFontFamilyId,
+      selectedFontDefinitions,
     );
-  }, [globalFontFamilyId, selectedProduct, selectedTemplate, selectedUseCase, selectedVariant, testValues, zones]);
+  }, [globalFontFamilyId, selectedFontDefinitions, selectedProduct, selectedTemplate, selectedUseCase, selectedVariant, testValues, zones]);
   const previewLabel = previewAsset;
   const sourceLabel = sourceAsset;
 
@@ -577,10 +693,10 @@ export default function TemplateToolPage() {
                 <select
                   value={globalFontFamilyId ?? ''}
                   onChange={(event) => setGlobalFontFamilyId(event.target.value === '' ? null : event.target.value)}
-                  disabled={availableFonts.length === 0}
+                  disabled={filteredFonts.length === 0}
                 >
-                  {availableFonts.length > 0 ? (
-                    availableFonts.map((font) => (
+                  {filteredFonts.length > 0 ? (
+                    filteredFonts.map((font) => (
                       <option key={font.id} value={font.id}>
                         {font.family}
                       </option>
@@ -590,7 +706,17 @@ export default function TemplateToolPage() {
                   )}
                 </select>
               </label>
+              <label className="template-tool-control template-tool-control--wide">
+                <span>Schrift suchen</span>
+                <input
+                  type="search"
+                  value={fontSearch}
+                  onChange={(event) => setFontSearch(event.target.value)}
+                  placeholder="Fontsource durchsuchen"
+                />
+              </label>
             </div>
+            {fontCatalogError ? <p className="template-tool-status template-tool-status--warning">{fontCatalogError}</p> : null}
 
             <div className="template-tool-control-group template-tool-control-group--toggles">
               <div className="template-tool-control-cluster">
@@ -682,7 +808,7 @@ export default function TemplateToolPage() {
                     zones.length,
                     selectedTemplate.page_width_mm,
                     selectedTemplate.page_height_mm,
-                    selectedTemplate.fonts,
+                    availableFonts,
                     defaultFieldIdForKind(selectedTemplate, kind),
                   );
                   setZones((current) => [...current, nextZone]);

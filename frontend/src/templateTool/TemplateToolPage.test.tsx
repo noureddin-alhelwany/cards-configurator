@@ -158,6 +158,27 @@ test('renders the internal template tool with separate preview and source layers
         json: async () => bundle,
       } as Response;
     }
+    if (requestUrl === '/api/font-catalog') {
+      return {
+        ok: true,
+        json: async () => [
+          { id: 'inter', family: 'Inter', type: 'google', category: 'sans-serif', variable: true, subsets: ['latin'] },
+          { id: 'libre-baskerville', family: 'Libre Baskerville', type: 'google', category: 'serif', variable: false, subsets: ['latin'] },
+        ],
+      } as Response;
+    }
+    if (requestUrl === '/api/font-catalog/inter') {
+      return {
+        ok: true,
+        json: async () => ({
+          id: 'inter',
+          family: 'Inter',
+          file: '/fonts/inter.woff2',
+          weight: 400,
+          style: 'normal',
+        }),
+      } as Response;
+    }
     if (requestUrl.startsWith('/api/qr')) {
       return {
         ok: true,
@@ -177,7 +198,9 @@ test('renders the internal template tool with separate preview and source layers
 
   expect(await screen.findByText('Templates und Design-Overlays')).toBeInTheDocument();
   expect(fetchMock).toHaveBeenCalledWith('/api/registries');
+  expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog');
   expect(screen.getByLabelText('Globale Schrift')).toBeInTheDocument();
+  expect(await screen.findByRole('option', { name: 'Inter' })).toBeInTheDocument();
   expect(screen.queryByText('Scanne den QR-Code')).not.toBeInTheDocument();
   expect(screen.getByLabelText('Preview anzeigen')).toBeInTheDocument();
   expect(screen.getByLabelText('Preview-Deckkraft')).toBeInTheDocument();
@@ -242,9 +265,14 @@ test('renders the internal template tool with separate preview and source layers
   expect(screen.queryByLabelText('Technischer Key')).not.toBeInTheDocument();
   expect(screen.queryByLabelText('Sichtbare Bezeichnung')).not.toBeInTheDocument();
 
-  fireEvent.change(screen.getByLabelText('Globale Schrift'), { target: { value: 'proof-serif' } });
+  fireEvent.change(screen.getByLabelText('Globale Schrift'), { target: { value: 'inter' } });
   await waitFor(() => {
-    expect(screen.getByLabelText('Globale Schrift')).toHaveValue('proof-serif');
+    expect(screen.getByLabelText('Globale Schrift')).toHaveValue('inter');
+  });
+  expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog/inter');
+  await waitFor(() => {
+    const previewText = document.querySelector<HTMLElement>('.template-tool-zone-editor__zone-text--static');
+    expect(previewText?.style.fontFamily).toContain('Inter');
   });
 
   fireEvent.click(screen.getByRole('button', { name: 'Löschen' }));
