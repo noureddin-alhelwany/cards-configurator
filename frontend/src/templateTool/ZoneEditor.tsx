@@ -79,6 +79,25 @@ const MAX_STAGE_SCALE = 3;
 const SCALE_BOOST = 1.3;
 const DEFAULT_PIXELS_PER_MM = 3.7795275591;
 const MM_PROBE_WIDTH_MM = 100;
+const FEATURED_FONT_ORDER = [
+  'inter',
+  'manrope',
+  'dm-sans',
+  'montserrat',
+  'nunito-sans',
+  'source-sans-3',
+  'playfair-display',
+  'cormorant-garamond',
+  'bodoni-moda',
+  'lora',
+  'libre-baskerville',
+  'source-serif-4',
+  'poppins',
+  'space-grotesk',
+  'fraunces',
+];
+const FEATURED_FONT_IDS = new Set(FEATURED_FONT_ORDER);
+const FEATURED_FONT_ORDER_INDEX = new Map(FEATURED_FONT_ORDER.map((fontId, index) => [fontId, index]));
 const DEFAULT_QR_ZONE: QrZoneDefinition = {
   error_correction: 'm',
   color: '#1f1a17',
@@ -88,6 +107,27 @@ const DEFAULT_QR_ZONE: QrZoneDefinition = {
 
 function zoneKindMeta(kind: ZoneKind) {
   return ZONE_KINDS.find((option) => option.kind === kind) ?? ZONE_KINDS[0];
+}
+
+function splitFontOptions(fonts: FontOption[]) {
+  const featured: FontOption[] = [];
+  const rest: FontOption[] = [];
+
+  for (const font of fonts) {
+    if (FEATURED_FONT_IDS.has(font.id)) {
+      featured.push(font);
+    } else {
+      rest.push(font);
+    }
+  }
+
+  featured.sort(
+    (left, right) =>
+      (FEATURED_FONT_ORDER_INDEX.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+      (FEATURED_FONT_ORDER_INDEX.get(right.id) ?? Number.MAX_SAFE_INTEGER),
+  );
+
+  return { featured, rest };
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -538,11 +578,32 @@ export default function ZoneEditor({
                     disabled={availableFonts.length === 0}
                   >
                     <option value="">Globale Schrift verwenden</option>
-                    {availableFonts.map((font) => (
-                      <option key={font.id} value={font.id}>
-                        {font.family}
-                      </option>
-                    ))}
+                    {(() => {
+                      const { featured, rest } = splitFontOptions(availableFonts);
+                      return (
+                        <>
+                          {featured.length > 0 ? (
+                            <optgroup label="Favoriten">
+                              {featured.map((font) => (
+                                <option key={font.id} value={font.id}>
+                                  {font.family}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ) : null}
+                          {rest.length > 0 ? <option value="" disabled>─────</option> : null}
+                          {rest.length > 0 ? (
+                            <optgroup label="Weitere Fonts">
+                              {rest.map((font) => (
+                                <option key={font.id} value={font.id}>
+                                  {font.family}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ) : null}
+                        </>
+                      );
+                    })()}
                   </select>
                 </label>
                 <div className="template-tool-zone-editor__style-grid">
