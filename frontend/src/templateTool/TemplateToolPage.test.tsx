@@ -164,6 +164,7 @@ test('renders the internal template tool with separate preview and source layers
         json: async () => [
           { id: 'inter', family: 'Inter', type: 'google', category: 'sans-serif', variable: true, subsets: ['latin'] },
           { id: 'libre-baskerville', family: 'Libre Baskerville', type: 'google', category: 'serif', variable: false, subsets: ['latin'] },
+          { id: 'abril-fatface', family: 'Abril Fatface', type: 'google', category: 'display', variable: false, subsets: ['latin'] },
         ],
       } as Response;
     }
@@ -191,6 +192,18 @@ test('renders the internal template tool with separate preview and source layers
         }),
       } as Response;
     }
+    if (requestUrl === '/api/font-catalog/abril-fatface') {
+      return {
+        ok: true,
+        json: async () => ({
+          id: 'abril-fatface',
+          family: 'Abril Fatface',
+          file: '/fonts/abril-fatface.woff2',
+          weight: 400,
+          style: 'normal',
+        }),
+      } as Response;
+    }
     if (requestUrl.startsWith('/api/qr')) {
       return {
         ok: true,
@@ -211,12 +224,20 @@ test('renders the internal template tool with separate preview and source layers
   expect(await screen.findByText('Templates und Design-Overlays')).toBeInTheDocument();
   expect(fetchMock).toHaveBeenCalledWith('/api/registries');
   expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog');
-  await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog/libre-baskerville'));
   expect(screen.getByText('Globale Schrift')).toBeInTheDocument();
   expect(screen.getByLabelText('Schrift suchen')).toBeInTheDocument();
   expect(screen.getByLabelText('Kategorie')).toBeInTheDocument();
   expect(await screen.findByRole('button', { name: /Inter/ })).toBeInTheDocument();
-  expect(screen.getAllByText('AaBb 123').length).toBeGreaterThanOrEqual(2);
+  expect(screen.getByRole('button', { name: /Libre Baskerville/ })).toBeInTheDocument();
+  expect(screen.getAllByText('AaBb 123').length).toBe(2);
+  expect(screen.queryByRole('button', { name: /Weitere Fonts laden/ })).not.toBeInTheDocument();
+
+  fireEvent.change(screen.getByLabelText('Schrift suchen'), { target: { value: 'Abril' } });
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog/abril-fatface'));
+  expect(await screen.findByRole('button', { name: /Abril Fatface/ })).toBeInTheDocument();
+  expect(screen.getAllByText('AaBb 123').length).toBe(1);
+
+  fireEvent.change(screen.getByLabelText('Schrift suchen'), { target: { value: '' } });
   expect(screen.queryByText('Scanne den QR-Code')).not.toBeInTheDocument();
   expect(screen.getByLabelText('Preview anzeigen')).toBeInTheDocument();
   expect(screen.getByLabelText('Preview-Deckkraft')).toBeInTheDocument();
@@ -266,7 +287,7 @@ test('renders the internal template tool with separate preview and source layers
     expect(previewText?.textContent).toContain('Hallo Fix');
   });
   const previewTextBefore = document.querySelector<HTMLElement>('.template-tool-zone-editor__zone-text--static');
-  expect(previewTextBefore?.style.fontFamily).toContain('Inter');
+  expect(previewTextBefore?.style.fontFamily).toContain('Proof Sans');
   expect(document.querySelector('.template-tool-zone-editor__list')).toBeNull();
 
   const initialLeft = draggableZoneElement.style.left;

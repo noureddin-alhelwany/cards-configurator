@@ -26,8 +26,25 @@ const DEFAULT_PREVIEW_OPACITY = 50;
 const DEFAULT_SOURCE_OPACITY = 50;
 const TEMPLATE_TOOL_STAGE_SCALE = 2;
 const DEFAULT_TEXT_FONT = 'Proof Sans';
-const FONT_BROWSER_INITIAL_COUNT = 24;
-const FONT_BROWSER_PAGE_SIZE = 24;
+const FEATURED_FONT_ORDER = [
+  'inter',
+  'manrope',
+  'dm-sans',
+  'montserrat',
+  'nunito-sans',
+  'source-sans-3',
+  'playfair-display',
+  'cormorant-garamond',
+  'bodoni-moda',
+  'lora',
+  'libre-baskerville',
+  'source-serif-4',
+  'poppins',
+  'space-grotesk',
+  'fraunces',
+];
+const FEATURED_FONT_IDS = new Set(FEATURED_FONT_ORDER);
+const FEATURED_FONT_ORDER_INDEX = new Map(FEATURED_FONT_ORDER.map((fontId, index) => [fontId, index]));
 
 type FontOption = {
   id: string;
@@ -367,7 +384,6 @@ export default function TemplateToolPage() {
   const [fontSearch, setFontSearch] = useState('');
   const [fontCategory, setFontCategory] = useState<string>('');
   const [fontFacesById, setFontFacesById] = useState<Record<string, FontDefinition>>({});
-  const [fontVisibleCount, setFontVisibleCount] = useState(FONT_BROWSER_INITIAL_COUNT);
 
   useEffect(() => {
     let active = true;
@@ -524,27 +540,22 @@ export default function TemplateToolPage() {
 
   const deferredFontSearch = useDeferredValue(fontSearch);
 
-  useEffect(() => {
-    if (fontCatalog.length > 0) {
-      if (fontCatalog.some((font) => font.id === globalFontFamilyId)) {
-        return;
-      }
-      setGlobalFontFamilyId(fontCatalog[0].id);
-      return;
-    }
-    if (globalFontFamilyId || availableFonts.length === 0) {
-      return;
-    }
-    setGlobalFontFamilyId(availableFonts[0].id);
-  }, [availableFonts, fontCatalog, globalFontFamilyId]);
+  const queryActive = deferredFontSearch.trim().length > 0 || fontCategory.length > 0;
 
-  useEffect(() => {
-    setFontVisibleCount(FONT_BROWSER_INITIAL_COUNT);
-  }, [deferredFontSearch, fontCategory]);
+  const fontBrowserCatalog = useMemo(() => {
+    if (queryActive) {
+      return fontCatalog;
+    }
+    return fontCatalog
+      .filter((font) => FEATURED_FONT_IDS.has(font.id))
+      .sort((left, right) => {
+        return (FEATURED_FONT_ORDER_INDEX.get(left.id) ?? Number.MAX_SAFE_INTEGER) - (FEATURED_FONT_ORDER_INDEX.get(right.id) ?? Number.MAX_SAFE_INTEGER);
+      });
+  }, [fontCatalog, queryActive]);
 
   const filteredFontCatalog = useMemo(() => {
     const query = deferredFontSearch.trim().toLowerCase();
-    return fontCatalog.filter((font) => {
+    return fontBrowserCatalog.filter((font) => {
       if (fontCategory && font.category !== fontCategory) {
         return false;
       }
@@ -553,21 +564,7 @@ export default function TemplateToolPage() {
       }
       return font.family.toLowerCase().includes(query) || font.id.toLowerCase().includes(query);
     });
-  }, [deferredFontSearch, fontCategory, fontCatalog]);
-
-  const visibleFontCatalog = useMemo(
-    () => {
-      const queryActive = deferredFontSearch.trim().length > 0 || fontCategory.length > 0;
-      if (queryActive) {
-        return filteredFontCatalog;
-      }
-      return filteredFontCatalog.slice(0, fontVisibleCount);
-    },
-    [deferredFontSearch, filteredFontCatalog, fontVisibleCount, fontCategory],
-  );
-
-  const hasMoreFonts =
-    deferredFontSearch.trim().length === 0 && fontCategory.length === 0 && visibleFontCatalog.length < filteredFontCatalog.length;
+  }, [deferredFontSearch, fontCategory, fontBrowserCatalog]);
 
   useEffect(() => {
     if (!selectedTemplate) {
@@ -578,7 +575,7 @@ export default function TemplateToolPage() {
     if (globalFontFamilyId) {
       neededFontIds.add(globalFontFamilyId);
     }
-    for (const font of visibleFontCatalog) {
+    for (const font of filteredFontCatalog) {
       neededFontIds.add(font.id);
     }
     for (const zone of zones) {
@@ -619,7 +616,59 @@ export default function TemplateToolPage() {
     return () => {
       active = false;
     };
-  }, [fontFacesById, globalFontFamilyId, selectedTemplate, visibleFontCatalog, zones]);
+  }, [filteredFontCatalog, fontFacesById, globalFontFamilyId, selectedTemplate, zones]);
+
+  useEffect(() => {
+    if (!selectedTemplate) {
+      setGlobalFontFamilyId(null);
+      return;
+    }
+
+    if (globalFontFamilyId && fontCatalog.some((font) => font.id === globalFontFamilyId)) {
+      return;
+    }
+
+    const nextGlobalFont =
+      selectedTemplate.typography?.global_font_family_id ??
+      selectedTemplate.fonts.find((font) => FEATURED_FONT_IDS.has(font.id ?? font.family))?.id ??
+      selectedTemplate.fonts[0]?.id ??
+      null;
+    setGlobalFontFamilyId(nextGlobalFont);
+  }, [globalFontFamilyId, selectedTemplate]);
+
+  useEffect(() => {
+    if (!selectedTemplate) {
+      return;
+    }
+
+    const selectedAndVisibleFontIds = new Set<string>();
+    if (globalFontFamilyId) {
+      selectedAndVisibleFontIds.add(globalFontFamilyId);
+    }
+    for (const font of filteredFontCatalog) {
+      selectedAndVisibleFontIds.add(font.id);
+    }
+    for (const zone of zones) {
+      for (const variable of zone.variables ?? []) {
+        if (variable.font_family_id) {
+          selectedAndVisibleFontIds.add(variable.font_family_id);
+        }
+      }
+    }
+
+    setFontFacesById((current) => {
+      let changed = false;
+      const next: Record<string, FontDefinition> = {};
+      for (const [fontId, face] of Object.entries(current)) {
+        if (selectedAndVisibleFontIds.has(fontId)) {
+          next[fontId] = face;
+        } else {
+          changed = true;
+        }
+      }
+      return changed ? next : current;
+    });
+  }, [filteredFontCatalog, globalFontFamilyId, selectedTemplate, zones]);
 
   const selectedFontDefinitions = useMemo(() => {
     const definitions = [...(selectedTemplate?.fonts ?? [])];
@@ -726,7 +775,7 @@ export default function TemplateToolPage() {
                 <p>{selectedFontEntry ? selectedFontEntry.family : 'Globale Schrift auswählen'}</p>
               </div>
               <p className="template-tool-card__meta">
-                {visibleFontCatalog.length} von {filteredFontCatalog.length}
+                {filteredFontCatalog.length} Fonts
               </p>
             </div>
             <div className="template-tool-controls template-tool-controls--stack">
@@ -757,8 +806,8 @@ export default function TemplateToolPage() {
             </div>
             <div className="template-tool-font-browser">
               <div className="template-tool-font-browser__list" role="listbox" aria-label="Fontsource-Fonts">
-                {visibleFontCatalog.length > 0 ? (
-                  visibleFontCatalog.map((font) => {
+                {filteredFontCatalog.length > 0 ? (
+                  filteredFontCatalog.map((font) => {
                     const selected = font.id === globalFontFamilyId;
                     return (
                       <button
@@ -781,15 +830,6 @@ export default function TemplateToolPage() {
                   <p className="template-tool-font-browser__empty">Keine Fonts für diese Filter gefunden.</p>
                 )}
               </div>
-              {hasMoreFonts ? (
-                <button
-                  type="button"
-                  className="template-tool-reset template-tool-font-browser__more"
-                  onClick={() => setFontVisibleCount((current) => current + FONT_BROWSER_PAGE_SIZE)}
-                >
-                  Weitere Fonts laden
-                </button>
-              ) : null}
             </div>
             {fontCatalogError ? <p className="template-tool-status template-tool-status--warning">{fontCatalogError}</p> : null}
           </div>
