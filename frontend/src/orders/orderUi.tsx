@@ -189,19 +189,19 @@ function snapshotAssetValues(snapshot: Record<string, unknown> | null | undefine
   return Object.entries(assetValues).filter((entry): entry is [string, string] => typeof entry[1] === 'string' && entry[1].length > 0);
 }
 
-function variantNameFromSnapshot(templateSnapshot: Record<string, unknown> | null | undefined, variantId: string | null) {
-  if (!variantId) {
+export function designNameFromSnapshot(templateSnapshot: Record<string, unknown> | null | undefined, designId: string | null) {
+  if (!designId) {
     return '—';
   }
-  const variants = templateSnapshot?.variants;
-  if (!Array.isArray(variants)) {
-    return variantId;
+  const designs = templateSnapshot?.designs;
+  if (!Array.isArray(designs)) {
+    return designId;
   }
-  const variant = variants.find((entry) => entry && typeof entry === 'object' && 'id' in entry && (entry as { id?: unknown }).id === variantId);
-  if (!variant || typeof variant !== 'object' || !('name' in variant) || typeof (variant as { name?: unknown }).name !== 'string') {
-    return variantId;
+  const design = designs.find((entry) => entry && typeof entry === 'object' && 'id' in entry && (entry as { id?: unknown }).id === designId);
+  if (!design || typeof design !== 'object' || !('name' in design) || typeof (design as { name?: unknown }).name !== 'string') {
+    return designId;
   }
-  return (variant as { name: string }).name;
+  return (design as { name: string }).name;
 }
 
 type OrderSnapshotProps = {
@@ -209,7 +209,7 @@ type OrderSnapshotProps = {
   categoryName: string;
   productName: string;
   templateName: string;
-  variantName: string;
+  designName: string;
   approvedAt: string;
   renderEngineVersion: string;
   layoutSnapshot: Record<string, unknown>;
@@ -221,7 +221,7 @@ export function OrderSnapshotSection({
   categoryName,
   productName,
   templateName,
-  variantName,
+  designName,
   approvedAt,
   renderEngineVersion,
   layoutSnapshot,
@@ -241,7 +241,7 @@ export function OrderSnapshotSection({
           { label: uiText.order.created.snapshotCategory, value: categoryName },
           { label: uiText.order.created.snapshotProduct, value: productName },
           { label: uiText.order.created.snapshotTemplate, value: templateName },
-          { label: uiText.order.created.snapshotDesign, value: variantName },
+          { label: uiText.order.created.snapshotDesign, value: designName },
           { label: uiText.order.created.snapshotApprovedAt, value: formatLocalizedDate(approvedAt) },
           { label: uiText.order.created.snapshotRenderEngine, value: renderEngineVersion },
           {
@@ -400,6 +400,6 @@ export function OrderAssetsSection({ assets }: OrderAssetsSectionProps) {
   );
 }
 
-export function variantLabelFromTemplateSnapshot(templateSnapshot: Record<string, unknown> | null | undefined, variantId: string | null) {
-  return variantNameFromSnapshot(templateSnapshot, variantId);
+export function designLabelFromTemplateSnapshot(templateSnapshot: Record<string, unknown> | null | undefined, designId: string | null) {
+  return designNameFromSnapshot(templateSnapshot, designId);
 }

@@ -26,7 +26,7 @@ def build_proof_fixture(bundle: RegistryBundle, proof_assets_dir: Path) -> Proof
     logo_bytes = logo_path.read_bytes()
 
     layout_state = LayoutState(
-        variant_id="",
+        design_id="",
         element_adjustments={
             "proof-logo": ElementAdjustment(offset_x=0.12, offset_y=-0.08, scale=1.02),
         },

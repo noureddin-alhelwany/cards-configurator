@@ -61,7 +61,7 @@ def _write_valid_registries(registries_dir: Path) -> None:
                 "text_rules": [],
                 "qr_rules": [],
                 "elements": [],
-                "variants": [{"id": "default", "name": "Default", "active": True}],
+                "designs": [{"id": "default", "name": "Default", "active": True}],
             }
         ),
         encoding="utf-8",
@@ -109,7 +109,7 @@ def test_admin_data_registry_and_delete_routes(tmp_path: Path, monkeypatch) -> N
                 "text_rules": [],
                 "qr_rules": [],
                 "elements": [],
-                "variants": [{"id": "default", "name": "Default", "active": True}],
+                "designs": [{"id": "default", "name": "Default", "active": True}],
             }
         )
         write_response = client.put("/api/admin/registries/template/template.json", json={"content": updated_content})
@@ -129,11 +129,11 @@ def test_admin_data_registry_and_delete_routes(tmp_path: Path, monkeypatch) -> N
                 product_id="product",
                 template_id="template",
                 template_version="1.0.0",
-                variant_id="default",
+                design_id="default",
                 category_snapshot={"id": "category", "name": "Category"},
                 product_snapshot={"id": "product", "name": "Product"},
                 template_snapshot={"id": "template", "version": "1.0.0", "name": "Template renamed"},
-                layout_snapshot={"variant_id": "default", "text_values": {}, "asset_values": {}, "element_adjustments": {}},
+                layout_snapshot={"design_id": "default", "text_values": {}, "asset_values": {}, "element_adjustments": {}},
                 validation_snapshot={"blocking": False},
                 preview_path=None,
                 mockup_path=None,

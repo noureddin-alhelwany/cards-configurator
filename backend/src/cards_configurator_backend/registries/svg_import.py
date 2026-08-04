@@ -54,7 +54,7 @@ def extract_slot_boxes(svg_path: Path, *, slot_prefix: str = "slot-") -> dict[st
 
 
 def _coerce_template_design(payload: dict[str, Any], design_id: str, design_name: str | None) -> dict[str, Any]:
-    designs = payload.setdefault("designs", payload.get("variants", []))
+    designs = payload.setdefault("designs", [])
     if not isinstance(designs, list):
         raise TypeError("template JSON field 'designs' must be a list")
 
@@ -79,8 +79,8 @@ def update_template_from_svg(
     reference_asset: str | None = None,
     source_asset: str | None = None,
     background_asset: str | None = None,
-    variant_id: str | None = None,
-    variant_name: str | None = None,
+    design_id: str | None = None,
+    design_name: str | None = None,
     preview_asset: str | None = None,
     accent_color: str | None = None,
 ) -> None:
@@ -125,8 +125,8 @@ def update_template_from_svg(
         payload["source_asset"] = asset_value
         payload["background_asset"] = asset_value
 
-    if variant_id is not None:
-        design = _coerce_template_design(payload, variant_id, variant_name)
+    if design_id is not None:
+        design = _coerce_template_design(payload, design_id, design_name)
         if preview_asset is not None:
             design["preview_asset"] = preview_asset
         if asset_value is not None:
@@ -148,10 +148,10 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--reference-asset", help="Reference asset to write into the template")
     parser.add_argument("--source-asset", help="Source asset to write into the template")
     parser.add_argument("--background-asset", help="Background asset to write into the template")
-    parser.add_argument("--variant-id", help="Variant id to create or update")
-    parser.add_argument("--variant-name", help="Variant name to create or update")
-    parser.add_argument("--preview-asset", help="Preview asset to write into the variant")
-    parser.add_argument("--accent-color", help="Variant accent colour")
+    parser.add_argument("--design-id", help="Design id to create or update")
+    parser.add_argument("--design-name", help="Design name to create or update")
+    parser.add_argument("--preview-asset", help="Preview asset to write into the design")
+    parser.add_argument("--accent-color", help="Design accent colour")
     return parser
 
 
@@ -167,8 +167,8 @@ def main(argv: list[str] | None = None) -> int:
         reference_asset=args.reference_asset,
         source_asset=args.source_asset,
         background_asset=args.background_asset,
-        variant_id=args.variant_id,
-        variant_name=args.variant_name,
+        design_id=args.design_id,
+        design_name=args.design_name,
         preview_asset=args.preview_asset,
         accent_color=args.accent_color,
     )

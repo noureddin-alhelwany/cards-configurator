@@ -86,7 +86,7 @@ function buildFixture(): ProofFixture {
       active: true,
     },
     layout_state: {
-      variant_id: '',
+      design_id: '',
       element_adjustments: {},
       text_values: { headline: 'Scanne den QR-Code' },
       asset_values: {},
@@ -217,7 +217,7 @@ function fixtureWithVariantBackground() {
       accent_color: '#315a86',
     },
   ];
-  fixture.layout_state.variant_id = 'classic';
+  fixture.layout_state.design_id = 'classic';
   return fixture;
 }
 

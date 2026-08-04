@@ -62,6 +62,14 @@ def ensure_database_compatibility(engine: Engine) -> None:
                 )
             )
 
+        if "design_id" not in columns and "variant_id" in columns:
+            connection.execute(text("ALTER TABLE orders ADD COLUMN design_id VARCHAR(255)"))
+            connection.execute(
+                text(
+                    "UPDATE orders SET design_id = variant_id WHERE design_id IS NULL AND variant_id IS NOT NULL"
+                )
+            )
+
 
 def get_db() -> Iterator[Session]:
     db = get_session_factory()()

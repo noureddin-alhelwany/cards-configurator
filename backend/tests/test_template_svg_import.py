@@ -37,7 +37,7 @@ def test_extract_slot_boxes_reads_named_placeholders(tmp_path: Path) -> None:
     }
 
 
-def test_update_template_from_svg_writes_slot_boxes_and_variant_design(tmp_path: Path) -> None:
+def test_update_template_from_svg_writes_slot_boxes_and_design(tmp_path: Path) -> None:
     template_path = tmp_path / "template.json"
     svg_path = tmp_path / "template.svg"
     output_path = tmp_path / "updated.json"
@@ -70,7 +70,7 @@ def test_update_template_from_svg_writes_slot_boxes_and_variant_design(tmp_path:
                         "min_font_size_mm": None,
                     }
                 ],
-                "variants": [],
+                "designs": [],
             }
         ),
         encoding="utf-8",
@@ -89,8 +89,8 @@ def test_update_template_from_svg_writes_slot_boxes_and_variant_design(tmp_path:
         svg_path,
         output_path,
         background_asset="backgrounds/proof_a6_card-1.6.0-classic.svg",
-        variant_id="classic",
-        variant_name="Classic",
+        design_id="classic",
+        design_name="Classic",
         preview_asset="template_google_reviews_classic.png",
         accent_color="#315a86",
     )
@@ -103,7 +103,7 @@ def test_update_template_from_svg_writes_slot_boxes_and_variant_design(tmp_path:
         "width_mm": 48.0,
         "height_mm": 10.0,
     }
-    assert updated["variants"][0] == {
+    assert updated["designs"][0] == {
         "id": "classic",
         "name": "Classic",
         "active": True,
@@ -132,7 +132,7 @@ def test_update_template_from_svg_writes_reference_artwork_and_checks_geometry(t
                 "bleed_mm": 3,
                 "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
                 "elements": [],
-                "variants": [],
+                "designs": [],
             }
         ),
         encoding="utf-8",
@@ -179,7 +179,7 @@ def test_update_template_from_svg_rejects_mismatched_reference_geometry(tmp_path
                 "bleed_mm": 3,
                 "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
                 "elements": [],
-                "variants": [],
+                "designs": [],
             }
         ),
         encoding="utf-8",

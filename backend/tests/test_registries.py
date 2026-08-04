@@ -101,7 +101,7 @@ def test_valid_registry_bundle_loads(tmp_path: Path) -> None:
                 ],
                 "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
                 "elements": [],
-                "variants": [{"id": "proof", "name": "Proof", "active": True}],
+                "designs": [{"id": "proof", "name": "Proof", "active": True}],
             }
         ),
         encoding="utf-8",
@@ -199,7 +199,7 @@ def test_text_variable_font_must_come_from_registry_fonts(tmp_path: Path) -> Non
                     }
                 ],
                 "elements": [],
-                "variants": [{"id": "proof", "name": "Proof", "active": True}],
+                "designs": [{"id": "proof", "name": "Proof", "active": True}],
             }
         ),
         encoding="utf-8",
@@ -244,7 +244,7 @@ def test_invalid_registry_bundle_is_reported(tmp_path: Path) -> None:
                 "bleed_mm": 3,
                 "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
                 "elements": [],
-                "variants": [{"id": "proof", "name": "Proof", "active": True}],
+                "designs": [{"id": "proof", "name": "Proof", "active": True}],
             }
         ),
         encoding="utf-8",
@@ -299,7 +299,7 @@ def test_duplicate_template_versions_are_rejected(tmp_path: Path) -> None:
         "bleed_mm": 3,
         "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
         "elements": [],
-        "variants": [{"id": "proof", "name": "Proof", "active": True}],
+        "designs": [{"id": "proof", "name": "Proof", "active": True}],
     }
     (registries_dir / "templates" / "template-a.json").write_text(json.dumps(template), encoding="utf-8")
     (registries_dir / "templates" / "template-b.json").write_text(json.dumps(template), encoding="utf-8")
@@ -353,7 +353,7 @@ def test_app_loads_registries_on_startup(tmp_path: Path, monkeypatch) -> None:
                 "bleed_mm": 3,
                 "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
                 "elements": [],
-                "variants": [{"id": "proof", "name": "Proof", "active": True}],
+                "designs": [{"id": "proof", "name": "Proof", "active": True}],
             }
         ),
         encoding="utf-8",

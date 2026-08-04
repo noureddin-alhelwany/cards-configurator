@@ -272,9 +272,9 @@ test('renders the registry selection flow and keeps only available products visi
             product_id: null,
             template_id: null,
             template_version: null,
-            variant_id: null,
+            design_id: null,
             layout_state: {
-              variant_id: '',
+              design_id: '',
               element_adjustments: {},
               text_values: {},
               asset_values: persistedAssetValues,
@@ -334,7 +334,7 @@ test('renders the registry selection flow and keeps only available products visi
         const selection = JSON.parse(String(init?.body ?? '{}'));
         persistedTextValues = {};
         persistedAssetValues = {};
-        persistedVariantId = selection.variant_id ?? 'logo-focused';
+        persistedVariantId = selection.design_id ?? 'logo-focused';
         return {
           ok: true,
           json: async () => ({
@@ -344,9 +344,9 @@ test('renders the registry selection flow and keeps only available products visi
             product_id: selection.product_id,
             template_id: selection.template_id,
             template_version: selection.template_version,
-            variant_id: persistedVariantId,
+            design_id: persistedVariantId,
             layout_state: {
-              variant_id: persistedVariantId,
+              design_id: persistedVariantId,
               element_adjustments: persistedElementAdjustments,
               text_values: {},
               asset_values: {},
@@ -356,7 +356,7 @@ test('renders the registry selection flow and keeps only available products visi
       }
       if (url.endsWith('/api/drafts/current/layout')) {
         const body = JSON.parse(String(init?.body ?? '{}'));
-        const nextVariantId = body.variant_id ?? persistedVariantId ?? 'logo-focused';
+        const nextVariantId = body.design_id ?? persistedVariantId ?? 'logo-focused';
         const nextTextValues = {
           ...persistedTextValues,
           ...(body.text_values ?? {}),
@@ -386,9 +386,9 @@ test('renders the registry selection flow and keeps only available products visi
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
-            variant_id: nextVariantId,
+            design_id: nextVariantId,
             layout_state: {
-              variant_id: nextVariantId,
+              design_id: nextVariantId,
               element_adjustments: nextElementAdjustments,
               text_values: nextTextValues,
               asset_values: persistedAssetValues,
@@ -739,9 +739,9 @@ test('selecting a product advances directly to the design step', async () => {
             product_id: null,
             template_id: null,
             template_version: null,
-            variant_id: null,
+            design_id: null,
             layout_state: {
-              variant_id: '',
+              design_id: '',
               element_adjustments: {},
               text_values: {},
               asset_values: {},
@@ -759,9 +759,9 @@ test('selecting a product advances directly to the design step', async () => {
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
-            variant_id: 'logo-focused',
+            design_id: 'logo-focused',
             layout_state: {
-              variant_id: 'logo-focused',
+              design_id: 'logo-focused',
               element_adjustments: {},
               text_values: {},
               asset_values: {},
@@ -902,12 +902,12 @@ test('approves a draft and locks editing afterward', async () => {
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
-            variant_id: 'logo-focused',
+            design_id: 'logo-focused',
             approved_at: null,
             approval_snapshot: null,
             approval_checklist: null,
             layout_state: {
-              variant_id: 'logo-focused',
+              design_id: 'logo-focused',
               element_adjustments: {},
               text_values: {
                 businessName: 'Studio One',
@@ -939,12 +939,12 @@ test('approves a draft and locks editing afterward', async () => {
             product_id: selection.product_id,
             template_id: selection.template_id,
             template_version: selection.template_version,
-            variant_id: selection.variant_id ?? 'logo-focused',
+            design_id: selection.design_id ?? 'logo-focused',
             approved_at: null,
             approval_snapshot: null,
             approval_checklist: null,
             layout_state: {
-              variant_id: selection.variant_id ?? 'logo-focused',
+              design_id: selection.design_id ?? 'logo-focused',
               element_adjustments: {},
               text_values: {
                 businessName: 'Studio One',
@@ -972,14 +972,14 @@ test('approves a draft and locks editing afterward', async () => {
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
-            variant_id: 'logo-focused',
+            design_id: 'logo-focused',
             approved_at: '2026-07-30T12:00:00.000Z',
             approval_snapshot: {
               template_id: 'proof_a6_card',
               template_version: '1.0.0',
-              variant_id: 'logo-focused',
+              design_id: 'logo-focused',
               layout_state: {
-                variant_id: 'logo-focused',
+                design_id: 'logo-focused',
                 element_adjustments: {},
                 text_values: {
                   businessName: 'Studio One',
@@ -996,7 +996,7 @@ test('approves a draft and locks editing afterward', async () => {
               preview_released: true,
             },
             layout_state: {
-              variant_id: 'logo-focused',
+              design_id: 'logo-focused',
               element_adjustments: {},
               text_values: {
                 businessName: 'Studio One',
@@ -1018,12 +1018,12 @@ test('approves a draft and locks editing afterward', async () => {
             product_id: null,
             template_id: null,
             template_version: null,
-            variant_id: null,
+            design_id: null,
             approved_at: null,
             approval_snapshot: null,
             approval_checklist: null,
             layout_state: {
-              variant_id: '',
+              design_id: '',
               element_adjustments: {},
               text_values: {},
               asset_values: {},
@@ -1042,7 +1042,7 @@ test('approves a draft and locks editing afterward', async () => {
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
-            variant_id: 'logo-focused',
+            design_id: 'logo-focused',
             approved_at: '2026-07-30T12:05:00.000Z',
             created_at: '2026-07-30T12:06:00.000Z',
             preview_path: '/tmp/order-1/preview.png',
@@ -1056,7 +1056,7 @@ test('approves a draft and locks editing afterward', async () => {
               name: 'Google Reviews Classic',
             },
             layout_snapshot: {
-              variant_id: 'logo-focused',
+              design_id: 'logo-focused',
               element_adjustments: {},
               text_values: {
                 businessName: 'Studio One',
@@ -1087,7 +1087,7 @@ test('approves a draft and locks editing afterward', async () => {
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
-            variant_id: 'logo-focused',
+            design_id: 'logo-focused',
             approved_at: '2026-07-30T12:05:00.000Z',
             created_at: '2026-07-30T12:06:00.000Z',
             preview_path: '/tmp/order-1/preview.png',
@@ -1101,7 +1101,7 @@ test('approves a draft and locks editing afterward', async () => {
               name: 'Google Reviews Classic',
             },
             layout_snapshot: {
-              variant_id: 'logo-focused',
+              design_id: 'logo-focused',
               element_adjustments: {},
               text_values: {
                 businessName: 'Studio One',
@@ -1290,12 +1290,12 @@ test('renders registry field copy for the review link and offers no example-link
     product_id: 'a6_card',
     template_id: 'proof_a6_card',
     template_version: '1.6.0',
-    variant_id: 'bold',
+    design_id: 'bold',
     approved_at: null,
     approval_snapshot: null,
     approval_checklist: null,
     layout_state: {
-      variant_id: 'bold',
+      design_id: 'bold',
       element_adjustments: {},
       text_values: { businessName: 'Studio Sonnenschein', headline: 'Scanne den QR-Code', qrTarget: '' },
       asset_values: {},

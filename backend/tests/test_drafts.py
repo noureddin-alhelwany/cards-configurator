@@ -15,7 +15,7 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
         assert draft_response.status_code == 200
         draft = draft_response.json()
         assert draft['template_id'] is None
-        assert draft['variant_id'] is None
+        assert draft['design_id'] is None
         assert draft['updated_at'] is not None
 
         response = client.post(
@@ -32,8 +32,8 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
         assert payload['template_id'] == 'proof_a6_card'
         assert payload['template_version'] == '1.6.0'
         # The host template auto-selects its first active design.
-        assert payload['variant_id'] == 'bold'
-        assert payload['layout_state']['variant_id'] == 'bold'
+        assert payload['design_id'] == 'bold'
+        assert payload['layout_state']['design_id'] == 'bold'
 
         layout_response = client.patch(
             '/api/drafts/current/layout',
@@ -46,8 +46,8 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
         )
         assert layout_response.status_code == 200
         layout_payload = layout_response.json()
-        assert layout_payload['variant_id'] == 'bold'
-        assert layout_payload['layout_state']['variant_id'] == 'bold'
+        assert layout_payload['design_id'] == 'bold'
+        assert layout_payload['layout_state']['design_id'] == 'bold'
         assert layout_payload['layout_state']['text_values']['businessName'] == 'Studio One'
         assert layout_payload['layout_state']['element_adjustments']['proof-logo']['offset_x'] == 0.25
         assert layout_payload['layout_state']['element_adjustments']['proof-logo']['scale'] == 1.1
@@ -57,7 +57,7 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
         refreshed_payload = refreshed.json()
         assert refreshed_payload['template_id'] == 'proof_a6_card'
         assert refreshed_payload['template_version'] == '1.6.0'
-        assert refreshed_payload['variant_id'] == 'bold'
+        assert refreshed_payload['design_id'] == 'bold'
         assert refreshed_payload['layout_state']['text_values']['businessName'] == 'Studio One'
         assert refreshed_payload['layout_state']['element_adjustments']['proof-logo']['offset_y'] == -0.1
         assert refreshed_payload['updated_at'] is not None
@@ -206,7 +206,7 @@ def test_design_approval_locks_the_draft(tmp_path: Path, monkeypatch) -> None:
         assert reset_payload['approval_checklist'] is None
         assert reset_payload['template_id'] is None
         assert reset_payload['template_version'] is None
-        assert reset_payload['variant_id'] is None
+        assert reset_payload['design_id'] is None
 
         unlocked_template_response = client.post(
             '/api/drafts/current/template',

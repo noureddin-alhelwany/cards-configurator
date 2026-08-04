@@ -72,7 +72,7 @@ export function DesignCard({
 }: DesignCardProps) {
   const previewFixture = buildTemplatePreviewFixture(template, product, category);
   if (previewFixture) {
-    previewFixture.layout_state.variant_id = variant.id;
+    previewFixture.layout_state.design_id = variant.id;
   }
 
   return (

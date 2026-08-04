@@ -32,7 +32,7 @@ class OrderRecord(Base):
     product_id: Mapped[str] = mapped_column(String(255), nullable=False)
     template_id: Mapped[str] = mapped_column(String(255), nullable=False)
     template_version: Mapped[str] = mapped_column(String(64), nullable=False)
-    variant_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    design_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     category_snapshot: Mapped[dict] = mapped_column("category_snapshot", JSON, nullable=False, default=dict)
     product_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     template_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)

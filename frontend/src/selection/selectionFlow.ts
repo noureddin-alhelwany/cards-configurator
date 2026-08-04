@@ -137,7 +137,7 @@ async function saveTemplateSelection(selection: TemplateSelectionRequest): Promi
 }
 
 async function saveLayoutValues(values: {
-  variant_id?: string | null;
+  design_id?: string | null;
   text_values?: Record<string, string>;
   asset_values?: Record<string, string>;
   element_adjustments?: Record<string, ElementAdjustment>;
@@ -312,7 +312,7 @@ export function useSelectionFlow() {
         setSelectedTemplateKey(
           draft.template_id && draft.template_version ? `${draft.template_id}@${draft.template_version}` : null,
         );
-        setSelectedVariantId(draft.layout_state.variant_id || null);
+        setSelectedVariantId(draft.layout_state.design_id || null);
         setLayoutValues(layoutValuesFromState(draft.layout_state));
         setWizardStepIndex(wizardStepIndexFromDraft(draft));
       })
@@ -447,7 +447,7 @@ export function useSelectionFlow() {
     setSelectedCategoryId(draft.category_id ?? firstCategory?.id ?? null);
     setSelectedProductId(draft.product_id ?? firstProduct?.id ?? null);
     setSelectedTemplateKey(draft.template_id && draft.template_version ? `${draft.template_id}@${draft.template_version}` : null);
-    setSelectedVariantId(draft.layout_state.variant_id || null);
+    setSelectedVariantId(draft.layout_state.design_id || null);
     setLayoutValues(layoutValuesFromState(draft.layout_state));
   }
 
@@ -613,12 +613,12 @@ export function useSelectionFlow() {
       product_id: selectedProductId,
       template_id: template.id,
       template_version: template.version,
-      variant_id: fallbackVariant?.id ?? null,
+      design_id: fallbackVariant?.id ?? null,
     });
     setSelectedTemplateKey(
       response.template_id && response.template_version ? `${response.template_id}@${response.template_version}` : null,
     );
-    setSelectedVariantId(response.variant_id ?? response.layout_state.variant_id ?? fallbackVariant?.id ?? null);
+    setSelectedVariantId(response.design_id ?? response.layout_state.design_id ?? fallbackVariant?.id ?? null);
     setLayoutValues(layoutValuesFromState(response.layout_state));
     setDraft(response);
     setWizardStepIndex(contentStepIndex);

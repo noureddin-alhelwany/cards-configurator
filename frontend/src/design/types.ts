@@ -12,7 +12,7 @@ export type ElementAdjustment = {
 };
 
 export type LayoutState = {
-  variant_id: string;
+  design_id: string;
   element_adjustments: Record<string, ElementAdjustment>;
   text_values: Record<string, string>;
   asset_values: Record<string, string>;

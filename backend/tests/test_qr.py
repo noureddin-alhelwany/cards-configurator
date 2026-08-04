@@ -56,7 +56,7 @@ def _draft(text_values: dict[str, str]):
         template_id="proof_a6_card",
         template_version="1.6.0",
         layout_state=LayoutState(
-            variant_id="",
+            design_id="",
             element_adjustments={},
             text_values=default_text_values,
             asset_values={},
@@ -85,10 +85,10 @@ def test_colour_reaches_the_symbol() -> None:
 
 def test_resolve_prefers_the_customer_url_over_the_template_default() -> None:
     template = _template()
-    layout = LayoutState(variant_id="", element_adjustments={}, text_values={"qrTarget": LONG_URL}, asset_values={})
+    layout = LayoutState(design_id="", element_adjustments={}, text_values={"qrTarget": LONG_URL}, asset_values={})
     assert resolve_qr_value(template, layout) == LONG_URL
 
-    empty = LayoutState(variant_id="", element_adjustments={}, text_values={}, asset_values={})
+    empty = LayoutState(design_id="", element_adjustments={}, text_values={}, asset_values={})
     static_value = next(e for e in template.elements if e.kind == "qr").value
     assert resolve_qr_value(template, empty) == static_value
 
@@ -101,6 +101,7 @@ def _report_for(url: str, *, box_width_mm: float | None = None):
         qr_element = next(e for e in template.elements if e.kind == "qr")
         qr_element.box_mm.width_mm = box_width_mm
         qr_element.box_mm.height_mm = box_width_mm
+        qr_element.quiet_zone_mm = 0.1
     return validate_current_draft(REPO_ROOT / "data", bundle, _draft({"qrTarget": url}))
 
 

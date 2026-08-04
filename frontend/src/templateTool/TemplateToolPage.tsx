@@ -277,7 +277,7 @@ function buildPreviewFixture(
       })),
     };
   if (selectedVariant) {
-    fixture.layout_state.variant_id = selectedVariant.id;
+    fixture.layout_state.design_id = selectedVariant.id;
   }
   fixture.template = {
     ...fixture.template,

@@ -7,7 +7,7 @@ export type DraftState = {
   product_id: string | null;
   template_id: string | null;
   template_version: string | null;
-  variant_id: string | null;
+  design_id: string | null;
   approved_at?: string | null;
   approval_snapshot?: Record<string, unknown> | null;
   approval_checklist?: Record<string, boolean> | null;
@@ -19,5 +19,5 @@ export type TemplateSelectionRequest = {
   product_id: string;
   template_id: string;
   template_version: string;
-  variant_id?: string | null;
+  design_id?: string | null;
 };

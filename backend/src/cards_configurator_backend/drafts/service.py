@@ -25,8 +25,32 @@ from .schemas import (
 DEFAULT_DRAFT_NAME = "Current draft"
 
 
-def _empty_layout_state(variant_id: str = "") -> LayoutState:
-    return LayoutState(variant_id=variant_id, element_adjustments={}, text_values={}, asset_values={})
+def _empty_layout_state(design_id: str = "") -> LayoutState:
+    return LayoutState(design_id=design_id, element_adjustments={}, text_values={}, asset_values={})
+
+
+def _legacy_design_id(payload: dict[str, object]) -> str | None:
+    value = payload.get("design_id")
+    if isinstance(value, str):
+        return value
+    value = payload.get("variant_id")
+    if isinstance(value, str):
+        return value
+    return None
+
+
+def _legacy_layout_payload(payload: dict[str, object]) -> dict[str, object]:
+    layout_payload = payload.get("layout_state")
+    if not isinstance(layout_payload, dict):
+        return _empty_layout_state().model_dump()
+
+    coerced = dict(layout_payload)
+    if "design_id" not in coerced:
+        legacy_design_id = coerced.get("variant_id")
+        if isinstance(legacy_design_id, str):
+            coerced["design_id"] = legacy_design_id
+    coerced.pop("variant_id", None)
+    return coerced
 
 
 def _default_payload() -> dict[str, object]:
@@ -35,16 +59,14 @@ def _default_payload() -> dict[str, object]:
         "product_id": None,
         "template_id": None,
         "template_version": None,
-        "variant_id": None,
+        "design_id": None,
         "layout_state": _empty_layout_state().model_dump(),
     }
 
 
 def _draft_state_from_record(record: DraftRecord) -> DraftState:
     payload = record.payload or {}
-    layout_payload = payload.get("layout_state")
-    if not isinstance(layout_payload, dict):
-        layout_payload = _empty_layout_state().model_dump()
+    layout_payload = _legacy_layout_payload(payload)
 
     return DraftState(
         id=record.id,
@@ -56,7 +78,7 @@ def _draft_state_from_record(record: DraftRecord) -> DraftState:
         template_version=payload.get("template_version")
         if isinstance(payload.get("template_version"), str)
         else None,
-        variant_id=payload.get("variant_id") if isinstance(payload.get("variant_id"), str) else None,
+        design_id=_legacy_design_id(payload),
         approved_at=payload.get("approved_at") if isinstance(payload.get("approved_at"), str) else None,
         approval_snapshot=payload.get("approval_snapshot") if isinstance(payload.get("approval_snapshot"), dict) else None,
         approval_checklist=payload.get("approval_checklist")
@@ -176,12 +198,12 @@ def save_template_selection(session: Session, bundle: RegistryBundle, request: T
     if request.category_id not in product.category_ids:
         raise HTTPException(status_code=400, detail="Selected category does not belong to the selected product")
 
-    variant_id = request.variant_id
-    active_variants = [variant for variant in template.designs if variant.active]
-    if variant_id is None:
-        variant_id = active_variants[0].id if active_variants else ""
-    elif variant_id not in {variant.id for variant in active_variants}:
-        raise HTTPException(status_code=400, detail="Template variant is not active")
+    design_id = request.design_id
+    active_designs = [design for design in template.designs if design.active]
+    if design_id is None:
+        design_id = active_designs[0].id if active_designs else ""
+    elif design_id not in {design.id for design in active_designs}:
+        raise HTTPException(status_code=400, detail="Template design is not active")
 
     draft = _get_first_draft(session)
     if draft is None:
@@ -197,8 +219,8 @@ def save_template_selection(session: Session, bundle: RegistryBundle, request: T
         "product_id": request.product_id,
         "template_id": template.id,
         "template_version": template.version,
-        "variant_id": variant_id or None,
-        "layout_state": _empty_layout_state(variant_id=variant_id).model_dump(),
+        "design_id": design_id or None,
+        "layout_state": _empty_layout_state(design_id=design_id).model_dump(),
     }
     draft.updated_at = datetime.now(UTC)
     session.commit()
@@ -227,9 +249,9 @@ def update_layout_state(session: Session, bundle: RegistryBundle, request: Layou
     if isinstance(template_id, str) and isinstance(template_version, str):
         template = _find_template(bundle, template_id, template_version)
 
-    if request.variant_id is not None:
-        layout_state.variant_id = request.variant_id
-        payload["variant_id"] = request.variant_id
+    if request.design_id is not None:
+        layout_state.design_id = request.design_id
+        payload["design_id"] = request.design_id
     if request.text_values is not None:
         layout_state.text_values.update(request.text_values)
         if template is not None:
@@ -273,7 +295,7 @@ def approve_draft(session: Session, bundle: RegistryBundle, request: ApprovalReq
     payload["approval_snapshot"] = {
         "template_id": current_state.template_id,
         "template_version": current_state.template_version,
-        "variant_id": current_state.variant_id,
+        "design_id": current_state.design_id,
         "layout_state": current_state.layout_state.model_dump(),
     }
     draft.payload = payload

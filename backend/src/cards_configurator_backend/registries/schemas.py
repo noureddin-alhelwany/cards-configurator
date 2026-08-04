@@ -67,7 +67,7 @@ class ElementAdjustment(BaseModel):
 
 
 class LayoutState(BaseModel):
-    variant_id: str
+    design_id: str
     element_adjustments: dict[str, ElementAdjustment] = Field(default_factory=dict)
     text_values: dict[str, str] = Field(default_factory=dict)
     asset_values: dict[str, str] = Field(default_factory=dict)

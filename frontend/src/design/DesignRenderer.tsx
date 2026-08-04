@@ -287,7 +287,7 @@ export default function DesignRenderer({
   const production = variant === 'production';
   const { page_width_mm: pageWidth, page_height_mm: pageHeight } = fixture.template;
   const encodedQrValue = resolveQrValue(fixture.template, fixture.layout_state);
-  const selectedVariant = activeTemplateVariant(fixture.template, fixture.layout_state.variant_id);
+  const selectedVariant = activeTemplateVariant(fixture.template, fixture.layout_state.design_id);
   const backgroundAsset = resolveTemplateBackgroundAsset(fixture.template, fixture.layout_state);
 
   useEffect(() => {

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 
 class OrderAssetState(BaseModel):
@@ -22,7 +22,7 @@ class OrderSummary(BaseModel):
     product_id: str
     template_id: str
     template_version: str
-    variant_id: str | None = None
+    design_id: str | None = Field(default=None, validation_alias=AliasChoices("design_id", "variant_id"))
     approved_at: datetime
     created_at: datetime
     preview_path: str | None = None

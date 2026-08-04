@@ -64,7 +64,7 @@ export function buildTemplatePreviewFixture(
     product,
     category: category,
     layout_state: {
-      variant_id: defaultTemplateDesignId(template) ?? '',
+      design_id: defaultTemplateDesignId(template) ?? '',
       element_adjustments: defaultAdjustmentsForTemplate(template),
       text_values,
       asset_values: {},
@@ -171,7 +171,7 @@ export function TemplateLivePreview({
           product,
           category: category,
           layout_state: {
-            variant_id: selectedVariantId ?? defaultTemplateDesignId(template) ?? '',
+            design_id: selectedVariantId ?? defaultTemplateDesignId(template) ?? '',
             element_adjustments: layoutValues.element_adjustments,
             text_values: layoutValues.text_values,
             asset_values: layoutValues.asset_values,

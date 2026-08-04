@@ -12,7 +12,7 @@ export type OrderSummary = {
   product_id: string;
   template_id: string;
   template_version: string;
-  variant_id: string | null;
+  design_id: string | null;
   approved_at: string;
   created_at: string;
   preview_path: string | null;
