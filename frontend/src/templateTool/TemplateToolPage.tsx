@@ -524,8 +524,8 @@ export default function TemplateToolPage() {
   );
 
   const selectedCategory = useMemo(
-    () => activeRegistryCategory(state.bundle, selectedTemplate),
-    [selectedTemplate, state.bundle],
+    () => activeRegistryCategory(state.bundle, selectedProduct),
+    [selectedProduct, state.bundle],
   );
 
   const selectedVariant = useMemo(() => {

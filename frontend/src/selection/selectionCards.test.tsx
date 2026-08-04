@@ -21,6 +21,7 @@ const bundle: RegistryBundle = {
       id: 'a6_card',
       name: 'A6 Card',
       description: 'Standardformat',
+      category_ids: ['google_reviews'],
       trim_width_mm: 105,
       trim_height_mm: 148,
       bleed_mm: 3,
@@ -41,7 +42,6 @@ const bundle: RegistryBundle = {
       name: 'Bold',
       description: null,
       product_id: 'a6_card',
-      category_ids: ['google_reviews'],
       active: true,
       fields: [],
       page_width_mm: 111,
@@ -72,7 +72,6 @@ describe('ProductCard', () => {
     render(
       <ProductCard
         bundle={bundle}
-        selectedCategoryId="google_reviews"
         product={bundle.products[0]}
         selected={true}
         onSelect={() => {}}

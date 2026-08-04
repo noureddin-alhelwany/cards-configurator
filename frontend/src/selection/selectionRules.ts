@@ -267,7 +267,6 @@ export function isGoogleReviewsHostTemplate(template: TemplateDefinition) {
   return (
     template.id === GOOGLE_REVIEWS_TEMPLATE_ID &&
     template.product_id === 'a6_card' &&
-    template.category_ids.includes('google_reviews') &&
     template.version === GOOGLE_REVIEWS_HOST_VERSION
   );
 }
@@ -304,13 +303,8 @@ export function productResolutionDescription(product: ProductDefinition) {
   return `Auflösung ${product.recommended_dpi} dpi, Minimum ${product.minimum_dpi} dpi`;
 }
 
-export function productSafeAreaDescription(bundle: RegistryBundle, productId: string, selectedCategoryId: string | null) {
-  const matchingTemplates = bundle.templates.filter((template) => {
-    if (!template.active || template.product_id !== productId) {
-      return false;
-    }
-    return !selectedCategoryId || template.category_ids.includes(selectedCategoryId);
-  });
+export function productSafeAreaDescription(bundle: RegistryBundle, productId: string) {
+  const matchingTemplates = bundle.templates.filter((template) => template.active && template.product_id === productId);
   const safeAreaCount = matchingTemplates.reduce((count, template) => count + (template.safe_areas?.length ?? 0), 0);
   if (safeAreaCount === 0) {
     return 'Safe Area wird aus dem Design geladen';

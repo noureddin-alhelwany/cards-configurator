@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import OrderProductionPage from './orders/OrderProductionPage';
 import OrderPage from './orders/OrderPage';
+import InternalDataPage from './internalData/InternalDataPage';
 import ProofPage from './proof/ProofPage';
 import SelectionPage from './selection/SelectionPage';
 import TemplateToolPage from './templateTool/TemplateToolPage';
@@ -19,6 +20,10 @@ export default function App() {
 
   if (pathname.startsWith('/render/proof')) {
     return <ProofPage />;
+  }
+
+  if (pathname.startsWith('/template-tool/data') || pathname.startsWith('/internal/data')) {
+    return <InternalDataPage />;
   }
 
   if (pathname.startsWith('/template-tool') || pathname.startsWith('/internal/template-tool')) {

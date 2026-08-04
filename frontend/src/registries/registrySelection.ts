@@ -13,13 +13,13 @@ export function activeRegistryProduct(bundle: RegistryBundle | null, productId: 
 
 export function activeRegistryCategory(
   bundle: RegistryBundle | null,
-  template: TemplateDefinition | null,
+  product: ProductDefinition | null,
 ): CategoryDefinition | null {
-  if (!bundle || !template) {
+  if (!bundle || !product) {
     return null;
   }
   return (
-    bundle.categories.find((category) => category.active && template.category_ids.includes(category.id)) ?? null
+    bundle.categories.find((category) => category.active && (product.category_ids?.includes(category.id) ?? false)) ?? null
   );
 }
 

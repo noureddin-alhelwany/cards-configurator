@@ -33,6 +33,7 @@ class ProductDefinition(BaseModel):
     id: str
     name: str
     description: str | None = None
+    category_ids: list[str] = Field(default_factory=list)
     trim_width_mm: float
     trim_height_mm: float
     bleed_mm: float
@@ -43,6 +44,13 @@ class ProductDefinition(BaseModel):
     qr_min_module_mm: float
     preview_asset: str
     active: bool = True
+
+    @field_validator("category_ids")
+    @classmethod
+    def validate_category_ids(cls, value: list[str]) -> list[str]:
+        if not value:
+            raise ValueError("products must reference at least one category")
+        return value
 
     @model_validator(mode="after")
     def validate_dpi_thresholds(self) -> ProductDefinition:
@@ -233,7 +241,6 @@ class TemplateDefinition(BaseModel):
     version: str
     name: str | None = None
     product_id: str
-    category_ids: list[str] = Field(default_factory=list)
     active: bool = True
     description: str | None = None
     page_width_mm: float
@@ -257,13 +264,6 @@ class TemplateDefinition(BaseModel):
     fonts: list[FontDefinition]
     elements: list[RenderableElementDefinition]
     variants: list[TemplateVariantDefinition] = Field(default_factory=list)
-
-    @field_validator("category_ids")
-    @classmethod
-    def validate_category_ids(cls, value: list[str]) -> list[str]:
-        if not value:
-            raise ValueError("templates must reference at least one category")
-        return value
 
     @model_validator(mode="after")
     def normalize_font_ids(self) -> TemplateDefinition:

@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from starlette.staticfiles import StaticFiles
 
 from .config import get_settings
-from .db import Base, get_engine
+from .db import Base, ensure_database_compatibility, get_engine
 from .registries.loader import load_registry_bundle
 from .routes import router
 
@@ -21,6 +21,7 @@ def create_app() -> FastAPI:
     def load_registries() -> None:
         app.state.registry_bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
         Base.metadata.create_all(bind=get_engine())
+        ensure_database_compatibility(get_engine())
 
     fonts_dir = settings.proof_assets_dir / "fonts"
     if fonts_dir.exists():

@@ -3,7 +3,19 @@ from __future__ import annotations
 import httpx
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
+from .admin import (
+    AdminDataResponse,
+    RegistryFileContent,
+    RegistryFileUpdateRequest,
+    delete_asset,
+    delete_order,
+    delete_registry_file,
+    load_admin_data,
+    read_registry_file,
+    write_registry_file,
+)
 from .assets import load_asset, store_uploaded_asset
 from .config import get_settings
 from .db import get_session_factory
@@ -38,6 +50,14 @@ from .urls import QR_DARK_DEFAULT, build_qr_data_url, normalize_url
 router = APIRouter(prefix="/api", tags=["system"])
 
 
+class AdminRegistryDeleteResponse(BaseModel):
+    ok: bool
+
+
+class AdminDeleteResponse(BaseModel):
+    ok: bool
+
+
 def _load_current_registry_bundle(request: Request):
     settings = get_settings()
     bundle = load_registry_bundle(settings.registries_dir, settings.proof_assets_dir)
@@ -54,6 +74,68 @@ def healthz() -> dict[str, str]:
 def registries(request: Request) -> dict[str, object]:
     bundle = _load_current_registry_bundle(request)
     return bundle.model_dump()
+
+
+@router.get("/admin/data", response_model=AdminDataResponse)
+def admin_data() -> AdminDataResponse:
+    settings = get_settings()
+    session = get_session_factory()()
+    try:
+        return load_admin_data(settings.registries_dir, settings.proof_assets_dir, settings.data_dir, session)
+    finally:
+        session.close()
+
+
+@router.get("/admin/registries/{kind}/{relative_path:path}", response_model=RegistryFileContent)
+def admin_read_registry(kind: str, relative_path: str) -> RegistryFileContent:
+    settings = get_settings()
+    session_kind = kind  # keep path validation close to the file loader
+    if session_kind not in {"category", "product", "template"}:
+        raise HTTPException(status_code=400, detail="Unknown registry kind")
+    return read_registry_file(settings.registries_dir, session_kind, relative_path)
+
+
+@router.put("/admin/registries/{kind}/{relative_path:path}", response_model=RegistryFileContent)
+def admin_write_registry(kind: str, relative_path: str, body: RegistryFileUpdateRequest) -> RegistryFileContent:
+    settings = get_settings()
+    if kind not in {"category", "product", "template"}:
+        raise HTTPException(status_code=400, detail="Unknown registry kind")
+    return write_registry_file(settings.registries_dir, settings.proof_assets_dir, kind, relative_path, body.content)
+
+
+@router.delete("/admin/registries/{kind}/{relative_path:path}", response_model=AdminRegistryDeleteResponse)
+def admin_delete_registry(kind: str, relative_path: str) -> AdminRegistryDeleteResponse:
+    settings = get_settings()
+    if kind not in {"category", "product", "template"}:
+        raise HTTPException(status_code=400, detail="Unknown registry kind")
+    session = get_session_factory()()
+    try:
+        delete_registry_file(session, settings.registries_dir, settings.proof_assets_dir, kind, relative_path)
+    finally:
+        session.close()
+    return AdminRegistryDeleteResponse(ok=True)
+
+
+@router.delete("/admin/orders/{order_id}", response_model=AdminDeleteResponse)
+def admin_delete_order(order_id: str) -> AdminDeleteResponse:
+    settings = get_settings()
+    session = get_session_factory()()
+    try:
+        delete_order(session, settings.data_dir, order_id)
+    finally:
+        session.close()
+    return AdminDeleteResponse(ok=True)
+
+
+@router.delete("/admin/assets/{asset_id}", response_model=AdminDeleteResponse)
+def admin_delete_asset(asset_id: str) -> AdminDeleteResponse:
+    settings = get_settings()
+    session = get_session_factory()()
+    try:
+        delete_asset(session, settings.data_dir, asset_id)
+    finally:
+        session.close()
+    return AdminDeleteResponse(ok=True)
 
 
 @router.get("/font-catalog")

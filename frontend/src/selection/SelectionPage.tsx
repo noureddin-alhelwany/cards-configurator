@@ -216,7 +216,6 @@ export default function SelectionPage() {
                       key={product.id}
                       product={product}
                       bundle={bundle}
-                      selectedCategoryId={selectedCategory?.id ?? null}
                       selected={product.id === selectedProduct?.id}
                       onSelect={handleProductSelect}
                       recommended={product.id === recommendedProductId}

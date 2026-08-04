@@ -2,6 +2,7 @@
   "id": "a6_card",
   "name": "Google-Bewertungskarte",
   "description": "Kunden scannen den QR-Code und gelangen direkt zur Google-Bewertung.",
+  "category_ids": ["google_reviews"],
   "trim_width_mm": 105,
   "trim_height_mm": 148,
   "bleed_mm": 3,

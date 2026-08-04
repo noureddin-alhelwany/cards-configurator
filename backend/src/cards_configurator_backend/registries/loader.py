@@ -317,6 +317,18 @@ def load_registry_bundle(registries_dir: Path, assets_dir: Path | None = None) -
     product_by_id = {record.id: record for record in active_products}
     category_by_id = {record.id: record for record in active_categories}
 
+    for record in active_products:
+        missing_categories = [category_id for category_id in record.category_ids if category_id not in category_by_id]
+        if missing_categories:
+            diagnostics.append(
+                _issue(
+                    "product_unknown_category",
+                    record.id,
+                    f"Product '{record.id}' references unknown category ids {missing_categories}",
+                    details={"product_id": record.id, "missing_category_ids": missing_categories},
+                )
+            )
+
     active_templates: list[TemplateDefinition] = []
     seen_templates: set[tuple[str, str]] = set()
     for record in cast(list[Any], templates):
@@ -340,17 +352,6 @@ def load_registry_bundle(registries_dir: Path, assets_dir: Path | None = None) -
                     record.id,
                     f"Template '{record.id}' references unknown product '{record.product_id}'",
                     details={"template_id": record.id, "product_id": record.product_id},
-                )
-            )
-            continue
-        missing_categories = [category_id for category_id in record.category_ids if category_id not in category_by_id]
-        if missing_categories:
-            diagnostics.append(
-                _issue(
-                    "template_unknown_category",
-                    record.id,
-                    f"Template '{record.id}' references unknown category ids {missing_categories}",
-                    details={"template_id": record.id, "missing_category_ids": missing_categories},
                 )
             )
             continue

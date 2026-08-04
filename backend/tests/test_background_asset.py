@@ -54,6 +54,7 @@ def _build_registries(
             {
                 "id": "product",
                 "name": "Product",
+                "category_ids": ["case"],
                 "trim_width_mm": 105,
                 "trim_height_mm": 148,
                 "bleed_mm": 3,
@@ -73,7 +74,6 @@ def _build_registries(
         "id": "template",
         "version": "1.0.0",
         "product_id": "product",
-        "category_ids": ["case"],
         "active": True,
         "page_width_mm": 111,
         "page_height_mm": 154,

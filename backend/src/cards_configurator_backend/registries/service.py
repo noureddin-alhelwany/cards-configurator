@@ -16,7 +16,11 @@ def _data_url(mime_type: str, raw: bytes) -> AssetDataUrl:
 def build_proof_fixture(bundle: RegistryBundle, proof_assets_dir: Path) -> ProofFixture:
     template = next(template for template in bundle.templates if template.id == "proof_a6_card" and template.version == "1.6.0")
     product = next(product for product in bundle.products if product.id == template.product_id)
-    category = next(category for category in bundle.categories if category.id in template.category_ids)
+    category = next(
+        category
+        for category in bundle.categories
+        if category.active and category.id in product.category_ids
+    )
 
     logo_path = proof_assets_dir / "logo.png"
     logo_bytes = logo_path.read_bytes()

@@ -152,7 +152,6 @@ export type TemplateDefinition = {
   name: string | null;
   description: string | null;
   product_id: string;
-  category_ids: string[];
   active: boolean;
   fields: TemplateFieldDefinition[];
   page_width_mm: number;
@@ -203,6 +202,7 @@ export type ProductDefinition = {
   id: string;
   name: string;
   description: string | null;
+  category_ids: string[];
   trim_width_mm: number;
   trim_height_mm: number;
   bleed_mm: number;

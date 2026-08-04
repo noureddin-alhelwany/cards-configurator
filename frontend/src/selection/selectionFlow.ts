@@ -233,47 +233,29 @@ export function compatibleProducts(bundle: RegistryBundle, selectedCategoryId: s
   if (!selectedCategoryId) {
     return activeProducts;
   }
-
-  const compatibleProductIds = new Set(
-    bundle.templates
-      .filter((template) => template.active && template.category_ids.includes(selectedCategoryId))
-      .map((template) => template.product_id),
-  );
-
-  return activeProducts.filter((product) => compatibleProductIds.has(product.id));
+  return activeProducts.filter((product) => product.category_ids?.includes(selectedCategoryId) ?? false);
 }
 
 export function primaryCategoryIdForProduct(bundle: RegistryBundle, productId: string) {
-  const categoryIds = new Set<string>();
-  bundle.templates
-    .filter((template) => template.active && template.product_id === productId)
-    .forEach((template) => template.category_ids.forEach((categoryId) => categoryIds.add(categoryId)));
-
-  return bundle.categories.find((category) => category.active && categoryIds.has(category.id))?.id ?? null;
+  const product = bundle.products.find((entry) => entry.active && entry.id === productId);
+  if (!product) {
+    return null;
+  }
+  return bundle.categories.find((category) => category.active && (product.category_ids?.includes(category.id) ?? false))?.id ?? null;
 }
 
-export function visibleTemplates(bundle: RegistryBundle, selectedCategoryId: string | null) {
-  return bundle.templates.filter(
-    (template) => {
-      if (!template.active) {
-        return false;
-      }
-      if (!selectedCategoryId) {
-        return true;
-      }
-      return template.category_ids.includes(selectedCategoryId);
-    },
-  );
+export function visibleTemplates(bundle: RegistryBundle) {
+  return bundle.templates.filter((template) => template.active);
 }
 
 export function visibleProductCategoryNames(bundle: RegistryBundle, productId: string): string[] {
-  const categoryIds = new Set<string>();
-  bundle.templates
-    .filter((template) => template.active && template.product_id === productId)
-    .forEach((template) => template.category_ids.forEach((categoryId) => categoryIds.add(categoryId)));
+  const product = bundle.products.find((entry) => entry.active && entry.id === productId);
+  if (!product) {
+    return [];
+  }
 
   return bundle.categories
-    .filter((category) => categoryIds.has(category.id) && category.active)
+    .filter((category) => (product.category_ids?.includes(category.id) ?? false) && category.active)
     .map((category) => category.name);
 }
 
@@ -431,18 +413,13 @@ export function useSelectionFlow() {
     ],
   );
   const matchingTemplates = useMemo(() => {
-    const templates =
-      bundle
-        ? visibleTemplates(bundle, selectedCategoryId).filter(
-            (template) => !selectedProductId || template.product_id === selectedProductId,
-          )
-        : [];
+    const templates = bundle ? visibleTemplates(bundle).filter((template) => !selectedProductId || template.product_id === selectedProductId) : [];
 
     return templates
       .map((template, index) => ({ template, index }))
       .sort((left, right) => templateRecommendationIndex(left.template, left.index) - templateRecommendationIndex(right.template, right.index))
       .map(({ template }) => template);
-  }, [bundle, selectedProductId, selectedCategoryId]);
+  }, [bundle, selectedProductId]);
   const productById = useMemo(
     () => new Map(bundle?.products.map((product) => [product.id, product] as const) ?? []),
     [bundle],

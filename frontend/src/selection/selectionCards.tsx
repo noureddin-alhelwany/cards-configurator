@@ -109,7 +109,6 @@ export function DesignCard({
 type ProductCardProps = {
   product: ProductDefinition;
   bundle: RegistryBundle;
-  selectedCategoryId: string | null;
   selected: boolean;
   onSelect: (id: string) => void;
   recommended?: boolean;
@@ -119,7 +118,6 @@ type ProductCardProps = {
 export function ProductCard({
   product,
   bundle,
-  selectedCategoryId,
   selected,
   onSelect,
   recommended = false,
@@ -144,7 +142,7 @@ export function ProductCard({
         <p className="product-card__format">{productDocumentFormat(product)}</p>
         <p className="product-card__meta">{productBleedDescription(product)}</p>
         <p className="product-card__meta">{productResolutionDescription(product)}</p>
-        <p className="product-card__meta">{productSafeAreaDescription(bundle, product.id, selectedCategoryId)}</p>
+        <p className="product-card__meta">{productSafeAreaDescription(bundle, product.id)}</p>
       </div>
     </button>
   );

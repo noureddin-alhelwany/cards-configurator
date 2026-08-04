@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from cards_configurator_backend.registries.svg_import import extract_slot_boxes, update_template_from_svg
+from cards_configurator_backend.registries.svg_import import (
+    extract_slot_boxes,
+    update_template_from_svg,
+)
 
 
 def test_extract_slot_boxes_reads_named_placeholders(tmp_path: Path) -> None:
@@ -46,7 +49,6 @@ def test_update_template_from_svg_writes_slot_boxes_and_variant_design(tmp_path:
                 "id": "proof_a6_card",
                 "version": "1.6.0",
                 "product_id": "a6_card",
-                "category_ids": ["google_reviews"],
                 "page_width_mm": 111,
                 "page_height_mm": 154,
                 "bleed_mm": 3,
@@ -125,7 +127,6 @@ def test_update_template_from_svg_writes_reference_artwork_and_checks_geometry(t
                 "id": "proof_a6_card",
                 "version": "1.6.0",
                 "product_id": "a6_card",
-                "category_ids": ["google_reviews"],
                 "page_width_mm": 111,
                 "page_height_mm": 154,
                 "bleed_mm": 3,
@@ -173,7 +174,6 @@ def test_update_template_from_svg_rejects_mismatched_reference_geometry(tmp_path
                 "id": "proof_a6_card",
                 "version": "1.6.0",
                 "product_id": "a6_card",
-                "category_ids": ["google_reviews"],
                 "page_width_mm": 111,
                 "page_height_mm": 154,
                 "bleed_mm": 3,

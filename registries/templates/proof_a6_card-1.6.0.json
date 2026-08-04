@@ -8,7 +8,6 @@
   "source_asset": "source/template_google_reviews_premium.png",
   "background_asset": "backgrounds/proof_a6_card-1.6.0-premium.svg",
   "product_id": "a6_card",
-  "category_ids": ["google_reviews"],
   "active": true,
   "page_width_mm": 111,
   "page_height_mm": 154,

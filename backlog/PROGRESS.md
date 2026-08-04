@@ -2,15 +2,16 @@
 
 ## Summary
 
-- Todo: 7
+- Todo: 6
 - In progress: 0
-- Done: 79
+- Done: 80
 - Blocked: 0
 
 ## Backlog
 
 | ID | Type | Priority | Status | Depends on | Title |
 |---|---|---:|---|---|---|
+| TECH-06 | technical | must | done |  | Kategorie nur an Produkte binden |
 | UI-26 | story | must | done | US-02, UI-25 | Produkte als ersten sichtbaren Schritt anzeigen |
 | UI-27 | story | must | done | US-06, UI-25 | Felddefinitionen vollständig an Templates binden |
 | UI-28 | story | must | done | UI-27, US-18, US-19, US-20, US-21 | Validierungsregeln vollständig an Templates binden |

@@ -146,6 +146,7 @@ test('renders the registry selection flow and keeps only available products visi
       {
         id: 'a6_card',
         name: 'A6 Card',
+        category_ids: ['google_reviews', 'wedding_reviews'],
         trim_width_mm: 105,
         trim_height_mm: 148,
         bleed_mm: 3,
@@ -160,6 +161,7 @@ test('renders the registry selection flow and keeps only available products visi
       {
         id: 'dl_card',
         name: 'DL Card',
+        category_ids: ['google_reviews'],
         trim_width_mm: 99,
         trim_height_mm: 210,
         bleed_mm: 3,
@@ -174,6 +176,7 @@ test('renders the registry selection flow and keeps only available products visi
       {
         id: 'hidden_card',
         name: 'Hidden Card',
+        category_ids: ['google_reviews'],
         trim_width_mm: 90,
         trim_height_mm: 50,
         bleed_mm: 3,
@@ -195,7 +198,6 @@ test('renders the registry selection flow and keeps only available products visi
         name: 'Google Reviews Host',
         preview_asset: 'template_google_reviews_bold.png',
         product_id: 'a6_card',
-        category_ids: ['google_reviews'],
         active: true,
         fields: [
           {
@@ -261,7 +263,6 @@ test('renders the registry selection flow and keeps only available products visi
         name: 'Wedding Reviews',
         preview_asset: 'template_google_reviews_classic.png',
         product_id: 'a6_card',
-        category_ids: ['wedding_reviews'],
         active: false,
         fields: [],
         variants: [],
@@ -653,6 +654,7 @@ test('selecting a product advances directly to the design step', async () => {
       {
         id: 'a6_card',
         name: 'A6 Card',
+        category_ids: ['google_reviews'],
         trim_width_mm: 105,
         trim_height_mm: 148,
         bleed_mm: 3,
@@ -667,6 +669,7 @@ test('selecting a product advances directly to the design step', async () => {
       {
         id: 'dl_card',
         name: 'DL Card',
+        category_ids: ['google_reviews'],
         trim_width_mm: 99,
         trim_height_mm: 210,
         bleed_mm: 3,
@@ -687,7 +690,6 @@ test('selecting a product advances directly to the design step', async () => {
         name: 'Google Reviews Classic',
         preview_asset: 'template_google_reviews_classic.png',
         product_id: 'a6_card',
-        category_ids: ['google_reviews'],
         active: true,
         fields: [
           {
@@ -726,7 +728,6 @@ test('selecting a product advances directly to the design step', async () => {
         name: 'Google Reviews Slim',
         preview_asset: 'booking.png',
         product_id: 'dl_card',
-        category_ids: ['google_reviews'],
         active: true,
         fields: [
           {
@@ -869,6 +870,7 @@ test('approves a draft and locks editing afterward', async () => {
       {
         id: 'a6_card',
         name: 'A6 Card',
+        category_ids: ['google_reviews'],
         trim_width_mm: 105,
         trim_height_mm: 148,
         bleed_mm: 3,
@@ -1272,7 +1274,6 @@ test('renders registry field copy for the review link and offers no example-link
         description: 'Kräftige Google-Bewertungsvorlage.',
         preview_asset: 'template_google_reviews_bold.png',
         product_id: 'a6_card',
-        category_ids: ['google_reviews'],
         active: true,
         fields: [
           {

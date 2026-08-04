@@ -32,6 +32,7 @@ def test_valid_registry_bundle_loads(tmp_path: Path) -> None:
             {
                 "id": "product",
                 "name": "Product",
+                "category_ids": ["case"],
                 "trim_width_mm": 105,
                 "trim_height_mm": 148,
                 "bleed_mm": 3,
@@ -53,7 +54,6 @@ def test_valid_registry_bundle_loads(tmp_path: Path) -> None:
                 "id": "template",
                 "version": "1.0.0",
                 "product_id": "product",
-                "category_ids": ["case"],
                 "active": True,
                 "page_width_mm": 111,
                 "page_height_mm": 154,
@@ -156,6 +156,7 @@ def test_text_variable_font_must_come_from_registry_fonts(tmp_path: Path) -> Non
             {
                 "id": "product",
                 "name": "Product",
+                "category_ids": ["case"],
                 "trim_width_mm": 105,
                 "trim_height_mm": 148,
                 "bleed_mm": 3,
@@ -177,7 +178,6 @@ def test_text_variable_font_must_come_from_registry_fonts(tmp_path: Path) -> Non
                 "id": "template",
                 "version": "1.0.0",
                 "product_id": "product",
-                "category_ids": ["case"],
                 "active": True,
                 "page_width_mm": 111,
                 "page_height_mm": 154,
@@ -240,6 +240,7 @@ def test_invalid_registry_bundle_is_reported(tmp_path: Path) -> None:
             {
                 "id": "product",
                 "name": "Product",
+                "category_ids": ["broken"],
                 "trim_width_mm": 105,
                 "trim_height_mm": 148,
                 "bleed_mm": 3,
@@ -261,7 +262,6 @@ def test_invalid_registry_bundle_is_reported(tmp_path: Path) -> None:
                 "id": "template",
                 "version": "1.0.0",
                 "product_id": "product",
-                "category_ids": ["broken"],
                 "active": True,
                 "page_width_mm": 111,
                 "page_height_mm": 154,
@@ -277,9 +277,9 @@ def test_invalid_registry_bundle_is_reported(tmp_path: Path) -> None:
     bundle = load_registry_bundle(registries_dir)
 
     assert bundle.categories == []
-    assert bundle.templates == []
+    assert len(bundle.templates) == 1
     assert any(issue.code == "registry_schema_invalid" for issue in bundle.diagnostics)
-    assert any(issue.code == "template_unknown_category" for issue in bundle.diagnostics)
+    assert any(issue.code == "product_unknown_category" for issue in bundle.diagnostics)
 
 
 def test_duplicate_template_versions_are_rejected(tmp_path: Path) -> None:
@@ -305,6 +305,7 @@ def test_duplicate_template_versions_are_rejected(tmp_path: Path) -> None:
             {
                 "id": "product",
                 "name": "Product",
+                "category_ids": ["case"],
                 "trim_width_mm": 105,
                 "trim_height_mm": 148,
                 "bleed_mm": 3,
@@ -324,7 +325,6 @@ def test_duplicate_template_versions_are_rejected(tmp_path: Path) -> None:
         "id": "template",
         "version": "1.0.0",
         "product_id": "product",
-        "category_ids": ["case"],
         "active": True,
         "page_width_mm": 111,
         "page_height_mm": 154,
@@ -365,6 +365,7 @@ def test_app_loads_registries_on_startup(tmp_path: Path, monkeypatch) -> None:
             {
                 "id": "product",
                 "name": "Product",
+                "category_ids": ["case"],
                 "trim_width_mm": 105,
                 "trim_height_mm": 148,
                 "bleed_mm": 3,
@@ -386,7 +387,6 @@ def test_app_loads_registries_on_startup(tmp_path: Path, monkeypatch) -> None:
                 "id": "template",
                 "version": "1.0.0",
                 "product_id": "product",
-                "category_ids": ["case"],
                 "active": True,
                 "page_width_mm": 111,
                 "page_height_mm": 154,

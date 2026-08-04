@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -97,7 +97,7 @@ def reset_current_draft(session: Session) -> DraftState:
         session.flush()
 
     draft.payload = _default_payload()
-    draft.updated_at = datetime.now(timezone.utc)
+    draft.updated_at = datetime.now(UTC)
     session.commit()
     session.refresh(draft)
     return _draft_state_from_record(draft)
@@ -169,8 +169,12 @@ def save_template_selection(session: Session, bundle: RegistryBundle, request: T
         raise HTTPException(status_code=404, detail="Template not found")
     if request.product_id != template.product_id:
         raise HTTPException(status_code=400, detail="Template does not belong to the selected product")
-    if request.category_id not in template.category_ids:
-        raise HTTPException(status_code=400, detail="Template does not support the selected category")
+
+    product = next((product for product in bundle.products if product.active and product.id == request.product_id), None)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    if request.category_id not in product.category_ids:
+        raise HTTPException(status_code=400, detail="Selected category does not belong to the selected product")
 
     variant_id = request.variant_id
     active_variants = [variant for variant in template.variants if variant.active]
@@ -196,7 +200,7 @@ def save_template_selection(session: Session, bundle: RegistryBundle, request: T
         "variant_id": variant_id or None,
         "layout_state": _empty_layout_state(variant_id=variant_id).model_dump(),
     }
-    draft.updated_at = datetime.now(timezone.utc)
+    draft.updated_at = datetime.now(UTC)
     session.commit()
     session.refresh(draft)
     return _draft_state_from_record(draft)
@@ -239,7 +243,7 @@ def update_layout_state(session: Session, bundle: RegistryBundle, request: Layou
 
     payload["layout_state"] = layout_state.model_dump()
     draft.payload = payload
-    draft.updated_at = datetime.now(timezone.utc)
+    draft.updated_at = datetime.now(UTC)
     session.commit()
     session.refresh(draft)
     return _draft_state_from_record(draft)
@@ -264,7 +268,7 @@ def approve_draft(session: Session, bundle: RegistryBundle, request: ApprovalReq
     if template is None:
         raise HTTPException(status_code=400, detail="A template must be selected before approval")
 
-    payload["approved_at"] = datetime.now(timezone.utc).isoformat()
+    payload["approved_at"] = datetime.now(UTC).isoformat()
     payload["approval_checklist"] = checklist
     payload["approval_snapshot"] = {
         "template_id": current_state.template_id,
@@ -273,7 +277,7 @@ def approve_draft(session: Session, bundle: RegistryBundle, request: ApprovalReq
         "layout_state": current_state.layout_state.model_dump(),
     }
     draft.payload = payload
-    draft.updated_at = datetime.now(timezone.utc)
+    draft.updated_at = datetime.now(UTC)
     session.commit()
     session.refresh(draft)
     return _draft_state_from_record(draft)
