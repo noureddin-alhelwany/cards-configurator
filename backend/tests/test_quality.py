@@ -23,7 +23,7 @@ def test_validation_reports_missing_required_fields(tmp_path: Path, monkeypatch)
         response = client.post(
             '/api/drafts/current/template',
             json={
-                'category_id': 'google_reviews',
+                'category_id': 'cat-1',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
                 'template_version': '1.6.0',
@@ -48,7 +48,7 @@ def test_validation_reports_text_overflow(tmp_path: Path, monkeypatch) -> None:
         client.post(
             '/api/drafts/current/template',
             json={
-                'category_id': 'google_reviews',
+                'category_id': 'cat-1',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
                 'template_version': '1.6.0',
@@ -82,7 +82,7 @@ def test_validation_does_not_emit_removed_quality_thresholds(tmp_path: Path, mon
         client.post(
             '/api/drafts/current/template',
             json={
-                'category_id': 'google_reviews',
+                'category_id': 'cat-1',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
                 'template_version': '1.6.0',

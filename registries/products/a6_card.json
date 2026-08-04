@@ -3,7 +3,7 @@
   "name": "Google-Bewertungskarte",
   "description": "Kunden scannen den QR-Code und gelangen direkt zur Google-Bewertung.",
   "category_ids": [
-    "google_reviews"
+    "cat-1"
   ],
   "preview_asset": "review.png",
   "active": true

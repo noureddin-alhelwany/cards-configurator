@@ -30,7 +30,7 @@ def test_order_creation_persists_and_exposes_detail(tmp_path: Path, monkeypatch)
         template_response = client.post(
             '/api/drafts/current/template',
             json={
-                'category_id': 'google_reviews',
+                'category_id': 'cat-1',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
                 'template_version': '1.6.0',
@@ -123,7 +123,7 @@ def test_failed_rendering_can_be_retried(tmp_path: Path, monkeypatch) -> None:
         template_response = client.post(
             '/api/drafts/current/template',
             json={
-                'category_id': 'google_reviews',
+                'category_id': 'cat-1',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
                 'template_version': '1.6.0',
@@ -220,7 +220,7 @@ def test_order_creation_ignores_asset_values_for_removed_fields(tmp_path: Path, 
         client.post(
             '/api/drafts/current/template',
             json={
-                'category_id': 'google_reviews',
+                'category_id': 'cat-1',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
                 'template_version': '1.6.0',

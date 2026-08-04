@@ -46,7 +46,7 @@ def test_order_pdf_pipeline_sets_boxes_preview_and_pdf(
         template_response = httpx.post(
             f"{live_server}/api/drafts/current/template",
             json={
-                'category_id': 'google_reviews',
+                'category_id': 'cat-1',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
                 'template_version': '1.6.0',
