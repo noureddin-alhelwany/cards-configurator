@@ -142,7 +142,7 @@
   display: grid;
   grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
-  border: 0.5mm solid rgba(82, 119, 164, 1);
+  border: 0.25mm solid rgba(82, 119, 164, 1);
   background: rgba(82, 119, 164, 0.18);
   pointer-events: auto;
   cursor: move;
@@ -160,7 +160,7 @@
 }
 
 .template-tool-zone-editor__zone--selected {
-  outline: 0.6mm solid rgba(47, 36, 27, 1);
+  outline: 0.3mm solid rgba(47, 36, 27, 1);
 }
 
 .template-tool-zone-editor__zone-text {
@@ -172,7 +172,7 @@
   box-sizing: border-box;
   border: 0;
   margin: 0;
-  padding: 2.2mm 2.8mm;
+  padding: 0 2.8mm;
   background: transparent;
   color: inherit;
   resize: none;

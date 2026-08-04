@@ -264,7 +264,7 @@ function offsetBox(box: BoxMm, deltaX: number, deltaY: number, widthMm: number, 
 }
 
 function resizeBox(box: BoxMm, deltaWidth: number, deltaHeight: number, widthMm: number, heightMm: number): BoxMm {
-  const minSize = 8;
+  const minSize = 2;
   const nextWidth = clamp(box.width_mm + deltaWidth, minSize, widthMm - box.x_mm);
   const nextHeight = clamp(box.height_mm + deltaHeight, minSize, heightMm - box.y_mm);
   return {
