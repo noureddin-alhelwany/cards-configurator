@@ -34,14 +34,6 @@ class ProductDefinition(BaseModel):
     name: str
     description: str | None = None
     category_ids: list[str] = Field(default_factory=list)
-    trim_width_mm: float
-    trim_height_mm: float
-    bleed_mm: float
-    recommended_dpi: int
-    warning_dpi: int
-    minimum_dpi: int
-    qr_min_width_mm: float
-    qr_min_module_mm: float
     preview_asset: str
     active: bool = True
 
@@ -51,12 +43,6 @@ class ProductDefinition(BaseModel):
         if not value:
             raise ValueError("products must reference at least one category")
         return value
-
-    @model_validator(mode="after")
-    def validate_dpi_thresholds(self) -> ProductDefinition:
-        if not (self.minimum_dpi <= self.warning_dpi <= self.recommended_dpi):
-            raise ValueError("dpi thresholds must be ordered minimum <= warning <= recommended")
-        return self
 
 
 class BoxMm(BaseModel):

@@ -32,14 +32,6 @@ test('renders the internal template tool with separate preview and source layers
         name: 'A6 Card',
         description: null,
         category_ids: ['google_reviews'],
-        trim_width_mm: 105,
-        trim_height_mm: 148,
-        bleed_mm: 3,
-        recommended_dpi: 450,
-        warning_dpi: 300,
-        minimum_dpi: 225,
-        qr_min_width_mm: 18,
-        qr_min_module_mm: 0.42,
         preview_asset: 'a6_preview.png',
         active: true,
       },
@@ -240,11 +232,7 @@ test('renders the internal template tool with separate preview and source layers
   const sourceOverlay = await screen.findByTestId('template-tool-overlay');
   expect(sourceOverlay).toHaveAttribute('src', '/proof-assets/source/template_google_reviews_bold.png');
 
-  expect(screen.getByTestId('proof-canvas').querySelector('.design-stage__document')).not.toBeNull();
   expect(screen.queryByAltText('QR: https://example.com/review')).not.toBeInTheDocument();
-  fireEvent.click(screen.getByLabelText('Hilfslinien anzeigen'));
-  expect(screen.getByTestId('proof-canvas').querySelector('.design-stage__document')).toBeNull();
-
   fireEvent.click(screen.getByRole('button', { name: 'Text erstellen' }));
 
   await screen.findByLabelText('Schrift suchen');

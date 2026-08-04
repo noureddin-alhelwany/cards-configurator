@@ -22,14 +22,6 @@ const bundle: RegistryBundle = {
       name: 'A6 Card',
       description: 'Standardformat',
       category_ids: ['google_reviews'],
-      trim_width_mm: 105,
-      trim_height_mm: 148,
-      bleed_mm: 3,
-      recommended_dpi: 450,
-      warning_dpi: 300,
-      minimum_dpi: 225,
-      qr_min_width_mm: 18,
-      qr_min_module_mm: 0.42,
       preview_asset: 'product.svg',
       active: true,
     },
@@ -71,16 +63,13 @@ describe('ProductCard', () => {
   test('shows the loaded product geometry and rendering info', () => {
     render(
       <ProductCard
-        bundle={bundle}
         product={bundle.products[0]}
         selected={true}
         onSelect={() => {}}
       />,
     );
 
-    expect(screen.getByText('105 × 148 mm')).toBeInTheDocument();
-    expect(screen.getByText('Beschnitt 3 mm')).toBeInTheDocument();
-    expect(screen.getByText('Auflösung 450 dpi, Minimum 225 dpi')).toBeInTheDocument();
-    expect(screen.getByText('1 Safe Area geladen')).toBeInTheDocument();
+    expect(screen.getByText('A6 Card')).toBeInTheDocument();
+    expect(screen.getByText('Standardformat')).toBeInTheDocument();
   });
 });

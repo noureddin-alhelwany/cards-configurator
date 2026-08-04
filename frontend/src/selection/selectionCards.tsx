@@ -1,7 +1,7 @@
-import type { RegistryBundle, ProductDefinition, TemplateDefinition, TemplateVariantDefinition, CategoryDefinition } from '../registries/types';
+import type { ProductDefinition, TemplateDefinition, TemplateVariantDefinition, CategoryDefinition } from '../registries/types';
 import DesignRenderer from '../design/DesignRenderer';
 import { buildTemplatePreviewFixture } from './selectionPreview';
-import { designStyleDescription, productBleedDescription, productDocumentFormat, productResolutionDescription, productSafeAreaDescription } from './selectionRules';
+import { designStyleDescription } from './selectionRules';
 import { uiText } from '../ui/text';
 import { previewAssetPath } from './previewAssets';
 
@@ -108,7 +108,6 @@ export function DesignCard({
 
 type ProductCardProps = {
   product: ProductDefinition;
-  bundle: RegistryBundle;
   selected: boolean;
   onSelect: (id: string) => void;
   recommended?: boolean;
@@ -117,7 +116,6 @@ type ProductCardProps = {
 
 export function ProductCard({
   product,
-  bundle,
   selected,
   onSelect,
   recommended = false,
@@ -139,10 +137,6 @@ export function ProductCard({
           <span>{product.name}</span>
         </h3>
         {product.description ? <p className="product-card__description">{product.description}</p> : null}
-        <p className="product-card__format">{productDocumentFormat(product)}</p>
-        <p className="product-card__meta">{productBleedDescription(product)}</p>
-        <p className="product-card__meta">{productResolutionDescription(product)}</p>
-        <p className="product-card__meta">{productSafeAreaDescription(bundle, product.id)}</p>
       </div>
     </button>
   );

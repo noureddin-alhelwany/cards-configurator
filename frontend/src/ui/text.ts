@@ -150,13 +150,10 @@ export const uiText = {
     },
     preview: {
       editingLabel: 'Bearbeitungsansicht',
-      editingHint: 'Die Vorschau rendert Preview und Source live auf derselben Geometrie wie die Produktion.',
     },
     controls: {
       template: 'Template',
       variant: 'Design',
-      guides: 'Hilfslinien',
-      guidesVisible: 'Hilfslinien anzeigen',
       previewVisible: 'Preview anzeigen',
       previewOpacity: 'Preview-Deckkraft',
       sourceVisible: 'Source anzeigen',

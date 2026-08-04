@@ -4,7 +4,6 @@ import type {
   LayoutState,
   ProofFixture,
   QrElementDefinition,
-  SafeAreaDefinition,
   TemplateElementDefinition,
   TemplateFieldDefinition,
   TemplateDefinition,
@@ -35,7 +34,6 @@ type Props = {
   onAssetReady?: (assetId: string) => void;
   validationIssues?: ValidationIssue[];
   variant?: RenderVariant;
-  showGuides?: boolean;
 };
 
 function clamp(value: number, minimum: number, maximum: number) {
@@ -221,26 +219,6 @@ function renderBackground(asset: string, onAssetReady?: (assetId: string) => voi
   );
 }
 
-function renderGuideLayer(safeAreas: SafeAreaDefinition[] | undefined) {
-  return (
-    <div className="design-stage__guide-layer" aria-hidden="true">
-      <div className="design-stage__document" />
-      <div className="design-stage__bleed" />
-      <div className="design-stage__trim" />
-      {safeAreas?.map((safeArea) => (
-        <div
-          key={safeArea.id}
-          className={`design-stage__safe-area design-stage__safe-area--${safeArea.kind ?? 'text'}`}
-          data-testid={`design-stage-safe-area-${safeArea.id}`}
-          style={documentBoxStyle(safeArea.box_mm)}
-        >
-          <span className="design-stage__safe-area-label">{safeArea.label ?? safeArea.kind ?? 'safeArea'}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function renderTemplateElement(
   element: TemplateElementDefinition,
   fixture: ProofFixture,
@@ -305,10 +283,8 @@ export default function DesignRenderer({
   onAssetReady,
   validationIssues,
   variant = 'screen',
-  showGuides = true,
 }: Props) {
   const production = variant === 'production';
-  const guidesVisible = showGuides && !production;
   const { page_width_mm: pageWidth, page_height_mm: pageHeight } = fixture.template;
   const encodedQrValue = resolveQrValue(fixture.template, fixture.layout_state);
   const selectedVariant = activeTemplateVariant(fixture.template, fixture.layout_state.variant_id);
@@ -334,7 +310,6 @@ export default function DesignRenderer({
       >
         {backgroundAsset ? renderBackground(backgroundAsset, onAssetReady) : null}
         {renderElementLayer(fixture, variant, validationIssues, onAssetReady, encodedQrValue)}
-        {guidesVisible ? renderGuideLayer(fixture.template.safe_areas) : null}
       </div>
     </div>
   );

@@ -290,7 +290,6 @@ function buildPreviewFixture(
 function renderTemplateToolStage({
   previewFixture,
   selectedTemplate,
-  selectedProduct,
   selectedVariant,
   zones,
   selectedZoneId,
@@ -304,7 +303,6 @@ function renderTemplateToolStage({
   fontCategories,
   filteredFontCatalog,
   fontCatalogError,
-  guidesVisible,
   previewVisible,
   previewOpacity,
   sourceVisible,
@@ -317,7 +315,6 @@ function renderTemplateToolStage({
 }: {
   previewFixture: NonNullable<ReturnType<typeof buildPreviewFixture>>;
   selectedTemplate: TemplateDefinition;
-  selectedProduct: ReturnType<typeof activeRegistryProduct>;
   selectedVariant: ReturnType<typeof activeRegistryVariant>;
   zones: EditableZone[];
   selectedZoneId: string | null;
@@ -331,7 +328,6 @@ function renderTemplateToolStage({
   fontCategories: string[];
   filteredFontCatalog: FontCatalogEntry[];
   fontCatalogError: string | null;
-  guidesVisible: boolean;
   previewVisible: boolean;
   previewOpacity: number;
   sourceVisible: boolean;
@@ -357,7 +353,6 @@ function renderTemplateToolStage({
       fontCategories={fontCategories}
       filteredFontCatalog={filteredFontCatalog}
       fontCatalogError={fontCatalogError}
-      qrMinimumWidthMm={selectedProduct?.qr_min_width_mm ?? null}
       testValues={testValues}
       frame={
         <div
@@ -365,7 +360,7 @@ function renderTemplateToolStage({
           style={stageStyle(selectedTemplate.page_width_mm, selectedTemplate.page_height_mm)}
         >
           <div className="template-tool-stage-shell__layer template-tool-stage-shell__layer--live">
-            <DesignPreviewFrame fixture={previewFixture} style={{ width: '100%', height: '100%' }} showGuides={guidesVisible} />
+            <DesignPreviewFrame fixture={previewFixture} style={{ width: '100%', height: '100%' }} />
           </div>
           {previewVisible ? (
             <img
@@ -408,7 +403,6 @@ export default function TemplateToolPage() {
   const [previewOpacity, setPreviewOpacity] = useState(DEFAULT_PREVIEW_OPACITY);
   const [sourceVisible, setSourceVisible] = useState(true);
   const [sourceOpacity, setSourceOpacity] = useState(DEFAULT_SOURCE_OPACITY);
-  const [guidesVisible, setGuidesVisible] = useState(true);
   const [zones, setZones] = useState<EditableZone[]>([]);
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [testValues, setTestValues] = useState<Record<string, string>>({});
@@ -868,18 +862,6 @@ export default function TemplateToolPage() {
                     <span className="template-tool-control__value">{sourceOpacity}%</span>
                   </label>
                 </div>
-
-                <div className="template-tool-control-cluster">
-                  <span className="template-tool-control-cluster__label">Hilfen</span>
-                  <label className="template-tool-control template-tool-control--toggle">
-                    <span>{uiText.templateTool.controls.guidesVisible}</span>
-                    <input
-                      type="checkbox"
-                      checked={guidesVisible}
-                      onChange={(event) => setGuidesVisible(event.target.checked)}
-                    />
-                  </label>
-                </div>
               </div>
             </div>
           </div>
@@ -889,7 +871,6 @@ export default function TemplateToolPage() {
               {renderTemplateToolStage({
                 previewFixture,
                 selectedTemplate,
-                selectedProduct,
                 selectedVariant,
                 zones,
                 selectedZoneId,
@@ -903,7 +884,6 @@ export default function TemplateToolPage() {
                 fontCategories,
                 filteredFontCatalog,
                 fontCatalogError,
-                guidesVisible,
                 previewVisible,
                 previewOpacity,
                 sourceVisible,

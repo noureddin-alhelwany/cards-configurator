@@ -129,7 +129,6 @@ def _probe_artwork_geometry(path: Path):
 
 def _background_diagnostics(
     record: TemplateDefinition,
-    product: ProductDefinition,
     assets_dir: Path,
 ) -> list[RegistryIssue]:
     """Check the declared background artwork against the page it has to fill.
@@ -187,41 +186,6 @@ def _background_diagnostics(
     width_value = geometry.width
     height_value = geometry.height
     aspect = width_value / height_value if height_value else 0.0
-    # The artwork is drawn with `object-fit: cover`, so the overflowing axis is cropped and
-    # the sparser axis decides the printed resolution -- the same rule as `quality.py`.
-    if geometry.kind == "raster":
-        dpi_x = width_value / (record.page_width_mm / 25.4)
-        dpi_y = height_value / (record.page_height_mm / 25.4)
-        effective_dpi = min(dpi_x, dpi_y)
-        dpi_details: dict[str, Any] = {
-            "template_id": record.id,
-            "background_asset": record.background_asset,
-            "width_px": int(width_value),
-            "height_px": int(height_value),
-            "effective_dpi": round(effective_dpi, 2),
-            "minimum_dpi": product.minimum_dpi,
-            "warning_dpi": product.warning_dpi,
-        }
-        if effective_dpi < product.minimum_dpi:
-            issues.append(
-                _issue(
-                    "template_background_dpi_too_low",
-                    record.id,
-                    f"Background artwork of '{record.id}' is below the product minimum of {product.minimum_dpi} dpi",
-                    details=dpi_details,
-                )
-            )
-        elif effective_dpi < product.warning_dpi:
-            issues.append(
-                _issue(
-                    "template_background_dpi_warning",
-                    record.id,
-                    f"Background artwork of '{record.id}' is below the recommended {product.warning_dpi} dpi",
-                    blocking=False,
-                    details=dpi_details,
-                )
-            )
-
     expected_aspect = record.page_width_mm / record.page_height_mm
     deviation = abs(aspect / expected_aspect - 1) if expected_aspect else 0.0
     if deviation > _ASPECT_WARNING_RATIO:
@@ -356,28 +320,8 @@ def load_registry_bundle(registries_dir: Path, assets_dir: Path | None = None) -
             )
             continue
 
-        product = product_by_id[record.product_id]
-        expected_width = product.trim_width_mm + 2 * product.bleed_mm
-        expected_height = product.trim_height_mm + 2 * product.bleed_mm
-        if abs(record.page_width_mm - expected_width) > 0.05 or abs(record.page_height_mm - expected_height) > 0.05:
-            diagnostics.append(
-                _issue(
-                    "template_page_mismatch",
-                    record.id,
-                    f"Template '{record.id}' page size must match product trim plus bleed",
-                    details={
-                        "template_id": record.id,
-                        "expected_width_mm": expected_width,
-                        "expected_height_mm": expected_height,
-                        "actual_width_mm": record.page_width_mm,
-                        "actual_height_mm": record.page_height_mm,
-                    },
-                )
-            )
-            continue
-
         if assets_dir is not None:
-            background_issues = _background_diagnostics(record, product, assets_dir)
+            background_issues = _background_diagnostics(record, assets_dir)
             diagnostics.extend(background_issues)
             if any(issue.blocking for issue in background_issues):
                 # A card whose artwork is missing or too soft must not be orderable.

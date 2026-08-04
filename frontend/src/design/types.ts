@@ -203,14 +203,6 @@ export type ProductDefinition = {
   name: string;
   description: string | null;
   category_ids: string[];
-  trim_width_mm: number;
-  trim_height_mm: number;
-  bleed_mm: number;
-  recommended_dpi: number;
-  warning_dpi: number;
-  minimum_dpi: number;
-  qr_min_width_mm: number;
-  qr_min_module_mm: number;
   preview_asset: string;
   active: boolean;
 };

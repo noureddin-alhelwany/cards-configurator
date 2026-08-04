@@ -2,15 +2,9 @@
   "id": "appointment_booking_card",
   "name": "Terminbuchungskarte",
   "description": "Der QR-Code führt direkt zur Online-Terminbuchung oder Terminseite.",
-  "category_ids": ["appointment_booking"],
-  "trim_width_mm": 105,
-  "trim_height_mm": 148,
-  "bleed_mm": 3,
-  "recommended_dpi": 450,
-  "warning_dpi": 300,
-  "minimum_dpi": 225,
-  "qr_min_width_mm": 18,
-  "qr_min_module_mm": 0.42,
+  "category_ids": [
+    "appointment_booking"
+  ],
   "preview_asset": "booking.png",
   "active": true
 }

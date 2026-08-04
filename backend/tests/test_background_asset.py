@@ -55,14 +55,6 @@ def _build_registries(
                 "id": "product",
                 "name": "Product",
                 "category_ids": ["case"],
-                "trim_width_mm": 105,
-                "trim_height_mm": 148,
-                "bleed_mm": 3,
-                "recommended_dpi": 450,
-                "warning_dpi": 300,
-                "minimum_dpi": 225,
-                "qr_min_width_mm": 18,
-                "qr_min_module_mm": 0.42,
                 "preview_asset": "product.png",
                 "active": True,
             }
@@ -139,35 +131,32 @@ def test_missing_artwork_removes_the_template_from_the_selection(tmp_path: Path)
     assert bundle.templates == []
 
 
-def test_a_raster_below_the_product_minimum_removes_the_template(tmp_path: Path) -> None:
-    """800 x 1110 px over 111 x 154 mm is 183 dpi, under the 225 minimum."""
+def test_a_raster_without_aspect_problems_is_accepted(tmp_path: Path) -> None:
+    """Raster size no longer matters for MVP background loading."""
     assets_dir = tmp_path / "assets"
     _write_png(assets_dir / "backgrounds" / "soft.png", (800, 1110))
     registries_dir = _build_registries(tmp_path, background="backgrounds/soft.png")
 
     bundle = load_registry_bundle(registries_dir, assets_dir)
 
-    assert "template_background_dpi_too_low" in _codes(bundle)
-    assert bundle.templates == []
-    issue = next(i for i in bundle.diagnostics if i.code == "template_background_dpi_too_low")
-    assert issue.details["effective_dpi"] < 225
+    assert bundle.diagnostics == []
+    assert len(bundle.templates) == 1
 
 
-def test_a_raster_between_minimum_and_warning_only_warns(tmp_path: Path) -> None:
-    """1100 x 1526 px is 251 dpi: printable, but below the 300 the product recommends."""
+def test_a_raster_with_valid_aspect_is_accepted(tmp_path: Path) -> None:
+    """The loader only rejects aspect mismatches now."""
     assets_dir = tmp_path / "assets"
     _write_png(assets_dir / "backgrounds" / "ok.png", (1100, 1526))
     registries_dir = _build_registries(tmp_path, background="backgrounds/ok.png")
 
     bundle = load_registry_bundle(registries_dir, assets_dir)
 
-    assert _codes(bundle) == {"template_background_dpi_warning"}
-    assert [issue.blocking for issue in bundle.diagnostics] == [False]
+    assert bundle.diagnostics == []
     assert len(bundle.templates) == 1
 
 
 def test_a_sharp_full_bleed_raster_passes(tmp_path: Path) -> None:
-    """1312 x 1820 px clears 300 dpi over 111 x 154 mm (1311 x 1819 lands at 299.98)."""
+    """A visually sharp raster still loads as before."""
     assets_dir = tmp_path / "assets"
     _write_png(assets_dir / "backgrounds" / "sharp.png", (1312, 1820))
     registries_dir = _build_registries(tmp_path, background="backgrounds/sharp.png")
@@ -179,18 +168,14 @@ def test_a_sharp_full_bleed_raster_passes(tmp_path: Path) -> None:
 
 
 def test_the_existing_mockups_would_be_rejected(tmp_path: Path) -> None:
-    """1054 x 1492 px: 241 dpi and 2% off the full-bleed aspect -- both fire.
-
-    This is the acceptance test for the rule itself: the flat mockups in the repo look like
-    finished cards, and they are exactly what must not become full-bleed artwork.
-    """
+    """The flat mockups in the repo are still rejected for aspect mismatch."""
     assets_dir = tmp_path / "assets"
     _write_png(assets_dir / "backgrounds" / "mockup.png", (1054, 1492))
     registries_dir = _build_registries(tmp_path, background="backgrounds/mockup.png")
 
     bundle = load_registry_bundle(registries_dir, assets_dir)
 
-    assert _codes(bundle) == {"template_background_dpi_warning", "template_background_aspect_mismatch"}
+    assert _codes(bundle) == {"template_background_aspect_mismatch"}
     aspect = next(i for i in bundle.diagnostics if i.code == "template_background_aspect_mismatch")
     assert aspect.details["deviation"] > 0.01
     # 2% shifts the crop; it does not ruin the card, so the template stays selectable.

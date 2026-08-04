@@ -1,4 +1,4 @@
-import type { ProductDefinition, RegistryBundle, TemplateDefinition, CategoryDefinition } from '../registries/types';
+import type { TemplateDefinition, CategoryDefinition } from '../registries/types';
 import type { ValidationIssue } from '../design/types';
 import { fieldRole } from '../design/fieldRoles';
 import type { TemplateFieldRole } from '../design/fieldRoles';
@@ -289,25 +289,4 @@ export function templateRecommendationIndex(template: TemplateDefinition, index:
     return 4;
   }
   return index;
-}
-
-export function productDocumentFormat(product: ProductDefinition) {
-  return `${product.trim_width_mm} × ${product.trim_height_mm} mm`;
-}
-
-export function productBleedDescription(product: ProductDefinition) {
-  return `Beschnitt ${product.bleed_mm} mm`;
-}
-
-export function productResolutionDescription(product: ProductDefinition) {
-  return `Auflösung ${product.recommended_dpi} dpi, Minimum ${product.minimum_dpi} dpi`;
-}
-
-export function productSafeAreaDescription(bundle: RegistryBundle, productId: string) {
-  const matchingTemplates = bundle.templates.filter((template) => template.active && template.product_id === productId);
-  const safeAreaCount = matchingTemplates.reduce((count, template) => count + (template.safe_areas?.length ?? 0), 0);
-  if (safeAreaCount === 0) {
-    return 'Safe Area wird aus dem Design geladen';
-  }
-  return `${safeAreaCount} Safe Area${safeAreaCount === 1 ? '' : 's'} geladen`;
 }

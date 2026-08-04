@@ -215,7 +215,6 @@ export default function SelectionPage() {
                     <ProductCard
                       key={product.id}
                       product={product}
-                      bundle={bundle}
                       selected={product.id === selectedProduct?.id}
                       onSelect={handleProductSelect}
                       recommended={product.id === recommendedProductId}

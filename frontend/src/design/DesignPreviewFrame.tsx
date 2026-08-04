@@ -16,13 +16,12 @@ type Props = {
   style?: CSSProperties;
   overlay?: PreviewOverlay | null;
   validationIssues?: ValidationIssue[];
-  showGuides?: boolean;
 };
 
-export default function DesignPreviewFrame({ fixture, className, style, overlay, validationIssues, showGuides }: Props) {
+export default function DesignPreviewFrame({ fixture, className, style, overlay, validationIssues }: Props) {
   return (
     <div className={['design-preview-frame', className].filter(Boolean).join(' ')} style={style}>
-      <DesignRenderer fixture={fixture} validationIssues={validationIssues} showGuides={showGuides} />
+      <DesignRenderer fixture={fixture} validationIssues={validationIssues} />
       {overlay ? (
         <img
           className="design-preview-frame__overlay"

@@ -75,14 +75,6 @@ function buildFixture(): ProofFixture {
       name: 'A6 Card',
       description: null,
       category_ids: ['google_reviews'],
-      trim_width_mm: 105,
-      trim_height_mm: 148,
-      bleed_mm: 3,
-      recommended_dpi: 450,
-      warning_dpi: 300,
-      minimum_dpi: 225,
-      qr_min_width_mm: 18,
-      qr_min_module_mm: 0.42,
       preview_asset: 'a6_preview.png',
       active: true,
     },
@@ -114,26 +106,12 @@ const blockingIssue = [
   },
 ];
 
-test('screen variant draws the print guides and the validation outline', () => {
+test('screen variant draws the validation outline', () => {
   const { container } = render(<DesignRenderer fixture={buildFixture()} validationIssues={blockingIssue} />);
 
-  expect(container.querySelector('.design-stage__document')).not.toBeNull();
-  expect(container.querySelector('.design-stage__bleed')).not.toBeNull();
-  expect(container.querySelector('.design-stage__trim')).not.toBeNull();
-  expect(container.querySelector('[data-testid="design-stage-safe-area-content"]')).not.toBeNull();
   expect(container.querySelector('.design-element--issue')).not.toBeNull();
   expect(container.querySelector('.design-stage--production')).toBeNull();
   expect(container.querySelector('[data-testid="print-page-size"]')).toBeNull();
-});
-
-test('screen variant can hide the print guides', () => {
-  const { container } = render(<DesignRenderer fixture={buildFixture()} validationIssues={blockingIssue} showGuides={false} />);
-
-  expect(container.querySelector('.design-stage__document')).toBeNull();
-  expect(container.querySelector('.design-stage__bleed')).toBeNull();
-  expect(container.querySelector('.design-stage__trim')).toBeNull();
-  expect(container.querySelector('[data-testid="design-stage-safe-area-content"]')).toBeNull();
-  expect(container.querySelector('.design-element--issue')).not.toBeNull();
 });
 
 test('production variant emits none of the preview chrome', () => {
@@ -141,11 +119,6 @@ test('production variant emits none of the preview chrome', () => {
     <DesignRenderer fixture={buildFixture()} validationIssues={blockingIssue} variant="production" />,
   );
 
-  // Trim guides would be printed ink on the cut line; the radius clips artwork at the corners.
-  expect(container.querySelector('.design-stage__bleed')).toBeNull();
-  expect(container.querySelector('.design-stage__trim')).toBeNull();
-  expect(container.querySelector('.design-stage__document')).toBeNull();
-  expect(container.querySelector('[data-testid="design-stage-safe-area-content"]')).toBeNull();
   // A validation outline must never reach the customer's card.
   expect(container.querySelector('.design-element--issue')).toBeNull();
   expect(container.querySelector('.design-stage--production')).not.toBeNull();

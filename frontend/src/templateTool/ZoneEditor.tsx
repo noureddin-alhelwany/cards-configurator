@@ -34,7 +34,6 @@ type Props = {
   fontCategories: string[];
   filteredFontCatalog: FontCatalogEntry[];
   fontCatalogError: string | null;
-  qrMinimumWidthMm: number | null;
   testValues: Record<string, string>;
   frame: ReactNode;
   onSelectZone: (zoneId: string | null) => void;
@@ -320,7 +319,6 @@ export default function ZoneEditor({
   fontCategories,
   filteredFontCatalog,
   fontCatalogError,
-  qrMinimumWidthMm,
   testValues,
   frame,
   onSelectZone,
@@ -842,7 +840,6 @@ export default function ZoneEditor({
               <div className="template-tool-zone-editor__section">
                 <div className="template-tool-card__heading">
                   <h3>QR-Konfiguration</h3>
-                  <p>Mindestbreite: {qrMinimumWidthMm?.toFixed(1) ?? 'n/a'} mm</p>
                 </div>
                 <label className="template-tool-control">
                   <span>Test-URL</span>
@@ -905,11 +902,6 @@ export default function ZoneEditor({
                 <p className="template-tool-zone-editor__status">
                   Die Zone selbst definiert die Größe. Der Printpfad erzeugt den QR-Code später im Backend.
                 </p>
-                {qrMinimumWidthMm != null && selectedZone.box_mm.width_mm < qrMinimumWidthMm ? (
-                  <p className="template-tool-zone-editor__status template-tool-zone-editor__status--warning">
-                    Die QR-Breite liegt unter dem Produktminimum von {qrMinimumWidthMm.toFixed(1)} mm.
-                  </p>
-                ) : null}
                 {contrastRatio(qrZoneOrDefault(selectedZone).color, qrZoneOrDefault(selectedZone).background) != null &&
                 (contrastRatio(qrZoneOrDefault(selectedZone).color, qrZoneOrDefault(selectedZone).background) ?? 0) < 3 ? (
                   <p className="template-tool-zone-editor__status template-tool-zone-editor__status--warning">
