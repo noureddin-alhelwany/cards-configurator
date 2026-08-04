@@ -55,7 +55,7 @@ function templateLabel(template: TemplateDefinition) {
 }
 
 function templateSubtitle(template: TemplateDefinition) {
-  return `${template.product_id} · ${activeRegistryVariants(template).length} Varianten`;
+  return `${template.product_id} · ${activeRegistryVariants(template).length} Designs`;
 }
 
 function assetUrl(asset: string | null | undefined) {
@@ -466,11 +466,10 @@ export default function TemplateToolPage() {
       return;
     }
 
-    const variants = activeRegistryVariants(selectedTemplate);
-    const nextVariantId =
-      variants.find((variant) => variant.id === selectedVariantId)?.id ?? variants[0]?.id ?? null;
-    if (nextVariantId !== selectedVariantId) {
-      setSelectedVariantId(nextVariantId);
+    const designs = activeRegistryVariants(selectedTemplate);
+    const nextDesignId = designs.find((design) => design.id === selectedVariantId)?.id ?? designs[0]?.id ?? null;
+    if (nextDesignId !== selectedVariantId) {
+      setSelectedVariantId(nextDesignId);
     }
   }, [selectedTemplate, selectedVariantId]);
 
@@ -799,15 +798,15 @@ export default function TemplateToolPage() {
             <div className="template-tool-controls template-tool-controls--stack">
               <div className="template-tool-control-group template-tool-control-group--primary">
                 <label className="template-tool-control">
-                  <span>{uiText.templateTool.controls.variant}</span>
+                  <span>{uiText.templateTool.controls.design}</span>
                   <select
                     value={selectedVariantId ?? ''}
                     onChange={(event) => setSelectedVariantId(event.target.value)}
                   >
                     {selectedTemplate
-                      ? activeRegistryVariants(selectedTemplate).map((variant) => (
-                          <option key={variant.id} value={variant.id}>
-                            {variant.name}
+                      ? activeRegistryVariants(selectedTemplate).map((design) => (
+                          <option key={design.id} value={design.id}>
+                            {design.name}
                           </option>
                         ))
                       : null}

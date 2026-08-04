@@ -240,8 +240,8 @@ export function OrderSnapshotSection({
           { label: uiText.order.created.snapshotCustomer, value: displayName },
           { label: uiText.order.created.snapshotCategory, value: categoryName },
           { label: uiText.order.created.snapshotProduct, value: productName },
-          { label: uiText.order.created.snapshotDesign, value: templateName },
-          { label: uiText.order.created.snapshotVariant, value: variantName },
+          { label: uiText.order.created.snapshotTemplate, value: templateName },
+          { label: uiText.order.created.snapshotDesign, value: variantName },
           { label: uiText.order.created.snapshotApprovedAt, value: formatLocalizedDate(approvedAt) },
           { label: uiText.order.created.snapshotRenderEngine, value: renderEngineVersion },
           {

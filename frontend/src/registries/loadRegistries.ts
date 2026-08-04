@@ -16,7 +16,6 @@ export async function loadRegistries(): Promise<RegistryBundle> {
     templates: bundle.templates.map((template) => ({
       ...template,
       designs: template.designs ?? template.variants ?? [],
-      variants: template.variants ?? template.designs ?? [],
     })),
   };
 }

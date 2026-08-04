@@ -227,7 +227,7 @@ export function friendlyValidationMessage(issue: ValidationIssue, fieldName: str
     case 'required_field_missing':
       return `${fieldName} fehlt noch.`;
     case 'text_overflow':
-      return `${fieldName} ist für das Layout zu lang. Kürze den Text oder wähle eine andere Variante.`;
+      return `${fieldName} ist für das Layout zu lang. Kürze den Text oder wähle ein anderes Design.`;
     case 'text_too_long':
       return `${fieldName} überschreitet die erlaubte Länge.`;
     case 'image_dpi_warning':

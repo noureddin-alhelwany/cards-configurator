@@ -153,7 +153,7 @@ export const uiText = {
     },
     controls: {
       template: 'Template',
-      variant: 'Design',
+      design: 'Design',
       previewVisible: 'Preview anzeigen',
       previewOpacity: 'Preview-Deckkraft',
       sourceVisible: 'Source anzeigen',
@@ -204,8 +204,8 @@ export const uiText = {
       snapshotCustomer: 'Kunde',
       snapshotCategory: 'Kategorie',
       snapshotProduct: 'Produkt',
+      snapshotTemplate: 'Vorlage',
       snapshotDesign: 'Design',
-      snapshotVariant: 'Variante',
       snapshotApprovedAt: 'Freigabezeitpunkt',
       snapshotRenderEngine: 'Render Engine',
       snapshotValidation: 'Validierung',
