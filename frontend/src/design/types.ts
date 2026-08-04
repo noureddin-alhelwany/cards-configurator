@@ -143,6 +143,7 @@ export type TemplateDesignDefinition = {
   source_asset?: string | null;
   background_asset?: string | null;
   accent_color?: string | null;
+  fonts?: FontDefinition[];
 };
 
 export type TemplateDefinition = {
@@ -158,15 +159,9 @@ export type TemplateDefinition = {
   page_height_mm: number;
   bleed_mm: number;
   reference_asset?: string | null;
-  preview_asset: string | null;
-  source_asset?: string | null;
-  /** Full-bleed artwork drawn under every element, served from `/proof-assets/`. */
-  background_asset: string | null;
-  background_asset_sha256: string | null;
   safe_areas?: SafeAreaDefinition[];
   text_rules?: TextRuleDefinition[];
   qr_rules?: QrRuleDefinition[];
-  fonts: FontDefinition[];
   elements: TemplateElementDefinition[];
   designs?: TemplateDesignDefinition[];
 };

@@ -96,7 +96,6 @@ def test_update_template_from_svg_writes_slot_boxes_and_design(tmp_path: Path) -
     )
 
     updated = json.loads(output_path.read_text(encoding="utf-8"))
-    assert updated["background_asset"] == "backgrounds/proof_a6_card-1.6.0-classic.svg"
     assert updated["elements"][0]["box_mm"] == {
         "x_mm": 12.0,
         "y_mm": 14.0,
@@ -111,7 +110,10 @@ def test_update_template_from_svg_writes_slot_boxes_and_design(tmp_path: Path) -
         "source_asset": "backgrounds/proof_a6_card-1.6.0-classic.svg",
         "background_asset": "backgrounds/proof_a6_card-1.6.0-classic.svg",
         "accent_color": "#315a86",
+        "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
     }
+    assert "source_asset" not in updated
+    assert "background_asset" not in updated
 
 
 def test_update_template_from_svg_writes_reference_artwork_and_checks_geometry(tmp_path: Path) -> None:
@@ -157,8 +159,8 @@ def test_update_template_from_svg_writes_reference_artwork_and_checks_geometry(t
 
     updated = json.loads(output_path.read_text(encoding="utf-8"))
     assert updated["reference_asset"] == "reference/proof_a6_card-reference.svg"
-    assert updated["source_asset"] == "backgrounds/proof_a6_card-background.svg"
-    assert updated["background_asset"] == "backgrounds/proof_a6_card-background.svg"
+    assert "source_asset" not in updated
+    assert "background_asset" not in updated
 
 
 def test_update_template_from_svg_rejects_mismatched_reference_geometry(tmp_path: Path) -> None:

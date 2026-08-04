@@ -1,7 +1,7 @@
 import type { ProductDefinition, TemplateDefinition, TemplateDesignDefinition, CategoryDefinition } from '../registries/types';
 import DesignRenderer from '../design/DesignRenderer';
 import { buildTemplatePreviewFixture } from './selectionPreview';
-import { designStyleDescription } from './selectionRules';
+import { activeDesigns, designStyleDescription } from './selectionRules';
 import { uiText } from '../ui/text';
 import { previewAssetPath } from './previewAssets';
 
@@ -17,6 +17,7 @@ type TemplateCardProps = {
 
 export function TemplateCard({ template, product, category, selected, recommended = false, onSelect, disabled = false }: TemplateCardProps) {
   const previewFixture = buildTemplatePreviewFixture(template, product, category);
+  const previewDesign = activeDesigns(template)[0] ?? null;
 
   return (
     <button
@@ -28,8 +29,8 @@ export function TemplateCard({ template, product, category, selected, recommende
       aria-label={`${uiText.selection.sections.design} auswählen: ${template.name ?? uiText.common.designFallback}`}
     >
       <div className="template-card__preview">
-        {template.preview_asset ? (
-          <img className="template-card__image" src={previewAssetPath(template.preview_asset)} alt="" />
+        {previewDesign?.preview_asset ? (
+          <img className="template-card__image" src={previewAssetPath(previewDesign.preview_asset)} alt="" />
         ) : previewFixture ? (
           <div className="template-card__preview-stage">
             <DesignRenderer fixture={previewFixture} />

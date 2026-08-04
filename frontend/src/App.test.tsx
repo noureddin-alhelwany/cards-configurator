@@ -3,6 +3,16 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import App from './App';
 
+const sharedFonts = [
+  {
+    id: 'proof-sans',
+    family: 'Proof Sans',
+    file: '/fonts/ProofSans.ttf',
+    weight: 400,
+    style: 'normal',
+  },
+];
+
 afterEach(() => {
   vi.unstubAllGlobals();
   window.history.pushState({}, '', '/');
@@ -39,14 +49,6 @@ test('renders the registry selection flow and keeps only available products visi
     page_width_mm: 111,
     page_height_mm: 154,
     bleed_mm: 3,
-    fonts: [
-      {
-        family: 'Proof Sans',
-        file: '/fonts/ProofSans.ttf',
-        weight: 400,
-        style: 'normal',
-      },
-    ],
     elements: [
       {
         kind: 'text',
@@ -172,7 +174,6 @@ test('renders the registry selection flow and keeps only available products visi
         id: 'proof_a6_card',
         version: '1.6.0',
         name: 'Google Reviews Host',
-        preview_asset: 'template_google_reviews_bold.png',
         product_id: 'a6_card',
         active: true,
         fields: [
@@ -211,24 +212,28 @@ test('renders the registry selection flow and keeps only available products visi
             name: 'Bold',
             active: true,
             preview_asset: 'template_google_reviews_bold.png',
+            fonts: sharedFonts,
           },
           {
             id: 'minimum',
             name: 'Minimum',
             active: true,
             preview_asset: 'template_google_reviews_minimum.png',
+            fonts: sharedFonts,
           },
           {
             id: 'warm',
             name: 'Warm',
             active: true,
             preview_asset: 'template_google_reviews_warm.png',
+            fonts: sharedFonts,
           },
           {
             id: 'premium',
             name: 'Premium',
             active: true,
             preview_asset: 'template_google_reviews_premium.png',
+            fonts: sharedFonts,
           },
         ],
       },
@@ -237,7 +242,6 @@ test('renders the registry selection flow and keeps only available products visi
         id: 'proof_a6_wedding',
         version: '1.0.0',
         name: 'Wedding Reviews',
-        preview_asset: 'template_google_reviews_classic.png',
         product_id: 'a6_card',
         active: false,
         fields: [],
@@ -645,7 +649,6 @@ test('selecting a product advances directly to the design step', async () => {
         id: 'proof_a6_card',
         version: '1.0.0',
         name: 'Google Reviews Classic',
-        preview_asset: 'template_google_reviews_classic.png',
         product_id: 'a6_card',
         active: true,
         fields: [
@@ -670,20 +673,19 @@ test('selecting a product advances directly to the design step', async () => {
             name: 'Logo',
             active: true,
             preview_asset: 'template_google_reviews_classic.png',
+            fonts: sharedFonts,
           },
         ],
         elements: [],
         page_width_mm: 111,
         page_height_mm: 154,
         bleed_mm: 3,
-        fonts: [],
       },
       {
         schema_version: 1,
         id: 'proof_dl_card',
         version: '1.0.0',
         name: 'Google Reviews Slim',
-        preview_asset: 'booking.png',
         product_id: 'dl_card',
         active: true,
         fields: [
@@ -708,13 +710,13 @@ test('selecting a product advances directly to the design step', async () => {
             name: 'Logo',
             active: true,
             preview_asset: 'booking.png',
+            fonts: sharedFonts,
           },
         ],
         elements: [],
         page_width_mm: 99,
         page_height_mm: 210,
         bleed_mm: 3,
-        fonts: [],
       },
     ],
   };
@@ -838,7 +840,6 @@ test('approves a draft and locks editing afterward', async () => {
         id: 'proof_a6_card',
         version: '1.0.0',
         name: 'Google Reviews Classic',
-        preview_asset: 'template_google_reviews_classic.png',
         product_id: 'a6_card',
         category_ids: ['google_reviews'],
         active: true,
@@ -871,13 +872,13 @@ test('approves a draft and locks editing afterward', async () => {
             name: 'Logo',
             active: true,
             preview_asset: 'template_google_reviews_classic.png',
+            fonts: sharedFonts,
           },
         ],
         elements: [],
         page_width_mm: 111,
         page_height_mm: 154,
         bleed_mm: 3,
-        fonts: [],
       },
     ],
   };
@@ -1213,7 +1214,6 @@ test('renders registry field copy for the review link and offers no example-link
         version: '1.6.0',
         name: 'Google Reviews Host',
         description: 'Kräftige Google-Bewertungsvorlage.',
-        preview_asset: 'template_google_reviews_bold.png',
         product_id: 'a6_card',
         active: true,
         fields: [
@@ -1272,13 +1272,13 @@ test('renders registry field copy for the review link and offers no example-link
             name: 'Bold',
             active: true,
             preview_asset: 'template_google_reviews_bold.png',
+            fonts: sharedFonts,
           },
         ],
         elements: [],
         page_width_mm: 111,
         page_height_mm: 154,
         bleed_mm: 3,
-        fonts: [],
       },
     ],
   };

@@ -4,9 +4,6 @@
   "version": "1.6.0",
   "name": "Google Reviews",
   "description": "Eine Vorlage mit vier Designs, einem echten Wortmarken-Slot und den restlichen Text- und QR-Slots.",
-  "preview_asset": "preview/template_google_reviews_premium.png",
-  "source_asset": "source/template_google_reviews_premium.png",
-  "background_asset": "backgrounds/proof_a6_card-1.6.0-premium.svg",
   "product_id": "a6_card",
   "active": true,
   "page_width_mm": 111,
@@ -103,15 +100,6 @@
       "placeholder": "Google-Bewertungslink einfügen",
       "suggestions": [],
       "default_value": ""
-    }
-  ],
-  "fonts": [
-    {
-      "id": "proof-sans",
-      "family": "Proof Sans",
-      "file": "/fonts/ProofSans.ttf",
-      "weight": 400,
-      "style": "normal"
     }
   ],
   "elements": [
@@ -252,7 +240,16 @@
       "preview_asset": "preview/template_google_reviews_bold.png",
       "source_asset": "source/template_google_reviews_bold.png",
       "background_asset": "backgrounds/proof_a6_card-1.6.0-bold.svg",
-      "accent_color": "#28486a"
+      "accent_color": "#28486a",
+      "fonts": [
+        {
+          "id": "proof-sans",
+          "family": "Proof Sans",
+          "file": "/fonts/ProofSans.ttf",
+          "weight": 400,
+          "style": "normal"
+        }
+      ]
     },
     {
       "id": "minimum",
@@ -261,7 +258,16 @@
       "preview_asset": "preview/template_google_reviews_minimum.png",
       "source_asset": "source/template_google_reviews_minimum.png",
       "background_asset": "backgrounds/proof_a6_card-1.6.0-minimum.svg",
-      "accent_color": "#6d7b58"
+      "accent_color": "#6d7b58",
+      "fonts": [
+        {
+          "id": "proof-sans",
+          "family": "Proof Sans",
+          "file": "/fonts/ProofSans.ttf",
+          "weight": 400,
+          "style": "normal"
+        }
+      ]
     },
     {
       "id": "warm",
@@ -270,7 +276,16 @@
       "preview_asset": "preview/template_google_reviews_warm.png",
       "source_asset": "source/template_google_reviews_warm.png",
       "background_asset": "backgrounds/proof_a6_card-1.6.0-warm.svg",
-      "accent_color": "#a67b4d"
+      "accent_color": "#a67b4d",
+      "fonts": [
+        {
+          "id": "proof-sans",
+          "family": "Proof Sans",
+          "file": "/fonts/ProofSans.ttf",
+          "weight": 400,
+          "style": "normal"
+        }
+      ]
     },
     {
       "id": "premium",
@@ -279,7 +294,16 @@
       "preview_asset": "preview/template_google_reviews_premium.png",
       "source_asset": "source/template_google_reviews_premium.png",
       "background_asset": "backgrounds/proof_a6_card-1.6.0-premium.svg",
-      "accent_color": "#6b4e33"
+      "accent_color": "#6b4e33",
+      "fonts": [
+        {
+          "id": "proof-sans",
+          "family": "Proof Sans",
+          "file": "/fonts/ProofSans.ttf",
+          "weight": 400,
+          "style": "normal"
+        }
+      ]
     }
   ]
 }

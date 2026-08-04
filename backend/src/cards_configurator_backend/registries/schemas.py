@@ -194,7 +194,9 @@ class TemplateDesignDefinition(BaseModel):
     preview_asset: str | None = None
     source_asset: str | None = None
     background_asset: str | None = None
+    background_asset_sha256: str | None = None
     accent_color: str | None = None
+    fonts: list[FontDefinition] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def sync_source_asset(self) -> TemplateDesignDefinition:
@@ -233,27 +235,21 @@ class TemplateDefinition(BaseModel):
     page_height_mm: float
     bleed_mm: float
     reference_asset: str | None = None
-    preview_asset: str | None = None
-    source_asset: str | None = None
-    # Full-bleed artwork under every element. Deliberately not an element: without a box in
-    # the JSON its geometry cannot drift from `page_*_mm`, and no `kind` switch grows a case.
-    # Optional with a default, because order snapshots are re-validated against this model
-    # (`docs/DOMAIN_MODEL.md`) -- a required field would break every existing order.
-    background_asset: str | None = None
-    # Tripwire, not a lock: a replaced file would retroactively change a year-old order, so
-    # the loader digests the artwork at startup and warns when it no longer matches.
-    background_asset_sha256: str | None = None
     fields: list[TemplateFieldDefinition] = Field(default_factory=list)
     safe_areas: list[SafeAreaDefinition] = Field(default_factory=list)
     text_rules: list[TextRuleDefinition] = Field(default_factory=list)
     qr_rules: list[QrRuleDefinition] = Field(default_factory=list)
-    fonts: list[FontDefinition]
     elements: list[RenderableElementDefinition]
     designs: list[TemplateDesignDefinition] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def normalize_font_ids(self) -> TemplateDefinition:
-        font_ids = {font.id or font.family for font in self.fonts}
+        font_ids: set[str] = set()
+        for design in self.designs:
+            if not design.active:
+                continue
+            for font in design.fonts:
+                font_ids.add(font.id or font.family)
 
         for safe_area in self.safe_areas:
             for variable in safe_area.variables:
@@ -273,9 +269,7 @@ class TemplateDefinition(BaseModel):
             if element.kind != "text":
                 continue
             if not font_ids:
-                raise ValueError(
-                    f"text element '{element.id}' requires a registered font but template '{self.id}' defines none"
-                )
+                raise ValueError(f"text element '{element.id}' requires a registered font but template '{self.id}' defines none")
             if element.font_family_id is None:
                 raise ValueError(f"text element '{element.id}' needs a font_family_id")
             if element.font_family_id not in font_ids:
@@ -288,14 +282,6 @@ class TemplateDefinition(BaseModel):
             raise ValueError("page dimensions must be positive")
         if self.bleed_mm < 0:
             raise ValueError("bleed must be non-negative")
-        return self
-
-    @model_validator(mode="after")
-    def sync_source_asset(self) -> TemplateDefinition:
-        if self.source_asset is None and self.background_asset is not None:
-            self.source_asset = self.background_asset
-        if self.background_asset is None and self.source_asset is not None:
-            self.background_asset = self.source_asset
         return self
 
 

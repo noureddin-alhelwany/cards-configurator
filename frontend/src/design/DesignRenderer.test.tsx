@@ -20,9 +20,6 @@ function buildFixture(): ProofFixture {
       version: '1.6.0',
       name: 'Google Reviews',
       description: null,
-      preview_asset: null,
-      background_asset: null,
-      background_asset_sha256: null,
       product_id: 'a6_card',
       active: true,
       page_width_mm: 111,
@@ -35,8 +32,6 @@ function buildFixture(): ProofFixture {
           label: 'Safe Area',
         },
       ],
-      fonts: [],
-      designs: [],
       fields: [
         {
           id: 'headline',
@@ -67,6 +62,26 @@ function buildFixture(): ProofFixture {
           align: 'left',
           valign: 'top',
           min_font_size_mm: null,
+        },
+      ],
+      designs: [
+        {
+          id: 'bold',
+          name: 'Bold',
+          active: true,
+          preview_asset: null,
+          source_asset: null,
+          background_asset: null,
+          accent_color: null,
+          fonts: [
+            {
+              id: 'proof-sans',
+              family: 'Proof Sans',
+              file: '/fonts/ProofSans.ttf',
+              weight: 400,
+              style: 'normal',
+            },
+          ],
         },
       ],
     },
@@ -200,21 +215,22 @@ test('the QR falls back to the template value when the field is empty', () => {
 
 function fixtureWithBackground(asset = 'template_google_reviews_bold_preview.png') {
   const fixture = fixtureWithQr();
-  fixture.template.background_asset = asset;
+  fixture.template.designs![0].background_asset = asset;
   return fixture;
 }
 
 function fixtureWithVariantBackground() {
   const fixture = fixtureWithQr();
-  fixture.template.background_asset = 'template_google_reviews_bold_preview.png';
   fixture.template.designs = [
     {
       id: 'classic',
       name: 'Classic',
       active: true,
       preview_asset: null,
+      source_asset: null,
       background_asset: 'template_google_reviews_warm_preview.png',
       accent_color: '#315a86',
+      fonts: fixture.template.designs![0].fonts,
     },
   ];
   fixture.layout_state.design_id = 'classic';

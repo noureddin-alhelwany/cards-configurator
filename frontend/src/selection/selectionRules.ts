@@ -84,7 +84,7 @@ export function selectedDesignName(template: TemplateDefinition, variantId: stri
 }
 
 export function activeDesigns(template: TemplateDefinition) {
-  return (template.designs ?? template.designs ?? []).filter((variant) => variant.active);
+  return (template.designs ?? []).filter((variant) => variant.active);
 }
 
 export function fieldLabel(field: TemplateDefinition['fields'][number], index: number) {

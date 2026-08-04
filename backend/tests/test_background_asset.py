@@ -70,7 +70,6 @@ def _build_registries(
         "page_width_mm": 111,
         "page_height_mm": 154,
         "bleed_mm": 3,
-        "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "ProofSans.ttf", "weight": 400, "style": "normal"}],
         "fields": [],
         "elements": [
             {
@@ -87,13 +86,24 @@ def _build_registries(
                 "align": "left",
             }
         ],
+        "designs": [
+            {
+                "id": "default",
+                "name": "Default",
+                "active": True,
+                "preview_asset": None,
+                "source_asset": None,
+                "background_asset": background,
+                "background_asset_sha256": sha256,
+                "accent_color": None,
+                "fonts": [
+                    {"id": "proof-sans", "family": "Proof Sans", "file": "ProofSans.ttf", "weight": 400, "style": "normal"}
+                ],
+            }
+        ],
     }
-    if background is not None:
-        template["background_asset"] = background
     if reference is not None:
         template["reference_asset"] = reference
-    if sha256 is not None:
-        template["background_asset_sha256"] = sha256
     (registries_dir / "templates" / "template.json").write_text(json.dumps(template), encoding="utf-8")
     return registries_dir
 
@@ -108,7 +118,7 @@ def test_a_template_without_artwork_is_unaffected(tmp_path: Path) -> None:
 
     assert bundle.diagnostics == []
     assert [template.id for template in bundle.templates] == ["template"]
-    assert bundle.templates[0].background_asset is None
+    assert bundle.templates[0].designs[0].background_asset is None
 
 
 def test_artwork_checks_are_skipped_without_an_assets_dir(tmp_path: Path) -> None:

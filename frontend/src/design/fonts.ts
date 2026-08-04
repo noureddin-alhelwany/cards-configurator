@@ -6,11 +6,27 @@ function fontKey(font: FontDefinition) {
   return [font.id ?? font.family, font.family, font.file, font.weight, font.style].join(':');
 }
 
+export function templateFontDefinitions(template: TemplateDefinition): FontDefinition[] {
+  const fonts: FontDefinition[] = [];
+  const seen = new Set<string>();
+  for (const design of template.designs ?? []) {
+    for (const font of design.fonts ?? []) {
+      const key = font.id ?? font.family;
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      fonts.push(font);
+    }
+  }
+  return fonts;
+}
+
 export function fontDefinitionForId(template: TemplateDefinition, fontFamilyId: string | null | undefined) {
   if (!fontFamilyId) {
     return null;
   }
-  return template.fonts.find((font) => (font.id ?? font.family) === fontFamilyId) ?? null;
+  return templateFontDefinitions(template).find((font) => (font.id ?? font.family) === fontFamilyId) ?? null;
 }
 
 export function resolveFontFamilyName(
@@ -26,7 +42,7 @@ export function resolveFontFamilyName(
 }
 
 export async function ensureTemplateFontsLoaded(template: TemplateDefinition) {
-  await ensureFontDefinitionsLoaded(template.fonts);
+  await ensureFontDefinitionsLoaded(templateFontDefinitions(template));
 }
 
 export async function ensureFontDefinitionsLoaded(fonts: FontDefinition[]) {

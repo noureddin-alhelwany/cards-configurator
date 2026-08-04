@@ -92,21 +92,14 @@ function resolvePreviewAsset(
   selectedTemplate: TemplateDefinition | null,
   selectedVariant: ReturnType<typeof activeRegistryDesign>,
 ) {
-  return assetUrl(selectedVariant?.preview_asset ?? selectedTemplate?.preview_asset ?? null);
+  return assetUrl(selectedVariant?.preview_asset ?? null);
 }
 
 function resolveSourceAsset(
   selectedTemplate: TemplateDefinition | null,
   selectedVariant: ReturnType<typeof activeRegistryDesign>,
 ) {
-  return assetUrl(
-    selectedVariant?.source_asset ??
-      selectedVariant?.background_asset ??
-      selectedTemplate?.source_asset ??
-      selectedTemplate?.reference_asset ??
-      selectedTemplate?.background_asset ??
-      null,
-  );
+  return assetUrl(selectedVariant?.source_asset ?? selectedVariant?.background_asset ?? null);
 }
 
 function stageStyle(
@@ -264,18 +257,17 @@ function buildPreviewFixture(
   }
 
   fixture.layout_state.text_values = previewTextValues;
-    fixture.template = {
-      ...fixture.template,
-      fonts: fontDefinitions,
-      safe_areas: zones,
+  fixture.template = {
+    ...fixture.template,
+    safe_areas: zones,
+    designs: (fixture.template.designs ?? []).map((design) => ({
+      ...design,
+      fonts: design.fonts ?? fontDefinitions,
+      preview_asset: null,
       background_asset: null,
       source_asset: null,
-      designs: (fixture.template.designs ?? []).map((design) => ({
-        ...design,
-        background_asset: null,
-        source_asset: null,
-      })),
-    };
+    })),
+  };
   if (selectedVariant) {
     fixture.layout_state.design_id = selectedVariant.id;
   }
@@ -459,6 +451,8 @@ export default function TemplateToolPage() {
     }
     return templates.find((template) => template.id === selectedTemplateId) ?? templates[0] ?? null;
   }, [selectedTemplateId, templates]);
+  const selectedVariant = useMemo(() => activeRegistryDesign(selectedTemplate, selectedVariantId), [selectedTemplate, selectedVariantId]);
+  const selectedVariantFonts = useMemo(() => selectedVariant?.fonts ?? [], [selectedVariant?.fonts]);
 
   useEffect(() => {
     if (!selectedTemplate) {
@@ -486,10 +480,10 @@ export default function TemplateToolPage() {
       setTestValues({});
       return;
     }
-    const nextZones = normalizeZones(selectedTemplate, fontOptionsFromDefinitions(selectedTemplate.fonts));
+    const nextZones = normalizeZones(selectedTemplate, fontOptionsFromDefinitions(selectedVariantFonts));
     setZones(nextZones);
     setSelectedZoneId(nextZones[0]?.id ?? null);
-  }, [selectedTemplate]);
+  }, [selectedTemplate, selectedVariantFonts]);
 
   useEffect(() => {
     setTestValues((current) => {
@@ -521,14 +515,10 @@ export default function TemplateToolPage() {
     [selectedProduct, state.bundle],
   );
 
-  const selectedVariant = useMemo(() => {
-    return activeRegistryDesign(selectedTemplate, selectedVariantId);
-  }, [selectedTemplate, selectedVariantId]);
-
   const previewAsset = resolvePreviewAsset(selectedTemplate, selectedVariant);
   const sourceAsset = resolveSourceAsset(selectedTemplate, selectedVariant);
   const availableFonts = useMemo<FontOption[]>(() => {
-    const fonts = fontOptionsFromDefinitions(selectedTemplate?.fonts ?? []);
+    const fonts = fontOptionsFromDefinitions(selectedVariantFonts);
     for (const font of fontCatalog) {
       if (!fonts.some((existing) => (existing.id ?? existing.family) === font.id)) {
         fonts.push({
@@ -538,7 +528,7 @@ export default function TemplateToolPage() {
       }
     }
     return fonts;
-  }, [fontCatalog, selectedTemplate?.fonts]);
+  }, [fontCatalog, selectedVariantFonts]);
 
   const fontCategories = useMemo(
     () =>
@@ -586,7 +576,7 @@ export default function TemplateToolPage() {
     }
 
     const neededFontIds = new Set<string>();
-    for (const font of selectedTemplate.fonts ?? []) {
+    for (const font of selectedVariantFonts) {
       if (font.id) {
         neededFontIds.add(font.id);
       }
@@ -602,7 +592,7 @@ export default function TemplateToolPage() {
       }
     }
 
-    const templateFontIds = new Set((selectedTemplate.fonts ?? []).map((font) => font.id ?? font.family));
+    const templateFontIds = new Set(selectedVariantFonts.map((font) => font.id ?? font.family));
     const missingFontIds = [...neededFontIds].filter((fontId) => !templateFontIds.has(fontId) && !fontFacesById[fontId]);
     if (missingFontIds.length === 0) {
       return;
@@ -632,7 +622,7 @@ export default function TemplateToolPage() {
     return () => {
       active = false;
     };
-  }, [filteredFontCatalog, fontFacesById, selectedTemplate, zones]);
+  }, [filteredFontCatalog, fontFacesById, selectedTemplate, selectedVariantFonts, zones]);
 
   useEffect(() => {
     if (!selectedTemplate) {
@@ -640,7 +630,7 @@ export default function TemplateToolPage() {
     }
 
     const selectedAndVisibleFontIds = new Set<string>();
-    for (const font of selectedTemplate.fonts ?? []) {
+    for (const font of selectedVariantFonts) {
       if (font.id) {
         selectedAndVisibleFontIds.add(font.id);
       }
@@ -668,17 +658,17 @@ export default function TemplateToolPage() {
       }
       return changed ? next : current;
     });
-  }, [filteredFontCatalog, selectedTemplate, zones]);
+  }, [filteredFontCatalog, selectedTemplate, selectedVariantFonts, zones]);
 
   const selectedFontDefinitions = useMemo(() => {
-    const definitions = [...(selectedTemplate?.fonts ?? [])];
+    const definitions = [...selectedVariantFonts];
     for (const face of Object.values(fontFacesById)) {
       if (!definitions.some((font) => (font.id ?? font.family) === (face.id ?? face.family))) {
         definitions.push(face);
       }
     }
     return definitions;
-  }, [fontFacesById, selectedTemplate?.fonts]);
+  }, [fontFacesById, selectedVariantFonts]);
 
   const previewFixture = useMemo(() => {
     if (!selectedTemplate || !selectedProduct || !selectedCategory) {
@@ -760,7 +750,7 @@ export default function TemplateToolPage() {
                   <span className="template-tool-list__name">{templateLabel(template)}</span>
                   <span className="template-tool-list__meta">{templateSubtitle(template)}</span>
                   <span className="template-tool-list__source">
-                    {template.source_asset || template.background_asset ? 'Source vorhanden' : 'Keine Source'}
+                    {template.designs?.some((design) => design.source_asset || design.background_asset) ? 'Source vorhanden' : 'Keine Source'}
                   </span>
                 </button>
               );

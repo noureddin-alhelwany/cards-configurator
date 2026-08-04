@@ -39,9 +39,6 @@ const bundle: RegistryBundle = {
       page_width_mm: 111,
       page_height_mm: 154,
       bleed_mm: 3,
-      preview_asset: null,
-      background_asset: null,
-      background_asset_sha256: null,
       safe_areas: [
         {
           id: 'content-safe-area',
@@ -51,9 +48,19 @@ const bundle: RegistryBundle = {
       ],
       text_rules: [],
       qr_rules: [],
-      fonts: [],
       elements: [],
-      designs: [],
+      designs: [
+        {
+          id: 'bold',
+          name: 'Bold',
+          active: true,
+          preview_asset: 'template-bold.png',
+          source_asset: null,
+          background_asset: null,
+          accent_color: null,
+          fonts: [],
+        },
+      ],
     },
   ],
   diagnostics: [],

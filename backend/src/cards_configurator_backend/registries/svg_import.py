@@ -57,14 +57,20 @@ def _coerce_template_design(payload: dict[str, Any], design_id: str, design_name
     designs = payload.setdefault("designs", [])
     if not isinstance(designs, list):
         raise TypeError("template JSON field 'designs' must be a list")
+    legacy_fonts = payload.get("fonts", [])
+    inherited_fonts = legacy_fonts if isinstance(legacy_fonts, list) else []
 
     for existing_design in designs:
         if isinstance(existing_design, dict) and existing_design.get("id") == design_id:
             if design_name is not None:
                 existing_design["name"] = design_name
+            if "fonts" not in existing_design and inherited_fonts:
+                existing_design["fonts"] = inherited_fonts
             return existing_design
 
     new_design: dict[str, Any] = {"id": design_id, "name": design_name or design_id, "active": True}
+    if inherited_fonts:
+        new_design["fonts"] = inherited_fonts
     designs.append(new_design)
     return new_design
 
@@ -121,9 +127,6 @@ def update_template_from_svg(
 
     if reference_asset is not None:
         payload["reference_asset"] = reference_asset
-    if asset_value is not None:
-        payload["source_asset"] = asset_value
-        payload["background_asset"] = asset_value
 
     if design_id is not None:
         design = _coerce_template_design(payload, design_id, design_name)

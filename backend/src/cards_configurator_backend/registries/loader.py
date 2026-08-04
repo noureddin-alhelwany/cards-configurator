@@ -14,6 +14,7 @@ from .schemas import (
     RegistryBundle,
     RegistryIssue,
     TemplateDefinition,
+    TemplateDesignDefinition,
 )
 
 # Aspect deviation the loader tolerates before it says anything, and before it refuses the
@@ -129,6 +130,7 @@ def _probe_artwork_geometry(path: Path):
 
 def _background_diagnostics(
     record: TemplateDefinition,
+    design: TemplateDesignDefinition,
     assets_dir: Path,
 ) -> list[RegistryIssue]:
     """Check the declared background artwork against the page it has to fill.
@@ -138,35 +140,42 @@ def _background_diagnostics(
     selection. Aspect drift is a warning first: 1% is invisible, 3% moves the crop enough to
     cut into content.
     """
-    if record.background_asset is None:
+    background_asset = getattr(design, "background_asset", None)
+    if background_asset is None:
         return []
 
-    path = assets_dir / record.background_asset
+    path = assets_dir / background_asset
     if not path.is_file():
         return [
             _issue(
                 "template_background_missing",
                 record.id,
-                f"Template '{record.id}' declares background artwork that is missing: {record.background_asset}",
-                details={"template_id": record.id, "background_asset": record.background_asset, "path": str(path)},
+                f"Design '{getattr(design, 'id', '<unknown>')}' of template '{record.id}' declares background artwork that is missing: {background_asset}",
+                details={
+                    "template_id": record.id,
+                    "design_id": getattr(design, "id", None),
+                    "background_asset": background_asset,
+                    "path": str(path),
+                },
             )
         ]
 
     issues: list[RegistryIssue] = []
 
-    if record.background_asset_sha256 is not None:
+    if getattr(design, "background_asset_sha256", None) is not None:
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        if digest != record.background_asset_sha256:
+        if digest != getattr(design, "background_asset_sha256"):
             issues.append(
                 _issue(
                     "template_background_changed",
                     record.id,
-                    f"Background artwork of '{record.id}' no longer matches its declared digest",
+                    f"Background artwork of design '{getattr(design, 'id', '<unknown>')}' no longer matches its declared digest",
                     blocking=False,
                     details={
                         "template_id": record.id,
-                        "background_asset": record.background_asset,
-                        "expected_sha256": record.background_asset_sha256,
+                        "design_id": getattr(design, "id", None),
+                        "background_asset": background_asset,
+                        "expected_sha256": getattr(design, "background_asset_sha256"),
                         "actual_sha256": digest,
                     },
                 )
@@ -178,8 +187,13 @@ def _background_diagnostics(
             _issue(
                 "template_background_missing",
                 record.id,
-                f"Background artwork of '{record.id}' could not be read as an image",
-                details={"template_id": record.id, "background_asset": record.background_asset, "path": str(path)},
+                f"Background artwork of design '{getattr(design, 'id', '<unknown>')}' could not be read as an image",
+                details={
+                    "template_id": record.id,
+                    "design_id": getattr(design, "id", None),
+                    "background_asset": background_asset,
+                    "path": str(path),
+                },
             )
         )
         return issues
@@ -193,11 +207,12 @@ def _background_diagnostics(
             _issue(
                 "template_background_aspect_mismatch",
                 record.id,
-                f"Background artwork of '{record.id}' does not match the page aspect ratio",
+                f"Background artwork of design '{getattr(design, 'id', '<unknown>')}' does not match the page aspect ratio",
                 blocking=deviation > _ASPECT_ERROR_RATIO,
                 details={
                     "template_id": record.id,
-                    "background_asset": record.background_asset,
+                    "design_id": getattr(design, "id", None),
+                    "background_asset": background_asset,
                     "expected_aspect": round(expected_aspect, 4),
                     "actual_aspect": round(aspect, 4),
                     "deviation": round(deviation, 4),
@@ -208,12 +223,14 @@ def _background_diagnostics(
     return issues
 
 
-def _reference_diagnostics(record: TemplateDefinition, assets_dir: Path) -> list[RegistryIssue]:
-    if record.reference_asset is None or record.background_asset is None:
+def _reference_diagnostics(record: TemplateDefinition, design: TemplateDesignDefinition, assets_dir: Path) -> list[RegistryIssue]:
+    reference_asset = record.reference_asset
+    background_asset = getattr(design, "background_asset", None)
+    if reference_asset is None or background_asset is None:
         return []
 
-    reference_path = assets_dir / record.reference_asset
-    background_path = assets_dir / record.background_asset
+    reference_path = assets_dir / reference_asset
+    background_path = assets_dir / background_asset
     if not reference_path.is_file() or not background_path.is_file():
         return []
 
@@ -227,11 +244,12 @@ def _reference_diagnostics(record: TemplateDefinition, assets_dir: Path) -> list
         _issue(
             "template_reference_background_mismatch",
             record.id,
-            f"Reference artwork of '{record.id}' must match its production background dimensions and orientation",
+            f"Reference artwork of design '{getattr(design, 'id', '<unknown>')}' must match its production background dimensions and orientation",
             details={
                 "template_id": record.id,
-                "reference_asset": record.reference_asset,
-                "background_asset": record.background_asset,
+                "design_id": getattr(design, "id", None),
+                "reference_asset": reference_asset,
+                "background_asset": background_asset,
                 "reference_width": round(reference_geometry.width, 2),
                 "reference_height": round(reference_geometry.height, 2),
                 "reference_orientation": reference_geometry.orientation,
@@ -321,14 +339,18 @@ def load_registry_bundle(registries_dir: Path, assets_dir: Path | None = None) -
             continue
 
         if assets_dir is not None:
-            background_issues = _background_diagnostics(record, assets_dir)
-            diagnostics.extend(background_issues)
-            if any(issue.blocking for issue in background_issues):
-                # A card whose artwork is missing or too soft must not be orderable.
-                continue
-            reference_issues = _reference_diagnostics(record, assets_dir)
-            diagnostics.extend(reference_issues)
-            if any(issue.blocking for issue in reference_issues):
+            design_issues: list[RegistryIssue] = []
+            for design in record.designs:
+                if not design.active:
+                    continue
+                background_issues = _background_diagnostics(record, design, assets_dir)
+                design_issues.extend(background_issues)
+                if any(issue.blocking for issue in background_issues):
+                    continue
+                reference_issues = _reference_diagnostics(record, design, assets_dir)
+                design_issues.extend(reference_issues)
+            diagnostics.extend(design_issues)
+            if any(issue.blocking for issue in design_issues):
                 continue
 
         seen_templates.add(key)
