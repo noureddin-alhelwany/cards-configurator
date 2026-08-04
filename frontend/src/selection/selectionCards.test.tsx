@@ -31,7 +31,7 @@ const bundle: RegistryBundle = {
       schema_version: 1,
       id: 'proof_a6_card',
       version: '1.6.0',
-      name: 'Bold',
+      name: 'Warm',
       description: null,
       product_id: 'a6_card',
       active: true,
@@ -51,10 +51,10 @@ const bundle: RegistryBundle = {
       elements: [],
       designs: [
         {
-          id: 'bold',
-          name: 'Bold',
+          id: 'warm',
+          name: 'Warm',
           active: true,
-          preview_asset: 'template-bold.png',
+          preview_asset: 'template-warm.png',
           source_asset: null,
           background_asset: null,
           accent_color: null,

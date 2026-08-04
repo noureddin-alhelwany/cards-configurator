@@ -208,31 +208,10 @@ test('renders the registry selection flow and keeps only available products visi
         ],
         designs: [
           {
-            id: 'bold',
-            name: 'Bold',
-            active: true,
-            preview_asset: 'template_google_reviews_bold.png',
-            fonts: sharedFonts,
-          },
-          {
-            id: 'minimum',
-            name: 'Minimum',
-            active: true,
-            preview_asset: 'template_google_reviews_minimum.png',
-            fonts: sharedFonts,
-          },
-          {
             id: 'warm',
             name: 'Warm',
             active: true,
             preview_asset: 'template_google_reviews_warm.png',
-            fonts: sharedFonts,
-          },
-          {
-            id: 'premium',
-            name: 'Premium',
-            active: true,
-            preview_asset: 'template_google_reviews_premium.png',
             fonts: sharedFonts,
           },
         ],
@@ -338,7 +317,7 @@ test('renders the registry selection flow and keeps only available products visi
         const selection = JSON.parse(String(init?.body ?? '{}'));
         persistedTextValues = {};
         persistedAssetValues = {};
-        persistedVariantId = selection.design_id ?? 'logo-focused';
+        persistedVariantId = selection.design_id ?? 'warm';
         return {
           ok: true,
           json: async () => ({
@@ -360,7 +339,7 @@ test('renders the registry selection flow and keeps only available products visi
       }
       if (url.endsWith('/api/drafts/current/layout')) {
         const body = JSON.parse(String(init?.body ?? '{}'));
-        const nextVariantId = body.design_id ?? persistedVariantId ?? 'logo-focused';
+        const nextVariantId = body.design_id ?? persistedVariantId ?? 'warm';
         const nextTextValues = {
           ...persistedTextValues,
           ...(body.text_values ?? {}),
@@ -480,19 +459,16 @@ test('renders the registry selection flow and keeps only available products visi
   expect(screen.queryByText('Hidden Card')).not.toBeInTheDocument();
 
   await waitFor(() => {
-    expect(screen.getByRole('button', { name: /Bold auswählen/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /2\. Design auswählen: Google Reviews Host/i })).toBeInTheDocument();
   });
-  expect(screen.getByRole('button', { name: /Minimum auswählen/i })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: /Warm auswählen/i })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: /Premium auswählen/i })).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /Wedding Reviews/i })).not.toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole('button', { name: /Bold auswählen/i }));
+  fireEvent.click(screen.getByRole('button', { name: /2\. Design auswählen: Google Reviews Host/i }));
 
   await waitFor(() => {
     expect(screen.getByRole('heading', { name: 'Personalisiere deine Karte' })).toBeInTheDocument();
   });
-  expect(screen.getByText('Design: Bold')).toBeInTheDocument();
+  expect(screen.getByText('Design: Warm')).toBeInTheDocument();
   expect(screen.getByText(/Gespeichert/)).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Weiter zur Prüfung' })).toBeEnabled();
   expect(screen.getByRole('textbox', { name: 'Unternehmensname' })).toBeInTheDocument();
@@ -669,10 +645,10 @@ test('selecting a product advances directly to the design step', async () => {
         ],
         designs: [
           {
-            id: 'logo-focused',
-            name: 'Logo',
+            id: 'warm',
+            name: 'Warm',
             active: true,
-            preview_asset: 'template_google_reviews_classic.png',
+            preview_asset: 'template_google_reviews_warm.png',
             fonts: sharedFonts,
           },
         ],
@@ -706,8 +682,8 @@ test('selecting a product advances directly to the design step', async () => {
         ],
         designs: [
           {
-            id: 'logo-focused',
-            name: 'Logo',
+            id: 'warm',
+            name: 'Warm',
             active: true,
             preview_asset: 'booking.png',
             fonts: sharedFonts,
@@ -761,9 +737,9 @@ test('selecting a product advances directly to the design step', async () => {
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
-            design_id: 'logo-focused',
+            design_id: 'warm',
             layout_state: {
-              design_id: 'logo-focused',
+              design_id: 'warm',
               element_adjustments: {},
               text_values: {},
               asset_values: {},
@@ -868,10 +844,10 @@ test('approves a draft and locks editing afterward', async () => {
         ],
         designs: [
           {
-            id: 'logo-focused',
-            name: 'Logo',
+            id: 'warm',
+            name: 'Warm',
             active: true,
-            preview_asset: 'template_google_reviews_classic.png',
+            preview_asset: 'template_google_reviews_warm.png',
             fonts: sharedFonts,
           },
         ],
@@ -903,12 +879,12 @@ test('approves a draft and locks editing afterward', async () => {
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
-            design_id: 'logo-focused',
+            design_id: 'warm',
             approved_at: null,
             approval_snapshot: null,
             approval_checklist: null,
             layout_state: {
-              design_id: 'logo-focused',
+              design_id: 'warm',
               element_adjustments: {},
               text_values: {
                 businessName: 'Studio One',
@@ -940,12 +916,12 @@ test('approves a draft and locks editing afterward', async () => {
             product_id: selection.product_id,
             template_id: selection.template_id,
             template_version: selection.template_version,
-            design_id: selection.design_id ?? 'logo-focused',
+            design_id: selection.design_id ?? 'warm',
             approved_at: null,
             approval_snapshot: null,
             approval_checklist: null,
             layout_state: {
-              design_id: selection.design_id ?? 'logo-focused',
+              design_id: selection.design_id ?? 'warm',
               element_adjustments: {},
               text_values: {
                 businessName: 'Studio One',
@@ -973,14 +949,14 @@ test('approves a draft and locks editing afterward', async () => {
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
-            design_id: 'logo-focused',
+            design_id: 'warm',
             approved_at: '2026-07-30T12:00:00.000Z',
             approval_snapshot: {
               template_id: 'proof_a6_card',
               template_version: '1.0.0',
-              design_id: 'logo-focused',
+              design_id: 'warm',
               layout_state: {
-                design_id: 'logo-focused',
+                design_id: 'warm',
                 element_adjustments: {},
                 text_values: {
                   businessName: 'Studio One',
@@ -997,7 +973,7 @@ test('approves a draft and locks editing afterward', async () => {
               preview_released: true,
             },
             layout_state: {
-              design_id: 'logo-focused',
+              design_id: 'warm',
               element_adjustments: {},
               text_values: {
                 businessName: 'Studio One',
@@ -1043,7 +1019,7 @@ test('approves a draft and locks editing afterward', async () => {
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
-            design_id: 'logo-focused',
+            design_id: 'warm',
             approved_at: '2026-07-30T12:05:00.000Z',
             created_at: '2026-07-30T12:06:00.000Z',
             preview_path: '/tmp/order-1/preview.png',
@@ -1057,7 +1033,7 @@ test('approves a draft and locks editing afterward', async () => {
               name: 'Google Reviews Classic',
             },
             layout_snapshot: {
-              design_id: 'logo-focused',
+              design_id: 'warm',
               element_adjustments: {},
               text_values: {
                 businessName: 'Studio One',
@@ -1088,7 +1064,7 @@ test('approves a draft and locks editing afterward', async () => {
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
-            design_id: 'logo-focused',
+            design_id: 'warm',
             approved_at: '2026-07-30T12:05:00.000Z',
             created_at: '2026-07-30T12:06:00.000Z',
             preview_path: '/tmp/order-1/preview.png',
@@ -1102,7 +1078,7 @@ test('approves a draft and locks editing afterward', async () => {
               name: 'Google Reviews Classic',
             },
             layout_snapshot: {
-              design_id: 'logo-focused',
+              design_id: 'warm',
               element_adjustments: {},
               text_values: {
                 businessName: 'Studio One',
@@ -1148,7 +1124,7 @@ test('approves a draft and locks editing afterward', async () => {
   await waitFor(() => {
     expect(screen.getByRole('heading', { name: 'Personalisiere deine Karte' })).toBeInTheDocument();
   });
-  expect(screen.getByText('Design: Logo')).toBeInTheDocument();
+  expect(screen.getByText('Design: Warm')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /A6 Card/i })).not.toBeInTheDocument();
 
   expect(screen.getByText(/Gespeichert/)).toBeInTheDocument();
@@ -1268,10 +1244,10 @@ test('renders registry field copy for the review link and offers no example-link
         ],
         designs: [
           {
-            id: 'bold',
-            name: 'Bold',
+            id: 'warm',
+            name: 'Warm',
             active: true,
-            preview_asset: 'template_google_reviews_bold.png',
+            preview_asset: 'template_google_reviews_warm.png',
             fonts: sharedFonts,
           },
         ],
@@ -1290,12 +1266,12 @@ test('renders registry field copy for the review link and offers no example-link
     product_id: 'a6_card',
     template_id: 'proof_a6_card',
     template_version: '1.6.0',
-    design_id: 'bold',
+    design_id: 'warm',
     approved_at: null,
     approval_snapshot: null,
     approval_checklist: null,
     layout_state: {
-      design_id: 'bold',
+      design_id: 'warm',
       element_adjustments: {},
       text_values: { businessName: 'Studio Sonnenschein', headline: 'Scanne den QR-Code', qrTarget: '' },
       asset_values: {},
@@ -1329,7 +1305,7 @@ test('renders registry field copy for the review link and offers no example-link
   });
 
   // Compact header instead of the template name plus description plus product repetition.
-  expect(screen.getByText('Design: Bold')).toBeInTheDocument();
+  expect(screen.getByText('Design: Warm')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Design ändern' })).toBeInTheDocument();
   expect(screen.queryByText('Kräftige Google-Bewertungsvorlage.')).not.toBeInTheDocument();
   expect(screen.queryByText('A6 Card')).not.toBeInTheDocument();

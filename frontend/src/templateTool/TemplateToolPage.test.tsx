@@ -109,37 +109,12 @@ test('renders the internal template tool with separate preview and source layers
         ],
         designs: [
           {
-            id: 'bold',
-            name: 'Bold',
-            active: true,
-            preview_asset: 'preview/template_google_reviews_bold.png',
-            source_asset: 'source/template_google_reviews_bold.png',
-            background_asset: 'backgrounds/template_google_reviews_bold.svg',
-            accent_color: '#315a86',
-            fonts: [
-              {
-                id: 'proof-sans',
-                family: 'Proof Sans',
-                file: '/fonts/ProofSans.ttf',
-                weight: 400,
-                style: 'normal',
-              },
-              {
-                id: 'proof-serif',
-                family: 'Proof Serif',
-                file: '/fonts/ProofSerif.ttf',
-                weight: 400,
-                style: 'normal',
-              },
-            ],
-          },
-          {
             id: 'warm',
             name: 'Warm',
             active: true,
             preview_asset: 'preview/template_google_reviews_warm.png',
-            source_asset: null,
-            background_asset: null,
+            source_asset: 'source/template_google_reviews_warm.png',
+            background_asset: 'backgrounds/template_google_reviews_warm.svg',
             accent_color: '#a67b4d',
             fonts: [
               {
@@ -245,9 +220,9 @@ test('renders the internal template tool with separate preview and source layers
   expect(screen.getAllByText('50%').length).toBeGreaterThanOrEqual(2);
 
   const previewImage = await screen.findByTestId('template-tool-preview-image');
-  expect(previewImage).toHaveAttribute('src', '/proof-assets/preview/template_google_reviews_bold.png');
+  expect(previewImage).toHaveAttribute('src', '/proof-assets/preview/template_google_reviews_warm.png');
   const sourceOverlay = await screen.findByTestId('template-tool-overlay');
-  expect(sourceOverlay).toHaveAttribute('src', '/proof-assets/source/template_google_reviews_bold.png');
+  expect(sourceOverlay).toHaveAttribute('src', '/proof-assets/source/template_google_reviews_warm.png');
 
   expect(screen.queryByAltText('QR: https://example.com/review')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Text erstellen' }));

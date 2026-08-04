@@ -32,8 +32,8 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
         assert payload['template_id'] == 'proof_a6_card'
         assert payload['template_version'] == '1.6.0'
         # The host template auto-selects its first active design.
-        assert payload['design_id'] == 'bold'
-        assert payload['layout_state']['design_id'] == 'bold'
+        assert payload['design_id'] == 'warm'
+        assert payload['layout_state']['design_id'] == 'warm'
 
         layout_response = client.patch(
             '/api/drafts/current/layout',
@@ -46,8 +46,8 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
         )
         assert layout_response.status_code == 200
         layout_payload = layout_response.json()
-        assert layout_payload['design_id'] == 'bold'
-        assert layout_payload['layout_state']['design_id'] == 'bold'
+        assert layout_payload['design_id'] == 'warm'
+        assert layout_payload['layout_state']['design_id'] == 'warm'
         assert layout_payload['layout_state']['text_values']['businessName'] == 'Studio One'
         assert layout_payload['layout_state']['element_adjustments']['proof-logo']['offset_x'] == 0.25
         assert layout_payload['layout_state']['element_adjustments']['proof-logo']['scale'] == 1.1
@@ -57,7 +57,7 @@ def test_template_selection_is_persisted(tmp_path: Path, monkeypatch) -> None:
         refreshed_payload = refreshed.json()
         assert refreshed_payload['template_id'] == 'proof_a6_card'
         assert refreshed_payload['template_version'] == '1.6.0'
-        assert refreshed_payload['design_id'] == 'bold'
+        assert refreshed_payload['design_id'] == 'warm'
         assert refreshed_payload['layout_state']['text_values']['businessName'] == 'Studio One'
         assert refreshed_payload['layout_state']['element_adjustments']['proof-logo']['offset_y'] == -0.1
         assert refreshed_payload['updated_at'] is not None
