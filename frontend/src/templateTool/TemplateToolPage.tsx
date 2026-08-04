@@ -270,7 +270,7 @@ function buildPreviewFixture(
     safe_areas: zones,
     background_asset: null,
     source_asset: null,
-    variants: fixture.template.variants.map((variant) => ({
+    designs: (fixture.template.designs ?? fixture.template.variants ?? []).map((variant) => ({
       ...variant,
       background_asset: null,
       source_asset: null,

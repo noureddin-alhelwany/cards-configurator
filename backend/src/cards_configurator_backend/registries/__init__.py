@@ -1,5 +1,4 @@
 from .loader import load_registry_bundle
-from .svg_import import extract_slot_boxes, update_template_from_svg
 from .schemas import (
     AssetDataUrl,
     BoxMm,
@@ -18,11 +17,13 @@ from .schemas import (
     SafeAreaDefinition,
     SafeAreaVariableDefinition,
     TemplateDefinition,
+    TemplateDesignDefinition,
     TemplateFieldDefinition,
     TemplateVariantDefinition,
-    TextRuleDefinition,
     TextElementDefinition,
+    TextRuleDefinition,
 )
+from .svg_import import extract_slot_boxes, update_template_from_svg
 
 __all__ = [
     "AssetDataUrl",
@@ -42,11 +43,12 @@ __all__ = [
     "SafeAreaDefinition",
     "SafeAreaVariableDefinition",
     "TemplateDefinition",
+    "TemplateDesignDefinition",
     "TemplateFieldDefinition",
     "TemplateVariantDefinition",
-    "TextRuleDefinition",
     "TextElementDefinition",
-    "load_registry_bundle",
+    "TextRuleDefinition",
     "extract_slot_boxes",
+    "load_registry_bundle",
     "update_template_from_svg",
 ]

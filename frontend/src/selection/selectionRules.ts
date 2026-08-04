@@ -84,7 +84,7 @@ export function selectedDesignName(template: TemplateDefinition, variantId: stri
 }
 
 export function activeVariants(template: TemplateDefinition) {
-  return template.variants.filter((variant) => variant.active);
+  return (template.designs ?? template.variants ?? []).filter((variant) => variant.active);
 }
 
 export function fieldLabel(field: TemplateDefinition['fields'][number], index: number) {
@@ -254,8 +254,8 @@ export function templateKey(template: TemplateDefinition) {
 
 export function activeVariant(template: TemplateDefinition, variantId: string | null) {
   return (
-    template.variants.find((variant) => variant.active && variant.id === variantId) ??
-    template.variants.find((variant) => variant.active) ??
+    (template.designs ?? template.variants ?? []).find((variant) => variant.active && variant.id === variantId) ??
+    (template.designs ?? template.variants ?? []).find((variant) => variant.active) ??
     null
   );
 }

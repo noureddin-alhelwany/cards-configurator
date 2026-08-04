@@ -1,16 +1,16 @@
-import type { LayoutState, TemplateDefinition, TemplateVariantDefinition } from './types';
+import type { LayoutState, TemplateDefinition, TemplateDesignDefinition } from './types';
 
 export function defaultTemplateVariantId(template: TemplateDefinition): string | null {
-  return template.variants.find((variant) => variant.active)?.id ?? null;
+  return (template.designs ?? template.variants ?? []).find((variant) => variant.active)?.id ?? null;
 }
 
 export function activeTemplateVariant(
   template: TemplateDefinition,
   variantId: string | null | undefined,
-): TemplateVariantDefinition | null {
+): TemplateDesignDefinition | null {
   return (
-    template.variants.find((variant) => variant.active && variant.id === variantId) ??
-    template.variants.find((variant) => variant.active) ??
+    (template.designs ?? template.variants ?? []).find((variant) => variant.active && variant.id === variantId) ??
+    (template.designs ?? template.variants ?? []).find((variant) => variant.active) ??
     null
   );
 }

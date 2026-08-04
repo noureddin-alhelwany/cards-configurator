@@ -15,10 +15,7 @@ def _local_name(tag: str) -> str:
 
 
 def _parse_mm(value: str) -> float:
-    stripped = value.strip()
-    if stripped.endswith("mm"):
-        stripped = stripped[:-2]
-    return float(stripped)
+    return float(value.strip().removesuffix("mm"))
 
 
 def _parse_box(element: ET.Element) -> BoxMm:
@@ -56,20 +53,20 @@ def extract_slot_boxes(svg_path: Path, *, slot_prefix: str = "slot-") -> dict[st
     return slots
 
 
-def _coerce_template_variant(payload: dict[str, Any], variant_id: str, variant_name: str | None) -> dict[str, Any]:
-    variants = payload.setdefault("variants", [])
-    if not isinstance(variants, list):
-        raise ValueError("template JSON field 'variants' must be a list")
+def _coerce_template_design(payload: dict[str, Any], design_id: str, design_name: str | None) -> dict[str, Any]:
+    designs = payload.setdefault("designs", payload.get("variants", []))
+    if not isinstance(designs, list):
+        raise TypeError("template JSON field 'designs' must be a list")
 
-    for existing_variant in variants:
-        if isinstance(existing_variant, dict) and existing_variant.get("id") == variant_id:
-            if variant_name is not None:
-                existing_variant["name"] = variant_name
-            return existing_variant
+    for existing_design in designs:
+        if isinstance(existing_design, dict) and existing_design.get("id") == design_id:
+            if design_name is not None:
+                existing_design["name"] = design_name
+            return existing_design
 
-    new_variant: dict[str, Any] = {"id": variant_id, "name": variant_name or variant_id, "active": True}
-    variants.append(new_variant)
-    return new_variant
+    new_design: dict[str, Any] = {"id": design_id, "name": design_name or design_id, "active": True}
+    designs.append(new_design)
+    return new_design
 
 
 def update_template_from_svg(
@@ -89,7 +86,7 @@ def update_template_from_svg(
 ) -> None:
     payload = json.loads(template_path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError("template JSON must contain an object")
+        raise TypeError("template JSON must contain an object")
 
     background_geometry = probe_artwork_geometry(svg_path)
     if background_geometry is None:
@@ -107,7 +104,7 @@ def update_template_from_svg(
     slot_boxes = extract_slot_boxes(svg_path, slot_prefix=slot_prefix)
     elements = payload.get("elements", [])
     if not isinstance(elements, list):
-        raise ValueError("template JSON field 'elements' must be a list")
+        raise TypeError("template JSON field 'elements' must be a list")
 
     for element in elements:
         if not isinstance(element, dict):
@@ -129,14 +126,14 @@ def update_template_from_svg(
         payload["background_asset"] = asset_value
 
     if variant_id is not None:
-        variant = _coerce_template_variant(payload, variant_id, variant_name)
+        design = _coerce_template_design(payload, variant_id, variant_name)
         if preview_asset is not None:
-            variant["preview_asset"] = preview_asset
+            design["preview_asset"] = preview_asset
         if asset_value is not None:
-            variant["source_asset"] = asset_value
-            variant["background_asset"] = asset_value
+            design["source_asset"] = asset_value
+            design["background_asset"] = asset_value
         if accent_color is not None:
-            variant["accent_color"] = accent_color
+            design["accent_color"] = accent_color
 
     output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 

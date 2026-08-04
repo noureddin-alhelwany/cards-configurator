@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 
 class RegistryIssue(BaseModel):
@@ -187,7 +194,7 @@ class QrRuleDefinition(BaseModel):
     minimum_quiet_zone_modules: float | None = None
 
 
-class TemplateVariantDefinition(BaseModel):
+class TemplateDesignDefinition(BaseModel):
     id: str
     name: str
     active: bool = True
@@ -197,12 +204,15 @@ class TemplateVariantDefinition(BaseModel):
     accent_color: str | None = None
 
     @model_validator(mode="after")
-    def sync_source_asset(self) -> TemplateVariantDefinition:
+    def sync_source_asset(self) -> TemplateDesignDefinition:
         if self.source_asset is None and self.background_asset is not None:
             self.source_asset = self.background_asset
         if self.background_asset is None and self.source_asset is not None:
             self.background_asset = self.source_asset
         return self
+
+
+TemplateVariantDefinition = TemplateDesignDefinition
 
 
 class TemplateFieldDefinition(BaseModel):
@@ -249,7 +259,14 @@ class TemplateDefinition(BaseModel):
     qr_rules: list[QrRuleDefinition] = Field(default_factory=list)
     fonts: list[FontDefinition]
     elements: list[RenderableElementDefinition]
-    variants: list[TemplateVariantDefinition] = Field(default_factory=list)
+    designs: list[TemplateDesignDefinition] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices("designs", "variants"),
+    )
+
+    @property
+    def variants(self) -> list[TemplateDesignDefinition]:
+        return self.designs
 
     @model_validator(mode="after")
     def normalize_font_ids(self) -> TemplateDefinition:

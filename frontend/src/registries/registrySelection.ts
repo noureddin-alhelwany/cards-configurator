@@ -1,4 +1,4 @@
-import type { RegistryBundle, TemplateDefinition, TemplateVariantDefinition, ProductDefinition, CategoryDefinition } from './types';
+import type { RegistryBundle, TemplateDefinition, TemplateDesignDefinition, ProductDefinition, CategoryDefinition } from './types';
 
 export function activeRegistryTemplates(bundle: RegistryBundle | null) {
   return bundle?.templates.filter((template) => template.active) ?? [];
@@ -23,20 +23,26 @@ export function activeRegistryCategory(
   );
 }
 
-export function activeRegistryVariants(template: TemplateDefinition | null) {
-  return template?.variants.filter((variant) => variant.active) ?? [];
+export function activeRegistryDesigns(template: TemplateDefinition | null) {
+  const designs = template?.designs ?? template?.variants ?? [];
+  return designs.filter((design) => design.active);
 }
 
 export function activeRegistryVariant(
   template: TemplateDefinition | null,
   variantId: string | null,
-): TemplateVariantDefinition | null {
+): TemplateDesignDefinition | null {
   if (!template) {
     return null;
   }
+  const designs = template.designs ?? template.variants ?? [];
   return (
-    template.variants.find((variant) => variant.active && variant.id === variantId) ??
-    template.variants.find((variant) => variant.active) ??
+    designs.find((design) => design.active && design.id === variantId) ??
+    designs.find((design) => design.active) ??
     null
   );
+}
+
+export function activeRegistryVariants(template: TemplateDefinition | null) {
+  return activeRegistryDesigns(template);
 }

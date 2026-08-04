@@ -135,7 +135,7 @@ export type QrRuleDefinition = {
   minimum_quiet_zone_modules: number | null;
 };
 
-export type TemplateVariantDefinition = {
+export type TemplateDesignDefinition = {
   id: string;
   name: string;
   active: boolean;
@@ -144,6 +144,8 @@ export type TemplateVariantDefinition = {
   background_asset?: string | null;
   accent_color?: string | null;
 };
+
+export type TemplateVariantDefinition = TemplateDesignDefinition;
 
 export type TemplateDefinition = {
   schema_version: number;
@@ -168,7 +170,8 @@ export type TemplateDefinition = {
   qr_rules?: QrRuleDefinition[];
   fonts: FontDefinition[];
   elements: TemplateElementDefinition[];
-  variants: TemplateVariantDefinition[];
+  designs?: TemplateDesignDefinition[];
+  variants?: TemplateDesignDefinition[];
 };
 
 export type TemplateFieldDefinition = {
