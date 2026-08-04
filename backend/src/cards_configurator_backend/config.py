@@ -6,14 +6,17 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+
 class Settings(BaseSettings):
     app_name: str = "cards-configurator"
     environment: str = "development"
     database_url: str = "sqlite:///./data/cards-configurator.sqlite3"
-    frontend_dist_dir: Path = Path("frontend/dist")
-    registries_dir: Path = Path("registries")
-    proof_assets_dir: Path = Path("proof-assets")
-    data_dir: Path = Path("data")
+    frontend_dist_dir: Path = PROJECT_ROOT / "frontend" / "dist"
+    registries_dir: Path = PROJECT_ROOT / "registries"
+    proof_assets_dir: Path = PROJECT_ROOT / "proof-assets"
+    data_dir: Path = PROJECT_ROOT / "data"
 
     model_config = SettingsConfigDict(
         env_file=".env",

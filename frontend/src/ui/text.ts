@@ -12,10 +12,10 @@ export const uiText = {
       title: 'cards-configurator',
       description: 'Die Konfigurationen werden geladen.',
     },
-    emptyUseCases: {
+    emptyCategories: {
       kicker: 'Auswahl',
-      title: 'Keine aktiven Anwendungsfälle',
-      description: 'Aktiviere mindestens einen Use Case in den Registries, damit der Konfigurator nutzbar ist.',
+      title: 'Keine aktiven Kategorien',
+      description: 'Aktiviere mindestens eine Kategorie in den Registries, damit der Konfigurator nutzbar ist.',
     },
     header: {
       title: 'Geführter Erstellungsprozess',
@@ -74,7 +74,7 @@ export const uiText = {
     emptyDesigns: {
       kicker: 'Design',
       title: 'Keine passenden Designs',
-      description: 'Wähle einen anderen Use Case oder ein anderes Produkt, damit wieder Designs erscheinen.',
+      description: 'Wähle eine andere Kategorie oder ein anderes Produkt, damit wieder Designs erscheinen.',
     },
     preview: {
       liveTitle: 'Live-Vorschau',
@@ -205,7 +205,7 @@ export const uiText = {
       snapshotTitle: 'Gespeicherte Auftragsdaten',
       snapshotLead: 'Die Detailansicht zeigt nur gespeicherte Snapshots und finale Artefakte.',
       snapshotCustomer: 'Kunde',
-      snapshotUseCase: 'Use Case',
+      snapshotCategory: 'Kategorie',
       snapshotProduct: 'Produkt',
       snapshotDesign: 'Design',
       snapshotVariant: 'Variante',

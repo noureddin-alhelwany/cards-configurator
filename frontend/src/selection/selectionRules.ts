@@ -1,4 +1,4 @@
-import type { ProductDefinition, RegistryBundle, TemplateDefinition, UseCaseDefinition } from '../registries/types';
+import type { ProductDefinition, RegistryBundle, TemplateDefinition, CategoryDefinition } from '../registries/types';
 import type { ValidationIssue } from '../design/types';
 import { fieldRole } from '../design/fieldRoles';
 import type { TemplateFieldRole } from '../design/fieldRoles';
@@ -191,11 +191,11 @@ export function fieldPlaceholder(field: TemplateDefinition['fields'][number], in
   }
 }
 
-export function fieldDefaultValue(field: TemplateDefinition['fields'][number], index: number, useCase: UseCaseDefinition) {
+export function fieldDefaultValue(field: TemplateDefinition['fields'][number], index: number, category: CategoryDefinition) {
   if (field.default_value != null) {
     return field.default_value;
   }
-  return demoTextForRole(fieldRole(field, index), useCase);
+  return demoTextForRole(fieldRole(field, index), category);
 }
 
 export function trimSuggestion(value: string, maxLength: number | null) {
@@ -205,14 +205,14 @@ export function trimSuggestion(value: string, maxLength: number | null) {
   return value.slice(0, maxLength).trimEnd();
 }
 
-export function demoTextForRole(role: TemplateFieldRole, useCase: UseCaseDefinition) {
+export function demoTextForRole(role: TemplateFieldRole, category: CategoryDefinition) {
   switch (role) {
     case 'business':
       return 'Studio Sonnenschein';
     case 'headline':
-      return `Danke für deinen Besuch bei ${useCase.name}`;
+      return `Danke für deinen Besuch bei ${category.name}`;
     case 'body':
-      return `Scanne den QR-Code und teile deine Erfahrung mit ${useCase.name.toLowerCase()}.`;
+      return `Scanne den QR-Code und teile deine Erfahrung mit ${category.name.toLowerCase()}.`;
     case 'qrTarget':
       // Seeded into the draft on template selection, so it must stay empty: a
       // pre-filled example link would silently ship on the printed card.
@@ -267,7 +267,7 @@ export function isGoogleReviewsHostTemplate(template: TemplateDefinition) {
   return (
     template.id === GOOGLE_REVIEWS_TEMPLATE_ID &&
     template.product_id === 'a6_card' &&
-    template.use_case_ids.includes('google_reviews') &&
+    template.category_ids.includes('google_reviews') &&
     template.version === GOOGLE_REVIEWS_HOST_VERSION
   );
 }
@@ -304,12 +304,12 @@ export function productResolutionDescription(product: ProductDefinition) {
   return `Auflösung ${product.recommended_dpi} dpi, Minimum ${product.minimum_dpi} dpi`;
 }
 
-export function productSafeAreaDescription(bundle: RegistryBundle, productId: string, selectedUseCaseId: string | null) {
+export function productSafeAreaDescription(bundle: RegistryBundle, productId: string, selectedCategoryId: string | null) {
   const matchingTemplates = bundle.templates.filter((template) => {
     if (!template.active || template.product_id !== productId) {
       return false;
     }
-    return !selectedUseCaseId || template.use_case_ids.includes(selectedUseCaseId);
+    return !selectedCategoryId || template.category_ids.includes(selectedCategoryId);
   });
   const safeAreaCount = matchingTemplates.reduce((count, template) => count + (template.safe_areas?.length ?? 0), 0);
   if (safeAreaCount === 0) {

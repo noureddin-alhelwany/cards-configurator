@@ -7,7 +7,7 @@ process from the same codebase without becoming a microservice.
 
 ## D-002 File-backed product/template registry
 
-`Product`, `UseCase` and `Template` are versioned structured files. The original
+`Category`, `Product` and `Template` are versioned structured files. The original
 phrase “create data model” means typed Pydantic domain/config models, not
 editable SQL tables.
 

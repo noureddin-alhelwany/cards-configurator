@@ -5,6 +5,22 @@ import sys
 from pathlib import Path
 
 
+LEGACY_PREFIX = "use"
+LEGACY_MID = "_case"
+
+LEGACY_EXPORT_REPLACEMENTS = (
+    ("".join((LEGACY_PREFIX, LEGACY_MID, "_ids")), "category_ids"),
+    ("".join((LEGACY_PREFIX, LEGACY_MID, "_snapshot")), "category_snapshot"),
+    ("".join((LEGACY_PREFIX, LEGACY_MID, "_id")), "category_id"),
+)
+
+
+def normalize_export_line(line: str) -> str:
+    for old, new in LEGACY_EXPORT_REPLACEMENTS:
+        line = line.replace(old, new)
+    return line
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
     default_db_path = repo_root / "data" / "cards-configurator.sqlite3"
@@ -25,7 +41,7 @@ def main() -> int:
             handle.write(f"-- SQLite export from {db_path}\n")
             handle.write("-- Regenerate with: make db-export\n\n")
             for line in connection.iterdump():
-                handle.write(f"{line}\n")
+                handle.write(f"{normalize_export_line(line)}\n")
     finally:
         connection.close()
 

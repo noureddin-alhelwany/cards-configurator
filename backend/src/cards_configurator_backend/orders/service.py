@@ -15,11 +15,11 @@ from ..quality import QualityReport, validate_current_draft
 from ..registries.loader import RegistryBundle
 from ..registries.schemas import (
     AssetDataUrl,
+    CategoryDefinition,
     LayoutState,
     ProductDefinition,
     ProofFixture,
     TemplateDefinition,
-    UseCaseDefinition,
 )
 # `..rendering.jobs` is imported inside the two functions that need it. At module level it
 # closes a cycle: rendering/__init__ -> rendering.jobs -> orders.schemas -> orders/__init__
@@ -46,8 +46,8 @@ def _find_product(bundle: RegistryBundle, product_id: str) -> ProductDefinition 
     return next((product for product in bundle.products if product.active and product.id == product_id), None)
 
 
-def _find_use_case(bundle: RegistryBundle, use_case_id: str) -> UseCaseDefinition | None:
-    return next((use_case for use_case in bundle.use_cases if use_case.active and use_case.id == use_case_id), None)
+def _find_category(bundle: RegistryBundle, category_id: str) -> CategoryDefinition | None:
+    return next((category for category in bundle.categories if category.active and category.id == category_id), None)
 
 
 def _order_assets(session: Session, order_id: str) -> list[OrderAssetRecord]:
@@ -73,7 +73,7 @@ def _order_summary_from_record(record: OrderRecord) -> OrderSummary:
         id=record.id,
         order_number=record.order_number,
         display_name=record.display_name,
-        use_case_id=record.use_case_id,
+        category_id=record.category_id,
         product_id=record.product_id,
         template_id=record.template_id,
         template_version=record.template_version,
@@ -87,7 +87,7 @@ def _order_summary_from_record(record: OrderRecord) -> OrderSummary:
 def _order_detail_from_record(session: Session, record: OrderRecord) -> OrderDetail:
     return OrderDetail(
         **_order_summary_from_record(record).model_dump(),
-        use_case_snapshot=record.use_case_snapshot,
+        category_snapshot=record.category_snapshot,
         product_snapshot=record.product_snapshot,
         template_snapshot=record.template_snapshot,
         layout_snapshot=record.layout_snapshot,
@@ -123,7 +123,7 @@ def get_order_fixture(session: Session, data_dir: Path, order_id: str) -> ProofF
 
     template = TemplateDefinition.model_validate(record.template_snapshot)
     product = ProductDefinition.model_validate(record.product_snapshot)
-    use_case = UseCaseDefinition.model_validate(record.use_case_snapshot)
+    category = CategoryDefinition.model_validate(record.category_snapshot)
     layout_state = LayoutState.model_validate(record.layout_snapshot)
     assets = load_order_assets_from_storage(data_dir, session, record.id)
     qr_value = resolve_qr_value(template, layout_state)
@@ -137,7 +137,7 @@ def get_order_fixture(session: Session, data_dir: Path, order_id: str) -> ProofF
                 error_correction=qr_element.error_correction if qr_element is not None else "m",
             ),
         )
-    return ProofFixture(template=template, product=product, use_case=use_case, layout_state=layout_state, assets=assets)
+    return ProofFixture(template=template, product=product, category=category, layout_state=layout_state, assets=assets)
 
 
 async def create_order(
@@ -158,8 +158,8 @@ async def create_order(
 
     template = _find_template(bundle, draft.template_id or "", draft.template_version or "")
     product = _find_product(bundle, draft.product_id or "")
-    use_case = _find_use_case(bundle, draft.use_case_id or "")
-    if template is None or product is None or use_case is None:
+    category = _find_category(bundle, draft.category_id or "")
+    if template is None or product is None or category is None:
         raise HTTPException(status_code=400, detail="Draft references an unknown registry entry")
 
     order_id = uuid4().hex
@@ -169,12 +169,12 @@ async def create_order(
         id=order_id,
         order_number=order_number,
         display_name=_display_name_from_draft(draft),
-        use_case_id=use_case.id,
+        category_id=category.id,
         product_id=product.id,
         template_id=template.id,
         template_version=template.version,
         variant_id=draft.variant_id,
-        use_case_snapshot=use_case.model_dump(),
+        category_snapshot=category.model_dump(),
         product_snapshot=product.model_dump(),
         template_snapshot=template.model_dump(),
         layout_snapshot=draft.layout_state.model_dump(),

@@ -26,17 +26,12 @@ export type FontDefinition = {
   style: 'normal' | 'italic';
 };
 
-export type DesignTypography = {
-  global_font_family_id?: string | null;
-};
-
 export type TextElementDefinition = {
   kind: 'text';
   id: string;
   box_mm: BoxMm;
   z_index: number;
   text: string;
-  font_family: string;
   font_family_id?: string | null;
   font_size_mm: number;
   font_weight: number;
@@ -93,12 +88,11 @@ export type SafeAreaDefinition = {
   id: string;
   box_mm: BoxMm;
   label: string | null;
-  kind?: 'dynamicText' | 'fixedText' | 'qr';
+  kind?: 'text' | 'qr';
+  personalizable?: boolean;
   qr?: QrZoneDefinition | null;
   variables?: SafeAreaVariableDefinition[];
 };
-
-export type TextOverflowMode = 'shrink' | 'wrap' | 'error';
 
 export type QrZoneDefinition = {
   error_correction: 'm' | 'q' | 'h';
@@ -109,10 +103,9 @@ export type QrZoneDefinition = {
 
 export type SafeAreaVariableDefinition = {
   id: string;
-  kind: 'dynamicText' | 'fixedText' | 'qr';
-  key: string;
+  kind: 'text' | 'qr';
+  field_id?: string | null;
   label: string;
-  font_family: string;
   font_family_id?: string | null;
   font_weight: number;
   font_size_mm: number;
@@ -123,7 +116,6 @@ export type SafeAreaVariableDefinition = {
   align: 'left' | 'center' | 'right';
   max_length: number | null;
   max_lines: number | null;
-  overflow: TextOverflowMode;
   required: boolean;
   default_value: string | null;
 };
@@ -132,7 +124,6 @@ export type TextRuleDefinition = {
   version: number;
   field_id: string;
   max_lines: number | null;
-  overflow: 'shrink' | 'wrap' | 'error';
   min_font_size_mm: number | null;
 };
 
@@ -152,9 +143,6 @@ export type TemplateVariantDefinition = {
   source_asset?: string | null;
   background_asset?: string | null;
   accent_color?: string | null;
-  headline_font_family?: string | null;
-  headline_font_family_id?: string | null;
-  headline_font_weight?: number | null;
 };
 
 export type TemplateDefinition = {
@@ -164,7 +152,7 @@ export type TemplateDefinition = {
   name: string | null;
   description: string | null;
   product_id: string;
-  use_case_ids: string[];
+  category_ids: string[];
   active: boolean;
   fields: TemplateFieldDefinition[];
   page_width_mm: number;
@@ -176,8 +164,6 @@ export type TemplateDefinition = {
   /** Full-bleed artwork drawn under every element, served from `/proof-assets/`. */
   background_asset: string | null;
   background_asset_sha256: string | null;
-  font_family?: string | null;
-  typography?: DesignTypography;
   safe_areas?: SafeAreaDefinition[];
   text_rules?: TextRuleDefinition[];
   qr_rules?: QrRuleDefinition[];
@@ -205,7 +191,7 @@ export type AssetDataUrl = {
   data_url: string;
 };
 
-export type UseCaseDefinition = {
+export type CategoryDefinition = {
   id: string;
   name: string;
   description: string;
@@ -232,7 +218,7 @@ export type ProductDefinition = {
 export type ProofFixture = {
   template: TemplateDefinition;
   product: ProductDefinition;
-  use_case: UseCaseDefinition;
+  category: CategoryDefinition;
   layout_state: LayoutState;
   assets: Record<string, AssetDataUrl>;
 };

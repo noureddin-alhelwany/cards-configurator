@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class OrderAssetState(BaseModel):
@@ -13,10 +13,12 @@ class OrderAssetState(BaseModel):
 
 
 class OrderSummary(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
+
     id: str
     order_number: str
     display_name: str | None = None
-    use_case_id: str
+    category_id: str
     product_id: str
     template_id: str
     template_version: str
@@ -27,7 +29,9 @@ class OrderSummary(BaseModel):
 
 
 class OrderDetail(OrderSummary):
-    use_case_snapshot: dict[str, object] = Field(default_factory=dict)
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
+
+    category_snapshot: dict[str, object] = Field(default_factory=dict)
     product_snapshot: dict[str, object] = Field(default_factory=dict)
     template_snapshot: dict[str, object] = Field(default_factory=dict)
     layout_snapshot: dict[str, object] = Field(default_factory=dict)
@@ -36,6 +40,7 @@ class OrderDetail(OrderSummary):
     pdf_path: str | None = None
     render_engine_version: str
     assets: list[OrderAssetState] = Field(default_factory=list)
+
 
 
 class OrderCreationRequest(BaseModel):

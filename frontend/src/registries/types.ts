@@ -16,7 +16,7 @@ import type {
   TemplateVariantDefinition,
   TextRuleDefinition,
   TextElementDefinition,
-  UseCaseDefinition,
+  CategoryDefinition,
 } from '../design/types';
 
 export type {
@@ -37,7 +37,7 @@ export type {
   TemplateVariantDefinition,
   TextRuleDefinition,
   TextElementDefinition,
-  UseCaseDefinition,
+  CategoryDefinition,
 };
 
 export type RegistryIssue = {
@@ -50,7 +50,7 @@ export type RegistryIssue = {
 };
 
 export type RegistryBundle = {
-  use_cases: UseCaseDefinition[];
+  categories: CategoryDefinition[];
   products: ProductDefinition[];
   templates: TemplateDefinition[];
   diagnostics: RegistryIssue[];

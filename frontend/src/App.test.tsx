@@ -39,7 +39,6 @@ test('renders the registry selection flow and keeps only available products visi
     page_width_mm: 111,
     page_height_mm: 154,
     bleed_mm: 3,
-    font_family: 'Proof Sans',
     fonts: [
       {
         family: 'Proof Sans',
@@ -60,7 +59,7 @@ test('renders the registry selection flow and keeps only available products visi
         },
         z_index: 1,
         text: 'Leave a Google review',
-        font_family: 'Proof Sans',
+        font_family_id: 'proof-sans',
         font_size_mm: 6.8,
         font_weight: 700,
         color: '#1f1a17',
@@ -78,7 +77,7 @@ test('renders the registry selection flow and keeps only available products visi
         },
         z_index: 1,
         text: 'Scan the QR code to open the review page and share your experience.',
-        font_family: 'Proof Sans',
+        font_family_id: 'proof-sans',
         font_size_mm: 3.1,
         font_weight: 400,
         color: '#4a3d31',
@@ -127,7 +126,7 @@ test('renders the registry selection flow and keeps only available products visi
   };
 
   const bundle = {
-    use_cases: [
+    categories: [
       {
         id: 'google_reviews',
         name: 'Google Reviews',
@@ -196,7 +195,7 @@ test('renders the registry selection flow and keeps only available products visi
         name: 'Google Reviews Host',
         preview_asset: 'template_google_reviews_bold.png',
         product_id: 'a6_card',
-        use_case_ids: ['google_reviews'],
+        category_ids: ['google_reviews'],
         active: true,
         fields: [
           {
@@ -262,7 +261,7 @@ test('renders the registry selection flow and keeps only available products visi
         name: 'Wedding Reviews',
         preview_asset: 'template_google_reviews_classic.png',
         product_id: 'a6_card',
-        use_case_ids: ['wedding_reviews'],
+        category_ids: ['wedding_reviews'],
         active: false,
         fields: [],
         variants: [],
@@ -292,7 +291,7 @@ test('renders the registry selection flow and keeps only available products visi
           json: async () => ({
             id: 1,
             name: 'Current draft',
-            use_case_id: null,
+            category_id: null,
             product_id: null,
             template_id: null,
             template_version: null,
@@ -367,7 +366,7 @@ test('renders the registry selection flow and keeps only available products visi
           json: async () => ({
             id: 1,
             name: 'Current draft',
-            use_case_id: selection.use_case_id,
+            category_id: selection.category_id,
             product_id: selection.product_id,
             template_id: selection.template_id,
             template_version: selection.template_version,
@@ -409,7 +408,7 @@ test('renders the registry selection flow and keeps only available products visi
           json: async () => ({
             id: 1,
             name: 'Current draft',
-            use_case_id: 'google_reviews',
+            category_id: 'google_reviews',
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
@@ -641,7 +640,7 @@ test('renders the registry selection flow and keeps only available products visi
 
 test('selecting a product advances directly to the design step', async () => {
   const bundle = {
-    use_cases: [
+    categories: [
       {
         id: 'google_reviews',
         name: 'Google Reviews',
@@ -688,7 +687,7 @@ test('selecting a product advances directly to the design step', async () => {
         name: 'Google Reviews Classic',
         preview_asset: 'template_google_reviews_classic.png',
         product_id: 'a6_card',
-        use_case_ids: ['google_reviews'],
+        category_ids: ['google_reviews'],
         active: true,
         fields: [
           {
@@ -718,7 +717,6 @@ test('selecting a product advances directly to the design step', async () => {
         page_width_mm: 111,
         page_height_mm: 154,
         bleed_mm: 3,
-        font_family: 'Proof Sans',
         fonts: [],
       },
       {
@@ -728,7 +726,7 @@ test('selecting a product advances directly to the design step', async () => {
         name: 'Google Reviews Slim',
         preview_asset: 'booking.png',
         product_id: 'dl_card',
-        use_case_ids: ['google_reviews'],
+        category_ids: ['google_reviews'],
         active: true,
         fields: [
           {
@@ -758,7 +756,6 @@ test('selecting a product advances directly to the design step', async () => {
         page_width_mm: 99,
         page_height_mm: 210,
         bleed_mm: 3,
-        font_family: 'Proof Sans',
         fonts: [],
       },
     ],
@@ -780,7 +777,7 @@ test('selecting a product advances directly to the design step', async () => {
           json: async () => ({
             id: 1,
             name: 'Current draft',
-            use_case_id: null,
+            category_id: null,
             product_id: null,
             template_id: null,
             template_version: null,
@@ -800,7 +797,7 @@ test('selecting a product advances directly to the design step', async () => {
           json: async () => ({
             id: 1,
             name: 'Current draft',
-            use_case_id: 'google_reviews',
+            category_id: 'google_reviews',
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
@@ -859,7 +856,7 @@ test('selecting a product advances directly to the design step', async () => {
 
 test('approves a draft and locks editing afterward', async () => {
   const bundle = {
-    use_cases: [
+    categories: [
       {
         id: 'google_reviews',
         name: 'Google Reviews',
@@ -892,7 +889,7 @@ test('approves a draft and locks editing afterward', async () => {
         name: 'Google Reviews Classic',
         preview_asset: 'template_google_reviews_classic.png',
         product_id: 'a6_card',
-        use_case_ids: ['google_reviews'],
+        category_ids: ['google_reviews'],
         active: true,
         fields: [
           {
@@ -929,7 +926,6 @@ test('approves a draft and locks editing afterward', async () => {
         page_width_mm: 111,
         page_height_mm: 154,
         bleed_mm: 3,
-        font_family: 'Proof Sans',
         fonts: [],
       },
     ],
@@ -951,7 +947,7 @@ test('approves a draft and locks editing afterward', async () => {
           json: async () => ({
             id: 1,
             name: 'Current draft',
-            use_case_id: 'google_reviews',
+            category_id: 'google_reviews',
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
@@ -988,7 +984,7 @@ test('approves a draft and locks editing afterward', async () => {
           json: async () => ({
             id: 1,
             name: 'Current draft',
-            use_case_id: selection.use_case_id,
+            category_id: selection.category_id,
             product_id: selection.product_id,
             template_id: selection.template_id,
             template_version: selection.template_version,
@@ -1021,7 +1017,7 @@ test('approves a draft and locks editing afterward', async () => {
           json: async () => ({
             id: 1,
             name: 'Current draft',
-            use_case_id: 'google_reviews',
+            category_id: 'google_reviews',
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
@@ -1067,7 +1063,7 @@ test('approves a draft and locks editing afterward', async () => {
           json: async () => ({
             id: 1,
             name: 'Current draft',
-            use_case_id: null,
+            category_id: null,
             product_id: null,
             template_id: null,
             template_version: null,
@@ -1091,7 +1087,7 @@ test('approves a draft and locks editing afterward', async () => {
             id: 'order-1',
             order_number: 'ORD-20260730-ABC123',
             display_name: 'Studio One',
-            use_case_id: 'google_reviews',
+            category_id: 'google_reviews',
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
@@ -1099,7 +1095,7 @@ test('approves a draft and locks editing afterward', async () => {
             approved_at: '2026-07-30T12:05:00.000Z',
             created_at: '2026-07-30T12:06:00.000Z',
             preview_path: '/tmp/order-1/preview.png',
-            use_case_snapshot: {
+            category_snapshot: {
               name: 'Google Reviews',
             },
             product_snapshot: {
@@ -1136,7 +1132,7 @@ test('approves a draft and locks editing afterward', async () => {
             id: 'order-1',
             order_number: 'ORD-20260730-ABC123',
             display_name: 'Studio One',
-            use_case_id: 'google_reviews',
+            category_id: 'google_reviews',
             product_id: 'a6_card',
             template_id: 'proof_a6_card',
             template_version: '1.0.0',
@@ -1144,7 +1140,7 @@ test('approves a draft and locks editing afterward', async () => {
             approved_at: '2026-07-30T12:05:00.000Z',
             created_at: '2026-07-30T12:06:00.000Z',
             preview_path: '/tmp/order-1/preview.png',
-            use_case_snapshot: {
+            category_snapshot: {
               name: 'Google Reviews',
             },
             product_snapshot: {
@@ -1242,7 +1238,7 @@ test('renders registry field copy for the review link and offers no example-link
   // the template, and the suggestion list is deliberately empty so no fake URL can be
   // written into a customer's card.
   const bundle = {
-    use_cases: [
+    categories: [
       {
         id: 'google_reviews',
         name: 'Google Reviews',
@@ -1276,7 +1272,7 @@ test('renders registry field copy for the review link and offers no example-link
         description: 'Kräftige Google-Bewertungsvorlage.',
         preview_asset: 'template_google_reviews_bold.png',
         product_id: 'a6_card',
-        use_case_ids: ['google_reviews'],
+        category_ids: ['google_reviews'],
         active: true,
         fields: [
           {
@@ -1340,7 +1336,6 @@ test('renders registry field copy for the review link and offers no example-link
         page_width_mm: 111,
         page_height_mm: 154,
         bleed_mm: 3,
-        font_family: 'Proof Sans',
         fonts: [],
       },
     ],
@@ -1349,7 +1344,7 @@ test('renders registry field copy for the review link and offers no example-link
   const draft = {
     id: 1,
     name: 'Current draft',
-    use_case_id: 'google_reviews',
+    category_id: 'google_reviews',
     product_id: 'a6_card',
     template_id: 'proof_a6_card',
     template_version: '1.6.0',

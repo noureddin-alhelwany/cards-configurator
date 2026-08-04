@@ -2,14 +2,14 @@ import { useDeferredValue, useEffect, useMemo, useState, type CSSProperties } fr
 import { buildTemplatePreviewFixture } from '../selection/selectionPreview';
 import { loadRegistries } from '../registries/loadRegistries';
 import type { RegistryBundle, TemplateDefinition } from '../registries/types';
-import type { FontDefinition, SafeAreaVariableDefinition } from '../design/types';
+import type { FontDefinition, SafeAreaVariableDefinition, TemplateFieldDefinition } from '../design/types';
 import { uiText } from '../ui/text';
 import DesignPreviewFrame from '../design/DesignPreviewFrame';
 import { ensureFontDefinitionsLoaded } from '../design/fonts';
 import {
   activeRegistryProduct,
   activeRegistryTemplates,
-  activeRegistryUseCase,
+  activeRegistryCategory,
   activeRegistryVariant,
   activeRegistryVariants,
 } from '../registries/registrySelection';
@@ -25,7 +25,6 @@ type LoadState = {
 const DEFAULT_PREVIEW_OPACITY = 50;
 const DEFAULT_SOURCE_OPACITY = 50;
 const TEMPLATE_TOOL_STAGE_SCALE = 2;
-const DEFAULT_TEXT_FONT = 'Proof Sans';
 const FEATURED_FONT_ORDER = [
   'inter',
   'manrope',
@@ -63,6 +62,32 @@ function assetUrl(asset: string | null | undefined) {
   return asset ? `/proof-assets/${asset}` : null;
 }
 
+function fieldDisplayLabel(field: TemplateFieldDefinition) {
+  return field.label ?? field.id;
+}
+
+function fieldKindMatchesZone(field: TemplateFieldDefinition, kind: 'text' | 'qr') {
+  if (kind === 'qr') {
+    return field.type === 'qr' || field.type === 'url';
+  }
+  return field.type === 'text';
+}
+
+function defaultFieldIdForKind(template: TemplateDefinition, kind: 'text' | 'qr') {
+  const allowedTypes = kind === 'qr' ? ['qr', 'url'] : ['text'];
+  return template.fields.find((field) => allowedTypes.includes(field.type))?.id ?? `${kind}_1`;
+}
+
+function fieldForZone(template: TemplateDefinition, kind: 'text' | 'qr', fieldId?: string | null) {
+  if (fieldId) {
+    const matched = template.fields.find((field) => field.id === fieldId);
+    if (matched && fieldKindMatchesZone(matched, kind)) {
+      return matched;
+    }
+  }
+  return template.fields.find((field) => fieldKindMatchesZone(field, kind)) ?? null;
+}
+
 function resolvePreviewAsset(
   selectedTemplate: TemplateDefinition | null,
   selectedVariant: ReturnType<typeof activeRegistryVariant>,
@@ -98,36 +123,33 @@ function stageStyle(
 
 function createZoneVariable(
   zoneId: string,
-  kind: 'dynamicText' | 'fixedText' | 'qr',
+  kind: 'text' | 'qr',
   index: number,
   fonts: FontOption[],
-  key: string,
+  template: TemplateDefinition,
+  fieldId: string | null,
 ): SafeAreaVariableDefinition {
   const defaultFont = fonts[0] ?? null;
+  const field = fieldForZone(template, kind, fieldId);
+  const nextFieldId = field?.id ?? fieldId ?? defaultFieldIdForKind(template, kind);
   return {
     id: `var-${zoneId}-${kind}-${index + 1}`,
     kind,
-    key,
-    label: kind === 'qr' ? 'QR-Code' : `${kind === 'fixedText' ? 'Fester Text' : 'Dynamischer Text'} ${index + 1}`,
-    font_family: defaultFont?.family ?? DEFAULT_TEXT_FONT,
-    font_family_id: null,
-    font_weight: kind === 'dynamicText' ? 700 : 400,
-    font_size_mm: kind === 'dynamicText' ? 6.8 : 4.4,
-    min_font_size_mm: kind === 'dynamicText' ? 4.5 : 3.2,
-    line_height: kind === 'dynamicText' ? 1.05 : 1.15,
+    field_id: nextFieldId,
+    label: field ? fieldDisplayLabel(field) : nextFieldId,
+    font_family_id: defaultFont?.id ?? null,
+    font_weight: 700,
+    font_size_mm: 6.8,
+    min_font_size_mm: 4.5,
+    line_height: 1.05,
+    letter_spacing_em: 0,
     color: '#1f1a17',
     align: 'left',
-    max_length: null,
-    max_lines: kind === 'dynamicText' ? 3 : 1,
-    overflow: 'shrink',
-    required: false,
-    default_value: null,
+    max_length: field?.max_length ?? null,
+    max_lines: field?.max_lines ?? null,
+    required: field?.required ?? false,
+    default_value: field?.default_value ?? null,
   };
-}
-
-function defaultFieldIdForKind(template: TemplateDefinition, kind: 'dynamicText' | 'fixedText' | 'qr') {
-  const allowedTypes = kind === 'qr' ? ['qr', 'url'] : ['text'];
-  return template.fields.find((field) => allowedTypes.includes(field.type))?.id ?? `${kind}_1`;
 }
 
 function fontOptionsFromDefinitions(fonts: Array<{ id?: string; family: string }>): FontOption[] {
@@ -137,22 +159,41 @@ function fontOptionsFromDefinitions(fonts: Array<{ id?: string; family: string }
   }));
 }
 
-function fontCategoryLabel(category: string | null | undefined) {
-  if (!category) {
-    return 'Sonstige';
-  }
-  return category
-    .split('-')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-}
-
 function normalizeZones(template: TemplateDefinition, fonts: FontOption[]): EditableZone[] {
-  const fontIdByFamily = Object.fromEntries(fonts.map((font) => [font.family, font.id]));
   return (template.safe_areas ?? []).map((safeArea, index) => ({
     ...safeArea,
     id: safeArea.id || `zone-${index + 1}`,
-    kind: safeArea.kind ?? 'fixedText',
+    kind: safeArea.kind ?? 'text',
+    variables: (() => {
+      const kind = safeArea.kind ?? 'text';
+      const sourceVariable =
+        (safeArea.variables ?? []).find((variable) => variable.kind === kind) ?? (safeArea.variables ?? [])[0] ?? null;
+      const fieldId = sourceVariable?.field_id ?? defaultFieldIdForKind(template, kind);
+      const field = fieldForZone(template, kind, fieldId);
+      const defaultFont = fonts[0] ?? null;
+      const nextVariable = sourceVariable
+        ? {
+            ...sourceVariable,
+            kind,
+            field_id: field?.id ?? fieldId,
+            label: field ? fieldDisplayLabel(field) : fieldId,
+            font_family_id: sourceVariable.font_family_id ?? defaultFont?.id ?? null,
+            max_length: sourceVariable.max_length ?? field?.max_length ?? null,
+            max_lines: sourceVariable.max_lines ?? field?.max_lines ?? null,
+            required: sourceVariable.required ?? field?.required ?? false,
+            default_value: sourceVariable.default_value ?? field?.default_value ?? null,
+          }
+        : createZoneVariable(
+            safeArea.id || `zone-${index + 1}`,
+            kind,
+            0,
+            fonts,
+            template,
+            fieldId,
+          );
+
+      return [nextVariable];
+    })(),
     qr:
       safeArea.kind === 'qr'
         ? safeArea.qr ?? {
@@ -162,26 +203,6 @@ function normalizeZones(template: TemplateDefinition, fonts: FontOption[]): Edit
             quiet_zone_mm: 2,
           }
         : safeArea.qr ?? null,
-    variables: (() => {
-      const kind = safeArea.kind ?? 'fixedText';
-      const sourceVariable =
-        (safeArea.variables ?? []).find((variable) => variable.kind === kind) ?? (safeArea.variables ?? [])[0] ?? null;
-      const nextVariable = sourceVariable
-        ? {
-            ...sourceVariable,
-            kind,
-            font_family_id: null,
-          }
-        : createZoneVariable(
-            safeArea.id || `zone-${index + 1}`,
-            kind,
-            0,
-            fonts,
-            defaultFieldIdForKind(template, kind),
-          );
-
-      return [nextVariable];
-    })(),
   }));
 }
 
@@ -191,14 +212,9 @@ function createZone(
   pageWidthMm: number,
   pageHeightMm: number,
   fonts: FontOption[],
-  key: string,
+  template: TemplateDefinition,
 ): EditableZone {
-  const defaults =
-    kind === 'qr'
-      ? { width_mm: 24, height_mm: 24 }
-      : kind === 'dynamicText'
-        ? { width_mm: 58, height_mm: 20 }
-        : { width_mm: 46, height_mm: 16 };
+  const defaults = kind === 'qr' ? { width_mm: 24, height_mm: 24 } : { width_mm: 58, height_mm: 20 };
   const offset = 12 + index * 4;
   return {
     id: `zone-${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${index + 1}`,
@@ -210,6 +226,7 @@ function createZone(
       width_mm: defaults.width_mm,
       height_mm: defaults.height_mm,
     },
+    personalizable: kind !== 'qr',
     qr:
       kind === 'qr'
         ? {
@@ -219,21 +236,20 @@ function createZone(
             quiet_zone_mm: 2,
         }
         : null,
-    variables: [createZoneVariable(`zone-${kind}-${index + 1}`, kind, 0, fonts, key)],
+    variables: [createZoneVariable(`zone-${kind}-${index + 1}`, kind, 0, fonts, template, defaultFieldIdForKind(template, kind))],
   };
 }
 
 function buildPreviewFixture(
   selectedTemplate: TemplateDefinition,
   selectedProduct: NonNullable<ReturnType<typeof activeRegistryProduct>>,
-  selectedUseCase: NonNullable<ReturnType<typeof activeRegistryUseCase>>,
+  selectedCategory: NonNullable<ReturnType<typeof activeRegistryCategory>>,
   zones: EditableZone[],
   selectedVariant: ReturnType<typeof activeRegistryVariant>,
   testValues: Record<string, string>,
-  globalFontFamilyId: string | null,
   fontDefinitions: FontDefinition[],
 ) {
-  const fixture = buildTemplatePreviewFixture(selectedTemplate, selectedProduct, selectedUseCase, {
+  const fixture = buildTemplatePreviewFixture(selectedTemplate, selectedProduct, selectedCategory, {
     textMode: 'blank',
   });
   if (!fixture) {
@@ -243,7 +259,7 @@ function buildPreviewFixture(
   const previewTextValues = { ...fixture.layout_state.text_values };
   for (const zone of zones) {
     for (const variable of zone.variables ?? []) {
-      previewTextValues[variable.key] = variable.default_value ?? '';
+      previewTextValues[variable.field_id ?? variable.id] = variable.default_value ?? '';
     }
   }
 
@@ -251,10 +267,6 @@ function buildPreviewFixture(
   fixture.template = {
     ...fixture.template,
     fonts: fontDefinitions,
-    typography: {
-      ...fixture.template.typography,
-      global_font_family_id: globalFontFamilyId,
-    },
     safe_areas: zones,
     background_asset: null,
     source_asset: null,
@@ -284,7 +296,14 @@ function renderTemplateToolStage({
   selectedZoneId,
   testValues,
   availableFonts,
-  globalFontFamilyId,
+  templateFields,
+  fontSearch,
+  onFontSearchChange,
+  fontCategory,
+  onFontCategoryChange,
+  fontCategories,
+  filteredFontCatalog,
+  fontCatalogError,
   guidesVisible,
   previewVisible,
   previewOpacity,
@@ -304,7 +323,14 @@ function renderTemplateToolStage({
   selectedZoneId: string | null;
   testValues: Record<string, string>;
   availableFonts: FontOption[];
-  globalFontFamilyId: string | null;
+  templateFields: TemplateFieldDefinition[];
+  fontSearch: string;
+  onFontSearchChange: (value: string) => void;
+  fontCategory: string;
+  onFontCategoryChange: (value: string) => void;
+  fontCategories: string[];
+  filteredFontCatalog: FontCatalogEntry[];
+  fontCatalogError: string | null;
   guidesVisible: boolean;
   previewVisible: boolean;
   previewOpacity: number;
@@ -323,10 +349,16 @@ function renderTemplateToolStage({
       pageWidthMm={selectedTemplate.page_width_mm}
       pageHeightMm={selectedTemplate.page_height_mm}
       availableFonts={availableFonts}
-      globalFontFamilyId={globalFontFamilyId}
+      templateFields={templateFields}
+      fontSearch={fontSearch}
+      onFontSearchChange={onFontSearchChange}
+      fontCategory={fontCategory}
+      onFontCategoryChange={onFontCategoryChange}
+      fontCategories={fontCategories}
+      filteredFontCatalog={filteredFontCatalog}
+      fontCatalogError={fontCatalogError}
       qrMinimumWidthMm={selectedProduct?.qr_min_width_mm ?? null}
       testValues={testValues}
-      showGuides={guidesVisible}
       frame={
         <div
           className="template-tool-stage-shell"
@@ -380,7 +412,6 @@ export default function TemplateToolPage() {
   const [zones, setZones] = useState<EditableZone[]>([]);
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [testValues, setTestValues] = useState<Record<string, string>>({});
-  const [globalFontFamilyId, setGlobalFontFamilyId] = useState<string | null>(null);
   const [fontSearch, setFontSearch] = useState('');
   const [fontCategory, setFontCategory] = useState<string>('');
   const [fontFacesById, setFontFacesById] = useState<Record<string, FontDefinition>>({});
@@ -457,14 +488,11 @@ export default function TemplateToolPage() {
 
   useEffect(() => {
     if (!selectedTemplate) {
-      setGlobalFontFamilyId(null);
       setZones([]);
       setSelectedZoneId(null);
       setTestValues({});
       return;
     }
-    const nextGlobalFont = selectedTemplate.typography?.global_font_family_id ?? selectedTemplate.fonts[0]?.id ?? null;
-    setGlobalFontFamilyId(nextGlobalFont);
     const nextZones = normalizeZones(selectedTemplate, fontOptionsFromDefinitions(selectedTemplate.fonts));
     setZones(nextZones);
     setSelectedZoneId(nextZones[0]?.id ?? null);
@@ -475,10 +503,8 @@ export default function TemplateToolPage() {
       const nextValues: Record<string, string> = {};
       for (const zone of zones) {
         for (const variable of zone.variables ?? []) {
-          if (variable.kind === 'fixedText') {
-            continue;
-          }
-          nextValues[variable.id] = current[variable.id] ?? variable.default_value ?? '';
+          const valueKey = variable.field_id ?? variable.id;
+          nextValues[valueKey] = current[valueKey] ?? variable.default_value ?? '';
         }
       }
       return nextValues;
@@ -497,8 +523,8 @@ export default function TemplateToolPage() {
     [selectedTemplate, state.bundle],
   );
 
-  const selectedUseCase = useMemo(
-    () => activeRegistryUseCase(state.bundle, selectedTemplate),
+  const selectedCategory = useMemo(
+    () => activeRegistryCategory(state.bundle, selectedTemplate),
     [selectedTemplate, state.bundle],
   );
 
@@ -531,11 +557,6 @@ export default function TemplateToolPage() {
         ),
       ).sort((a, b) => a.localeCompare(b)),
     [fontCatalog],
-  );
-
-  const selectedFontEntry = useMemo(
-    () => fontCatalog.find((font) => font.id === globalFontFamilyId) ?? null,
-    [fontCatalog, globalFontFamilyId],
   );
 
   const deferredFontSearch = useDeferredValue(fontSearch);
@@ -572,8 +593,10 @@ export default function TemplateToolPage() {
     }
 
     const neededFontIds = new Set<string>();
-    if (globalFontFamilyId) {
-      neededFontIds.add(globalFontFamilyId);
+    for (const font of selectedTemplate.fonts ?? []) {
+      if (font.id) {
+        neededFontIds.add(font.id);
+      }
     }
     for (const font of filteredFontCatalog) {
       neededFontIds.add(font.id);
@@ -616,25 +639,7 @@ export default function TemplateToolPage() {
     return () => {
       active = false;
     };
-  }, [filteredFontCatalog, fontFacesById, globalFontFamilyId, selectedTemplate, zones]);
-
-  useEffect(() => {
-    if (!selectedTemplate) {
-      setGlobalFontFamilyId(null);
-      return;
-    }
-
-    if (globalFontFamilyId && fontCatalog.some((font) => font.id === globalFontFamilyId)) {
-      return;
-    }
-
-    const nextGlobalFont =
-      selectedTemplate.typography?.global_font_family_id ??
-      selectedTemplate.fonts.find((font) => FEATURED_FONT_IDS.has(font.id ?? font.family))?.id ??
-      selectedTemplate.fonts[0]?.id ??
-      null;
-    setGlobalFontFamilyId(nextGlobalFont);
-  }, [globalFontFamilyId, selectedTemplate]);
+  }, [filteredFontCatalog, fontFacesById, selectedTemplate, zones]);
 
   useEffect(() => {
     if (!selectedTemplate) {
@@ -642,8 +647,10 @@ export default function TemplateToolPage() {
     }
 
     const selectedAndVisibleFontIds = new Set<string>();
-    if (globalFontFamilyId) {
-      selectedAndVisibleFontIds.add(globalFontFamilyId);
+    for (const font of selectedTemplate.fonts ?? []) {
+      if (font.id) {
+        selectedAndVisibleFontIds.add(font.id);
+      }
     }
     for (const font of filteredFontCatalog) {
       selectedAndVisibleFontIds.add(font.id);
@@ -668,7 +675,7 @@ export default function TemplateToolPage() {
       }
       return changed ? next : current;
     });
-  }, [filteredFontCatalog, globalFontFamilyId, selectedTemplate, zones]);
+  }, [filteredFontCatalog, selectedTemplate, zones]);
 
   const selectedFontDefinitions = useMemo(() => {
     const definitions = [...(selectedTemplate?.fonts ?? [])];
@@ -681,20 +688,19 @@ export default function TemplateToolPage() {
   }, [fontFacesById, selectedTemplate?.fonts]);
 
   const previewFixture = useMemo(() => {
-    if (!selectedTemplate || !selectedProduct || !selectedUseCase) {
+    if (!selectedTemplate || !selectedProduct || !selectedCategory) {
       return null;
     }
     return buildPreviewFixture(
       selectedTemplate,
       selectedProduct,
-      selectedUseCase,
+      selectedCategory,
       zones,
       selectedVariant,
       testValues,
-      globalFontFamilyId,
       selectedFontDefinitions,
     );
-  }, [globalFontFamilyId, selectedFontDefinitions, selectedProduct, selectedTemplate, selectedUseCase, selectedVariant, testValues, zones]);
+  }, [selectedFontDefinitions, selectedProduct, selectedTemplate, selectedCategory, selectedVariant, testValues, zones]);
   const previewLabel = previewAsset;
   const sourceLabel = sourceAsset;
 
@@ -768,71 +774,6 @@ export default function TemplateToolPage() {
             })}
           </div>
 
-          <div className="template-tool-sidebar-section">
-            <div className="template-tool-card__heading">
-              <div>
-                <h3>Globale Schrift</h3>
-                <p>{selectedFontEntry ? selectedFontEntry.family : 'Globale Schrift auswählen'}</p>
-              </div>
-              <p className="template-tool-card__meta">
-                {filteredFontCatalog.length} Fonts
-              </p>
-            </div>
-            <div className="template-tool-controls template-tool-controls--stack">
-              <label className="template-tool-control template-tool-control--wide">
-                <span>Schrift suchen</span>
-                <input
-                  type="search"
-                  value={fontSearch}
-                  onChange={(event) => setFontSearch(event.target.value)}
-                  placeholder="Fontsource durchsuchen"
-                />
-              </label>
-              <label className="template-tool-control template-tool-control--wide">
-                <span>Kategorie</span>
-                <select
-                  value={fontCategory}
-                  onChange={(event) => setFontCategory(event.target.value)}
-                  disabled={fontCatalog.length === 0}
-                >
-                  <option value="">Alle Kategorien</option>
-                  {fontCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {fontCategoryLabel(category)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <div className="template-tool-font-browser">
-              <div className="template-tool-font-browser__list" role="listbox" aria-label="Fontsource-Fonts">
-                {filteredFontCatalog.length > 0 ? (
-                  filteredFontCatalog.map((font) => {
-                    const selected = font.id === globalFontFamilyId;
-                    return (
-                      <button
-                        key={font.id}
-                        type="button"
-                        className={`template-tool-font-browser__item${selected ? ' template-tool-font-browser__item--selected' : ''}`}
-                        onClick={() => setGlobalFontFamilyId(font.id)}
-                      >
-                        <span className="template-tool-font-browser__name">{font.family}</span>
-                        <span className="template-tool-font-browser__preview" style={{ fontFamily: font.family }}>
-                          AaBb 123
-                        </span>
-                        <span className="template-tool-font-browser__meta">
-                          {fontCategoryLabel(font.category)}{font.variable ? ' · Variable' : ''}
-                        </span>
-                      </button>
-                    );
-                  })
-                ) : (
-                  <p className="template-tool-font-browser__empty">Keine Fonts für diese Filter gefunden.</p>
-                )}
-              </div>
-            </div>
-            {fontCatalogError ? <p className="template-tool-status template-tool-status--warning">{fontCatalogError}</p> : null}
-          </div>
         </aside>
 
         <div className="template-tool-main-column">
@@ -849,7 +790,7 @@ export default function TemplateToolPage() {
             </div>
             {selectedTemplate ? (
               <p className="template-tool-card__meta">
-                {selectedUseCase ? selectedUseCase.name : 'Anwendungsfall fehlt'}
+                {selectedCategory ? selectedCategory.name : 'Anwendungsfall fehlt'}
               </p>
             ) : null}
           </div>
@@ -954,7 +895,14 @@ export default function TemplateToolPage() {
                 selectedZoneId,
                 testValues,
                 availableFonts,
-                globalFontFamilyId,
+                templateFields: selectedTemplate.fields,
+                fontSearch,
+                onFontSearchChange: setFontSearch,
+                fontCategory,
+                onFontCategoryChange: setFontCategory,
+                fontCategories,
+                filteredFontCatalog,
+                fontCatalogError,
                 guidesVisible,
                 previewVisible,
                 previewOpacity,
@@ -971,7 +919,7 @@ export default function TemplateToolPage() {
                     selectedTemplate.page_width_mm,
                     selectedTemplate.page_height_mm,
                     availableFonts,
-                    defaultFieldIdForKind(selectedTemplate, kind),
+                    selectedTemplate,
                   );
                   setZones((current) => [...current, nextZone]);
                   setSelectedZoneId(nextZone.id);

@@ -25,7 +25,7 @@ def test_validation_reports_missing_required_fields(tmp_path: Path, monkeypatch)
         response = client.post(
             '/api/drafts/current/template',
             json={
-                'use_case_id': 'google_reviews',
+                'category_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
                 'template_version': '1.6.0',
@@ -50,7 +50,7 @@ def test_validation_reports_text_overflow(tmp_path: Path, monkeypatch) -> None:
         client.post(
             '/api/drafts/current/template',
             json={
-                'use_case_id': 'google_reviews',
+                'category_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
                 'template_version': '1.6.0',
@@ -87,7 +87,7 @@ def test_validation_flags_warning_and_blocking_logo_dpi(tmp_path: Path, monkeypa
         client.post(
             '/api/drafts/current/template',
             json={
-                'use_case_id': 'google_reviews',
+                'category_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
                 'template_version': '1.6.0',
@@ -162,7 +162,7 @@ def test_validation_blocks_small_qr_codes(tmp_path: Path, monkeypatch) -> None:
         client.post(
             '/api/drafts/current/template',
             json={
-                'use_case_id': 'google_reviews',
+                'category_id': 'google_reviews',
                 'product_id': 'a6_card',
                 'template_id': 'proof_a6_card',
                 'template_version': '1.6.0',

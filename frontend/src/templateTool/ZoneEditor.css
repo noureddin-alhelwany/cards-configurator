@@ -149,12 +149,7 @@
   user-select: none;
 }
 
-.template-tool-zone-editor__zone--dynamicText {
-  border-color: rgba(111, 83, 154, 1);
-  background: rgba(111, 83, 154, 0.18);
-}
-
-.template-tool-zone-editor__zone--fixedText {
+.template-tool-zone-editor__zone--text {
   border-color: rgba(132, 92, 57, 1);
   background: rgba(132, 92, 57, 0.18);
 }

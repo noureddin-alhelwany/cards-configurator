@@ -20,7 +20,7 @@ names still say `Template` for the moment.
 > as D-004 requires.
 
 One layout in four designs, not four cloned designs: the four mockups have the same sequence
-of blocks and differ only in background decor, accent colour and headline typeface.
+of blocks and differ only in background decor and accent colour.
 `proof_a6_card-1.{2,3,4,5}.0.json` are byte-identical in `elements` — that is a symptom of
 there being no construct for "same layout, different look", which the design model supplies.
 
@@ -137,7 +137,7 @@ it is read nowhere, and bumping it would imply a migration history that does not
 - [x] Five text-free SVG backgrounds, 111×154mm, one colour world per mockup, with **named
       slot placeholders** (`id="slot-headline"`, …).
 - [x] Optional style fields on `TemplateVariantDefinition` (today inert: only `id`, `name`,
-      `active`, `preview_asset`): `background_asset`, accent colour, headline typeface.
+      `active`, `preview_asset`): `background_asset` and accent colour.
 - [x] Design resolution in the renderer, so the layout and its slots exist **once**.
 - [x] `scripts/import_template_svg.py` reads slot geometry from the named placeholders at
       **authoring time** and writes the template JSON. No runtime parser, no new runtime

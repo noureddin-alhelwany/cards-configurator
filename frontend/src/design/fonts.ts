@@ -6,13 +6,6 @@ function fontKey(font: FontDefinition) {
   return [font.id ?? font.family, font.family, font.file, font.weight, font.style].join(':');
 }
 
-export function resolveEffectiveFontFamilyId(
-  zoneFontFamilyId: string | null | undefined,
-  globalFontFamilyId: string | null | undefined,
-) {
-  return zoneFontFamilyId ?? globalFontFamilyId ?? null;
-}
-
 export function fontDefinitionForId(template: TemplateDefinition, fontFamilyId: string | null | undefined) {
   if (!fontFamilyId) {
     return null;

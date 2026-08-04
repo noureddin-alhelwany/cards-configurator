@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import type { ProductDefinition, TemplateDefinition, UseCaseDefinition } from '../registries/types';
+import type { ProductDefinition, TemplateDefinition, CategoryDefinition } from '../registries/types';
 import type { ElementAdjustment, ValidationIssue } from '../design/types';
 import { uiText } from '../ui/text';
 import { TemplateLivePreview } from './selectionPreview';
@@ -9,7 +9,7 @@ type SelectionPreviewPanelProps = {
   previewMode: 'hidden' | 'live' | 'mockup';
   selectedTemplate: TemplateDefinition | null;
   selectedProduct: ProductDefinition | null;
-  selectedUseCase: UseCaseDefinition | null;
+  selectedCategory: CategoryDefinition | null;
   selectedVariantId: string | null;
   layoutValues: {
     text_values: Record<string, string>;
@@ -26,7 +26,7 @@ export function SelectionPreviewPanel({
   previewMode,
   selectedTemplate,
   selectedProduct,
-  selectedUseCase,
+  selectedCategory,
   selectedVariantId,
   layoutValues,
   assetPreviews,
@@ -36,7 +36,7 @@ export function SelectionPreviewPanel({
 }: SelectionPreviewPanelProps) {
   const previewVisible = previewMode !== 'hidden';
   const title = previewMode === 'mockup' ? uiText.selection.preview.approvalTitle : uiText.selection.preview.liveTitle;
-  const canRender = previewVisible && selectedTemplate && selectedProduct && selectedUseCase;
+  const canRender = previewVisible && selectedTemplate && selectedProduct && selectedCategory;
 
   // Escape leaves the enlarged view.
   useEffect(() => {
@@ -57,7 +57,7 @@ export function SelectionPreviewPanel({
     <TemplateLivePreview
       template={selectedTemplate}
       product={selectedProduct}
-      useCase={selectedUseCase}
+      category={selectedCategory}
       selectedVariantId={selectedVariantId}
       layoutValues={layoutValues}
       assetPreviews={assetPreviews}

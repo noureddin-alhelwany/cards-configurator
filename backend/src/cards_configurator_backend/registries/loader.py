@@ -9,11 +9,11 @@ from pydantic import ValidationError
 
 from .artwork_geometry import geometry_compatible, probe_artwork_geometry
 from .schemas import (
+    CategoryDefinition,
     ProductDefinition,
     RegistryBundle,
     RegistryIssue,
     TemplateDefinition,
-    UseCaseDefinition,
 )
 
 # Aspect deviation the loader tolerates before it says anything, and before it refuses the
@@ -63,13 +63,13 @@ def _load_documents(directory: Path) -> tuple[list[tuple[Path, dict[str, Any]]],
     return records, issues
 
 
-def _load_use_cases(directory: Path) -> tuple[list[UseCaseDefinition], list[RegistryIssue]]:
+def _load_categories(directory: Path) -> tuple[list[CategoryDefinition], list[RegistryIssue]]:
     documents, issues = _load_documents(directory)
-    records: list[UseCaseDefinition] = []
+    records: list[CategoryDefinition] = []
 
     for path, payload in documents:
         try:
-            records.append(UseCaseDefinition.model_validate(payload))
+            records.append(CategoryDefinition.model_validate(payload))
         except ValidationError as exc:
             issues.append(
                 _issue(
@@ -286,22 +286,22 @@ def load_registry_bundle(registries_dir: Path, assets_dir: Path | None = None) -
     build registries in a tmp dir). Pass it to have declared background artwork verified;
     without it, artwork checks are skipped rather than guessed.
     """
-    use_cases, diagnostics = _load_use_cases(registries_dir / "use_cases")
+    categories, diagnostics = _load_categories(registries_dir / "categories")
     products, product_issues = _load_products(registries_dir / "products")
     templates, template_issues = _load_templates(registries_dir / "templates")
     diagnostics.extend(product_issues)
     diagnostics.extend(template_issues)
 
-    active_use_cases: list[UseCaseDefinition] = []
-    seen_use_cases: set[str] = set()
-    for record in use_cases:
+    active_categories: list[CategoryDefinition] = []
+    seen_categories: set[str] = set()
+    for record in categories:
         if not record.active:
             continue
-        if record.id in seen_use_cases:
-            diagnostics.append(_issue("duplicate_use_case_id", record.id, f"Duplicate use case id '{record.id}'"))
+        if record.id in seen_categories:
+            diagnostics.append(_issue("duplicate_category_id", record.id, f"Duplicate category id '{record.id}'"))
             continue
-        seen_use_cases.add(record.id)
-        active_use_cases.append(record)
+        seen_categories.add(record.id)
+        active_categories.append(record)
 
     active_products: list[ProductDefinition] = []
     seen_products: set[str] = set()
@@ -315,7 +315,7 @@ def load_registry_bundle(registries_dir: Path, assets_dir: Path | None = None) -
         active_products.append(record)
 
     product_by_id = {record.id: record for record in active_products}
-    use_case_by_id = {record.id: record for record in active_use_cases}
+    category_by_id = {record.id: record for record in active_categories}
 
     active_templates: list[TemplateDefinition] = []
     seen_templates: set[tuple[str, str]] = set()
@@ -343,14 +343,14 @@ def load_registry_bundle(registries_dir: Path, assets_dir: Path | None = None) -
                 )
             )
             continue
-        missing_use_cases = [use_case_id for use_case_id in record.use_case_ids if use_case_id not in use_case_by_id]
-        if missing_use_cases:
+        missing_categories = [category_id for category_id in record.category_ids if category_id not in category_by_id]
+        if missing_categories:
             diagnostics.append(
                 _issue(
-                    "template_unknown_use_case",
+                    "template_unknown_category",
                     record.id,
-                    f"Template '{record.id}' references unknown use case ids {missing_use_cases}",
-                    details={"template_id": record.id, "missing_use_case_ids": missing_use_cases},
+                    f"Template '{record.id}' references unknown category ids {missing_categories}",
+                    details={"template_id": record.id, "missing_category_ids": missing_categories},
                 )
             )
             continue
@@ -390,7 +390,7 @@ def load_registry_bundle(registries_dir: Path, assets_dir: Path | None = None) -
         active_templates.append(record)
 
     return RegistryBundle(
-        use_cases=active_use_cases,
+        categories=active_categories,
         products=active_products,
         templates=active_templates,
         diagnostics=diagnostics,

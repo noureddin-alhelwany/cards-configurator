@@ -206,7 +206,7 @@ function variantNameFromSnapshot(templateSnapshot: Record<string, unknown> | nul
 
 type OrderSnapshotProps = {
   displayName: string;
-  useCaseName: string;
+  categoryName: string;
   productName: string;
   templateName: string;
   variantName: string;
@@ -218,7 +218,7 @@ type OrderSnapshotProps = {
 
 export function OrderSnapshotSection({
   displayName,
-  useCaseName,
+  categoryName,
   productName,
   templateName,
   variantName,
@@ -238,7 +238,7 @@ export function OrderSnapshotSection({
       <OrderKeyValueGrid
         items={[
           { label: uiText.order.created.snapshotCustomer, value: displayName },
-          { label: uiText.order.created.snapshotUseCase, value: useCaseName },
+          { label: uiText.order.created.snapshotCategory, value: categoryName },
           { label: uiText.order.created.snapshotProduct, value: productName },
           { label: uiText.order.created.snapshotDesign, value: templateName },
           { label: uiText.order.created.snapshotVariant, value: variantName },

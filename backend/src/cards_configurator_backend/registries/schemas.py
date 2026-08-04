@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class RegistryIssue(BaseModel):
@@ -19,7 +19,9 @@ class AssetDataUrl(BaseModel):
     data_url: str
 
 
-class UseCaseDefinition(BaseModel):
+class CategoryDefinition(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
+
     id: str
     name: str
     description: str
@@ -64,10 +66,6 @@ class FontDefinition(BaseModel):
     style: Literal["normal", "italic"] = "normal"
 
 
-class DesignTypography(BaseModel):
-    global_font_family_id: str | None = None
-
-
 class ElementAdjustment(BaseModel):
     offset_x: float = 0.0
     offset_y: float = 0.0
@@ -90,7 +88,6 @@ class ElementBase(BaseModel):
 class TextElementDefinition(ElementBase):
     kind: Literal["text"]
     text: str
-    font_family: str
     font_family_id: str | None = None
     font_size_mm: float
     font_weight: int = 700
@@ -145,10 +142,9 @@ RenderableElementDefinition = Annotated[
 
 class SafeAreaVariableDefinition(BaseModel):
     id: str
-    kind: Literal["dynamicText", "fixedText", "qr"]
-    key: str
+    kind: Literal["text", "qr"]
+    field_id: str | None = None
     label: str
-    font_family: str
     font_family_id: str | None = None
     font_weight: int = 400
     font_size_mm: float = 4.0
@@ -158,7 +154,6 @@ class SafeAreaVariableDefinition(BaseModel):
     align: Literal["left", "center", "right"] = "left"
     max_length: int | None = None
     max_lines: int | None = None
-    overflow: Literal["shrink", "wrap", "error"] = "shrink"
     required: bool = False
     default_value: str | None = None
 
@@ -167,7 +162,8 @@ class SafeAreaDefinition(BaseModel):
     id: str
     box_mm: BoxMm
     label: str | None = None
-    kind: Literal["dynamicText", "fixedText", "qr"] = "fixedText"
+    kind: Literal["text", "qr"] = "text"
+    personalizable: bool = False
     qr: QrZoneDefinition | None = None
     variables: list[SafeAreaVariableDefinition] = Field(default_factory=list)
 
@@ -186,7 +182,6 @@ class TextRuleDefinition(BaseModel):
     version: int
     field_id: str
     max_lines: int | None = None
-    overflow: Literal["shrink", "wrap", "error"] = "shrink"
     min_font_size_mm: float | None = None
 
 
@@ -206,9 +201,6 @@ class TemplateVariantDefinition(BaseModel):
     source_asset: str | None = None
     background_asset: str | None = None
     accent_color: str | None = None
-    headline_font_family: str | None = None
-    headline_font_family_id: str | None = None
-    headline_font_weight: int | None = None
 
     @model_validator(mode="after")
     def sync_source_asset(self) -> TemplateVariantDefinition:
@@ -234,12 +226,14 @@ class TemplateFieldDefinition(BaseModel):
 
 
 class TemplateDefinition(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
+
     schema_version: int
     id: str
     version: str
     name: str | None = None
     product_id: str
-    use_case_ids: list[str]
+    category_ids: list[str] = Field(default_factory=list)
     active: bool = True
     description: str | None = None
     page_width_mm: float
@@ -256,8 +250,6 @@ class TemplateDefinition(BaseModel):
     # Tripwire, not a lock: a replaced file would retroactively change a year-old order, so
     # the loader digests the artwork at startup and warns when it no longer matches.
     background_asset_sha256: str | None = None
-    font_family: str | None = None
-    typography: DesignTypography = Field(default_factory=DesignTypography)
     fields: list[TemplateFieldDefinition] = Field(default_factory=list)
     safe_areas: list[SafeAreaDefinition] = Field(default_factory=list)
     text_rules: list[TextRuleDefinition] = Field(default_factory=list)
@@ -266,41 +258,27 @@ class TemplateDefinition(BaseModel):
     elements: list[RenderableElementDefinition]
     variants: list[TemplateVariantDefinition] = Field(default_factory=list)
 
-    @field_validator("use_case_ids")
+    @field_validator("category_ids")
     @classmethod
-    def validate_use_case_ids(cls, value: list[str]) -> list[str]:
+    def validate_category_ids(cls, value: list[str]) -> list[str]:
         if not value:
-            raise ValueError("templates must reference at least one use case")
+            raise ValueError("templates must reference at least one category")
         return value
 
     @model_validator(mode="after")
     def normalize_font_ids(self) -> TemplateDefinition:
-        font_id_by_family = {font.family: font.id or font.family for font in self.fonts}
         font_ids = {font.id or font.family for font in self.fonts}
-
-        if self.typography.global_font_family_id is None and self.font_family is not None:
-            self.typography.global_font_family_id = font_id_by_family.get(self.font_family, self.typography.global_font_family_id)
 
         for safe_area in self.safe_areas:
             for variable in safe_area.variables:
-                if variable.kind not in {"dynamicText", "fixedText"}:
+                if variable.kind != "text":
                     continue
                 if not font_ids:
                     raise ValueError(
                         f"safe area variable '{variable.id}' requires a registered font but template '{self.id}' defines none"
                     )
-                if variable.font_family_id is not None:
-                    if variable.font_family_id not in font_ids:
-                        raise ValueError(f"safe area variable '{variable.id}' uses unknown font '{variable.font_family_id}'")
-                    continue
-                if variable.font_family in font_id_by_family:
-                    variable.font_family_id = font_id_by_family[variable.font_family]
-                    continue
-                if variable.font_family is not None:
-                    raise ValueError(f"safe area variable '{variable.id}' uses unknown font '{variable.font_family}'")
-                if self.typography.global_font_family_id is not None:
-                    variable.font_family_id = self.typography.global_font_family_id
-                    continue
+                if variable.font_family_id is None:
+                    raise ValueError(f"safe area variable '{variable.id}' needs a font_family_id")
                 if variable.font_family_id not in font_ids:
                     raise ValueError(
                         f"safe area variable '{variable.id}' uses unknown font '{variable.font_family_id}'"
@@ -312,27 +290,10 @@ class TemplateDefinition(BaseModel):
                 raise ValueError(
                     f"text element '{element.id}' requires a registered font but template '{self.id}' defines none"
                 )
-            if element.font_family_id is not None:
-                if element.font_family_id not in font_ids:
-                    raise ValueError(f"text element '{element.id}' uses unknown font '{element.font_family_id}'")
-                continue
-            if element.font_family in font_id_by_family:
-                element.font_family_id = font_id_by_family[element.font_family]
-                continue
-            if element.font_family is not None:
-                raise ValueError(f"text element '{element.id}' uses unknown font '{element.font_family}'")
-            if self.typography.global_font_family_id is not None:
-                element.font_family_id = self.typography.global_font_family_id
-                continue
+            if element.font_family_id is None:
+                raise ValueError(f"text element '{element.id}' needs a font_family_id")
             if element.font_family_id not in font_ids:
                 raise ValueError(f"text element '{element.id}' uses unknown font '{element.font_family_id}'")
-        for variant in self.variants:
-            if variant.headline_font_family_id is not None and variant.headline_font_family_id not in font_ids:
-                raise ValueError(f"template variant '{variant.id}' uses unknown font '{variant.headline_font_family_id}'")
-            if variant.headline_font_family_id is None and variant.headline_font_family in font_id_by_family:
-                variant.headline_font_family_id = font_id_by_family[variant.headline_font_family]
-            if variant.headline_font_family is not None and variant.headline_font_family not in font_id_by_family:
-                raise ValueError(f"template variant '{variant.id}' uses unknown font '{variant.headline_font_family}'")
         return self
 
     @model_validator(mode="after")
@@ -353,15 +314,19 @@ class TemplateDefinition(BaseModel):
 
 
 class ProofFixture(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
+
     template: TemplateDefinition
     product: ProductDefinition
-    use_case: UseCaseDefinition
+    category: CategoryDefinition
     layout_state: LayoutState
     assets: dict[str, AssetDataUrl]
 
 
 class RegistryBundle(BaseModel):
-    use_cases: list[UseCaseDefinition]
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
+
+    categories: list[CategoryDefinition]
     products: list[ProductDefinition]
     templates: list[TemplateDefinition]
     diagnostics: list[RegistryIssue] = Field(default_factory=list)

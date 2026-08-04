@@ -25,7 +25,7 @@ Als Produktteam möchte ich alle sichtbaren Texte zentral verwalten, damit Bezei
 - [x] Die Struktur unterstützt später Deutsch und Englisch.
 - [x] Backendfehlermeldungen werden nicht direkt ausgegeben.
 - [x] Texte können angepasst werden, ohne die Komponentenlogik zu verändern.
-- [x] Texte für Use Cases, Produkte, Templates und Felder können aus Konfigurationen kommen.
+- [x] Texte für Kategorien, Produkte, Templates und Felder können aus Konfigurationen kommen.
 
 ## Result
 

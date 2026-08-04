@@ -22,7 +22,6 @@ from .schemas import (
     TemplateVariantDefinition,
     TextRuleDefinition,
     TextElementDefinition,
-    UseCaseDefinition,
 )
 
 __all__ = [
@@ -47,7 +46,6 @@ __all__ = [
     "TemplateVariantDefinition",
     "TextRuleDefinition",
     "TextElementDefinition",
-    "UseCaseDefinition",
     "load_registry_bundle",
     "extract_slot_boxes",
     "update_template_from_svg",

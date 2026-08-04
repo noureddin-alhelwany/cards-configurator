@@ -24,12 +24,11 @@ function buildFixture(): ProofFixture {
       background_asset: null,
       background_asset_sha256: null,
       product_id: 'a6_card',
-      use_case_ids: ['google_reviews'],
+      category_ids: ['google_reviews'],
       active: true,
       page_width_mm: 111,
       page_height_mm: 154,
       bleed_mm: 3,
-      font_family: 'Proof Sans',
       safe_areas: [
         {
           id: 'content',
@@ -61,7 +60,7 @@ function buildFixture(): ProofFixture {
           box_mm: { x_mm: 15, y_mm: 14, width_mm: 70, height_mm: 22 },
           z_index: 1,
           text: 'Scanne den QR-Code',
-          font_family: 'Proof Sans',
+          font_family_id: 'proof-sans',
           font_size_mm: 6.8,
           font_weight: 700,
           color: '#1f1a17',
@@ -87,7 +86,7 @@ function buildFixture(): ProofFixture {
       preview_asset: 'a6_preview.png',
       active: true,
     },
-    use_case: {
+    category: {
       id: 'google_reviews',
       name: 'Google Reviews',
       description: 'Scan to leave a review.',
@@ -178,16 +177,16 @@ function fixtureWithQr(textValues: Record<string, string> = {}) {
     suggestions: [],
     default_value: null,
   });
-  fixture.template.elements.push({
-    kind: 'qr',
-    id: 'proof-qr',
+    fixture.template.elements.push({
+      kind: 'qr',
+      id: 'proof-qr',
     box_mm: { x_mm: 71, y_mm: 74, width_mm: 22, height_mm: 22 },
     z_index: 2,
     value: 'https://example.com/review',
     color: '#1f1a17',
     background: '#ffffff',
     quiet_zone_mm: 4,
-  });
+    });
   fixture.layout_state.text_values = { ...fixture.layout_state.text_values, ...textValues };
   fixture.assets = { ...fixture.assets, qr: { mime_type: 'image/svg+xml', data_url: 'data:image/svg+xml,<svg/>' } };
   return fixture;
@@ -243,8 +242,6 @@ function fixtureWithVariantBackground() {
       preview_asset: null,
       background_asset: 'template_google_reviews_warm_preview.png',
       accent_color: '#315a86',
-      headline_font_family: 'Proof Sans',
-      headline_font_weight: 700,
     },
   ];
   fixture.layout_state.variant_id = 'classic';

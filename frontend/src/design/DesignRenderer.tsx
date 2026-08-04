@@ -16,7 +16,7 @@ import { resolveQrValue } from './qr';
 import { estimateTextFit } from './textFit';
 import { BACKGROUND_ASSET_ID, markRenderError } from './renderReadiness';
 import { activeTemplateVariant, resolveTemplateBackgroundAsset } from './variantResolution';
-import { ensureTemplateFontsLoaded, resolveEffectiveFontFamilyId, resolveFontFamilyName } from './fonts';
+import { ensureTemplateFontsLoaded, resolveFontFamilyName } from './fonts';
 import { documentBoxStyle } from './workspaceGeometry';
 import './DesignRenderer.css';
 
@@ -80,11 +80,7 @@ function renderTextElement(
   const field = fieldForElement(fields, element.id);
   const textValue = layoutState.text_values[element.id] ?? element.text;
   const { scale: fitScale, rawScale } = textFitFor(element, textValue, field?.max_lines ?? null);
-  const fontFamilyId = resolveEffectiveFontFamilyId(
-    element.font_family_id,
-    template.typography?.global_font_family_id ?? null,
-  );
-  const fontFamily = resolveFontFamilyName(template, fontFamilyId, element.font_family);
+  const fontFamily = resolveFontFamilyName(template, element.font_family_id);
   // Validation outlines are a preview affordance; they must never be printed.
   const issue = variant === 'production' ? null : issueForElement(validationIssues, element.id);
   // `opacity` below 1 creates a compositing layer that Chrome may flatten to raster.
@@ -108,7 +104,7 @@ function renderTextElement(
         ...verticalStyle,
         zIndex: element.z_index,
         color: element.color,
-        fontFamily: fontFamily ?? element.font_family,
+        fontFamily: fontFamily ?? undefined,
         fontSize: `${element.font_size_mm * fitScale}mm`,
         fontWeight: element.font_weight,
         lineHeight: element.line_height,
@@ -234,7 +230,7 @@ function renderGuideLayer(safeAreas: SafeAreaDefinition[] | undefined) {
       {safeAreas?.map((safeArea) => (
         <div
           key={safeArea.id}
-          className={`design-stage__safe-area design-stage__safe-area--${safeArea.kind ?? 'fixedText'}`}
+          className={`design-stage__safe-area design-stage__safe-area--${safeArea.kind ?? 'text'}`}
           data-testid={`design-stage-safe-area-${safeArea.id}`}
           style={documentBoxStyle(safeArea.box_mm)}
         >
@@ -301,8 +297,6 @@ function canvasStyle(
     '--page-height': `${pageHeight}mm`,
     '--bleed': `${bleed}mm`,
     '--variant-accent-color': selectedVariant?.accent_color ?? undefined,
-    '--variant-headline-font-family': selectedVariant?.headline_font_family ?? undefined,
-    '--variant-headline-font-weight': selectedVariant?.headline_font_weight?.toString() ?? undefined,
   } as CSSProperties;
 }
 

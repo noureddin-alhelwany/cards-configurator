@@ -2,7 +2,7 @@
 
 ## File-backed registries
 
-### UseCase
+### Category
 
 - id
 - name
@@ -26,9 +26,11 @@
 - schema version
 - id and immutable version
 - product id
-- supported use-case ids
+- supported category ids
 - fields
 - elements
+- controlled text and QR zones
+- zone-level font references only
 - variants
 - fonts and static assets
 - active
@@ -39,11 +41,10 @@ These are validated configuration files, not SQL tables.
 
 ### Draft
 
-- UUID
-- use-case, product, template and template version
+- integer id
+- category, product, template and template version
 - selected variant
 - layout state JSON
-- revision integer
 - created/updated timestamps
 
 ### Asset
@@ -62,7 +63,7 @@ Original files are immutable.
 
 - UUID and human-readable order number
 - optional customer/company display name
-- use-case/product/template identifiers
+- category/product/template identifiers
 - product snapshot
 - template snapshot
 - layout snapshot

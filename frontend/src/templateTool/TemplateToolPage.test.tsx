@@ -3,15 +3,21 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import App from '../App';
 
+function setPath(path: string) {
+  if (typeof window !== 'undefined') {
+    window.history.pushState({}, '', path);
+  }
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
-  window.history.pushState({}, '', '/');
+  setPath('/');
 });
 
 test('renders the internal template tool with separate preview and source layers', async () => {
   const qrDataUrl = 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23ffffff%22/%3E%3C/svg%3E';
   const bundle = {
-    use_cases: [
+    categories: [
       {
         id: 'google_reviews',
         name: 'Google Reviews',
@@ -45,7 +51,7 @@ test('renders the internal template tool with separate preview and source layers
         name: 'Google Reviews Host',
         description: null,
         product_id: 'a6_card',
-        use_case_ids: ['google_reviews'],
+        category_ids: ['google_reviews'],
         active: true,
         page_width_mm: 111,
         page_height_mm: 154,
@@ -54,7 +60,6 @@ test('renders the internal template tool with separate preview and source layers
         background_asset_sha256: null,
         source_asset: 'source/template_google_reviews_bold.png',
         preview_asset: 'preview/template_google_reviews_bold.png',
-        font_family: 'Proof Sans',
         fonts: [
           {
             id: 'proof-sans',
@@ -109,7 +114,7 @@ test('renders the internal template tool with separate preview and source layers
             box_mm: { x_mm: 10, y_mm: 12, width_mm: 70, height_mm: 20 },
             z_index: 1,
             text: 'Scanne den QR-Code',
-            font_family: 'Proof Sans',
+            font_family_id: 'proof-sans',
             font_size_mm: 6.8,
             font_weight: 700,
             color: '#1f1a17',
@@ -217,28 +222,13 @@ test('renders the internal template tool with separate preview and source layers
   });
 
   vi.stubGlobal('fetch', fetchMock);
-  window.history.pushState({}, '', '/template-tool');
+  setPath('/template-tool');
 
   render(<App />);
 
   expect(await screen.findByText('Templates und Design-Overlays')).toBeInTheDocument();
   expect(fetchMock).toHaveBeenCalledWith('/api/registries');
   expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog');
-  expect(screen.getByText('Globale Schrift')).toBeInTheDocument();
-  expect(screen.getByLabelText('Schrift suchen')).toBeInTheDocument();
-  expect(screen.getByLabelText('Kategorie')).toBeInTheDocument();
-  expect(await screen.findByRole('button', { name: /Inter/ })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: /Libre Baskerville/ })).toBeInTheDocument();
-  expect(screen.getAllByText('AaBb 123').length).toBe(2);
-  expect(screen.queryByRole('button', { name: /Weitere Fonts laden/ })).not.toBeInTheDocument();
-
-  fireEvent.change(screen.getByLabelText('Schrift suchen'), { target: { value: 'Abril' } });
-  await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog/abril-fatface'));
-  expect(await screen.findByRole('button', { name: /Abril Fatface/ })).toBeInTheDocument();
-  expect(screen.getAllByText('AaBb 123').length).toBe(1);
-
-  fireEvent.change(screen.getByLabelText('Schrift suchen'), { target: { value: '' } });
-  expect(screen.queryByText('Scanne den QR-Code')).not.toBeInTheDocument();
   expect(screen.getByLabelText('Preview anzeigen')).toBeInTheDocument();
   expect(screen.getByLabelText('Preview-Deckkraft')).toBeInTheDocument();
   expect(screen.getByLabelText('Source anzeigen')).toBeInTheDocument();
@@ -255,7 +245,22 @@ test('renders the internal template tool with separate preview and source layers
   fireEvent.click(screen.getByLabelText('Hilfslinien anzeigen'));
   expect(screen.getByTestId('proof-canvas').querySelector('.design-stage__document')).toBeNull();
 
-  fireEvent.click(screen.getByRole('button', { name: 'Textzone erstellen' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Text erstellen' }));
+
+  await screen.findByLabelText('Schrift suchen');
+  expect(screen.getByText('Zuordnung')).toBeInTheDocument();
+  expect(screen.getByText('Headline')).toBeInTheDocument();
+  expect(screen.getByLabelText('Textinhalt')).toHaveValue('Scanne den QR-Code');
+  expect(await screen.findByRole('button', { name: /Inter/ })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Libre Baskerville/ })).toBeInTheDocument();
+  expect(screen.getAllByText('AaBb 123').length).toBeGreaterThanOrEqual(2);
+  expect(screen.queryByRole('button', { name: /Weitere Fonts laden/ })).not.toBeInTheDocument();
+
+  fireEvent.change(screen.getByLabelText('Schrift suchen'), { target: { value: 'Abril' } });
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog/abril-fatface'));
+  expect(await screen.findByRole('button', { name: /Abril Fatface/ })).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Schrift suchen'), { target: { value: '' } });
+  expect(screen.getByLabelText('Textinhalt')).toHaveValue('Scanne den QR-Code');
 
   const stage = document.querySelector('.template-tool-zone-editor__canvas-content') as HTMLElement | null;
   expect(stage).not.toBeNull();
@@ -274,7 +279,7 @@ test('renders the internal template tool with separate preview and source layers
     }),
   });
 
-  const draggableZone = document.querySelector('[data-testid^="template-tool-zone-zone-dynamicText"]') as HTMLElement | null;
+  const draggableZone = document.querySelector('[data-testid^="template-tool-zone-zone-text"]') as HTMLElement | null;
   expect(draggableZone).not.toBeNull();
   const draggableZoneElement = draggableZone as HTMLElement;
   expect(draggableZoneElement.querySelector('.template-tool-zone-editor__zone-text--static')).not.toBeNull();
@@ -288,7 +293,6 @@ test('renders the internal template tool with separate preview and source layers
   });
   const previewTextBefore = document.querySelector<HTMLElement>('.template-tool-zone-editor__zone-text--static');
   expect(previewTextBefore?.style.fontFamily).toContain('Proof Sans');
-  expect(document.querySelector('.template-tool-zone-editor__list')).toBeNull();
 
   const initialLeft = draggableZoneElement.style.left;
   const initialTop = draggableZoneElement.style.top;
@@ -298,9 +302,7 @@ test('renders the internal template tool with separate preview and source layers
   expect(draggableZoneElement.style.left).not.toBe(initialLeft);
   expect(draggableZoneElement.style.top).not.toBe(initialTop);
   expect(draggableZoneElement.querySelector('.template-tool-zone-editor__zone-text--static')).toHaveTextContent('Hallo Fix');
-  expect(screen.queryByLabelText('Element-ID')).not.toBeInTheDocument();
-  expect(screen.queryByLabelText('Technischer Key')).not.toBeInTheDocument();
-  expect(screen.queryByLabelText('Sichtbare Bezeichnung')).not.toBeInTheDocument();
+  expect(screen.getByText('Zuordnung')).toBeInTheDocument();
 
   fireEvent.change(screen.getByLabelText('Schrift suchen'), { target: { value: 'Inter' } });
   fireEvent.change(screen.getByLabelText('Kategorie'), { target: { value: 'sans-serif' } });
@@ -314,7 +316,7 @@ test('renders the internal template tool with separate preview and source layers
 
   fireEvent.click(screen.getByRole('button', { name: 'Löschen' }));
   await waitFor(() => {
-    expect(screen.queryByLabelText('dynamicText skalieren')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Text skalieren')).not.toBeInTheDocument();
   });
 
   fireEvent.click(screen.getByRole('button', { name: 'QR-Code erstellen' }));

@@ -11,11 +11,11 @@ from fastapi.testclient import TestClient
 
 def test_valid_registry_bundle_loads(tmp_path: Path) -> None:
     registries_dir = tmp_path / "registries"
-    (registries_dir / "use_cases").mkdir(parents=True)
+    (registries_dir / "categories").mkdir(parents=True)
     (registries_dir / "products").mkdir(parents=True)
     (registries_dir / "templates").mkdir(parents=True)
 
-    (registries_dir / "use_cases" / "case.json").write_text(
+    (registries_dir / "categories" / "case.json").write_text(
         json.dumps(
             {
                 "id": "case",
@@ -53,7 +53,7 @@ def test_valid_registry_bundle_loads(tmp_path: Path) -> None:
                 "id": "template",
                 "version": "1.0.0",
                 "product_id": "product",
-                "use_case_ids": ["case"],
+                "category_ids": ["case"],
                 "active": True,
                 "page_width_mm": 111,
                 "page_height_mm": 154,
@@ -72,10 +72,10 @@ def test_valid_registry_bundle_loads(tmp_path: Path) -> None:
                         "variables": [
                             {
                                 "id": "headline",
-                                "kind": "dynamicText",
-                                "key": "headline",
+                                "kind": "text",
+                                "field_id": "headline",
                                 "label": "Headline",
-                                "font_family": "Proof Sans",
+                                "font_family_id": "proof-sans",
                                 "font_weight": 700,
                                 "font_size_mm": 6.8,
                                 "min_font_size_mm": 4.5,
@@ -84,7 +84,6 @@ def test_valid_registry_bundle_loads(tmp_path: Path) -> None:
                                 "align": "left",
                                 "max_length": 60,
                                 "max_lines": 3,
-                                "overflow": "shrink",
                                 "required": True,
                                 "default_value": "Scanne den QR-Code",
                             }
@@ -96,7 +95,6 @@ def test_valid_registry_bundle_loads(tmp_path: Path) -> None:
                         "version": 1,
                         "field_id": "headline",
                         "max_lines": 2,
-                        "overflow": "shrink",
                         "min_font_size_mm": 4.5,
                     }
                 ],
@@ -109,8 +107,7 @@ def test_valid_registry_bundle_loads(tmp_path: Path) -> None:
                         "minimum_quiet_zone_modules": 4,
                     }
                 ],
-                "font_family": "Proof Sans",
-                "fonts": [{"family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
+                "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
                 "elements": [],
                 "variants": [{"id": "proof", "name": "Proof", "active": True}],
             }
@@ -120,7 +117,7 @@ def test_valid_registry_bundle_loads(tmp_path: Path) -> None:
 
     bundle = load_registry_bundle(registries_dir)
 
-    assert [use_case.id for use_case in bundle.use_cases] == ["case"]
+    assert [category.id for category in bundle.categories] == ["case"]
     assert [product.id for product in bundle.products] == ["product"]
     assert [template.id for template in bundle.templates] == ["template"]
     template = bundle.templates[0]
@@ -138,11 +135,11 @@ def test_valid_registry_bundle_loads(tmp_path: Path) -> None:
 
 def test_text_variable_font_must_come_from_registry_fonts(tmp_path: Path) -> None:
     registries_dir = tmp_path / "registries"
-    (registries_dir / "use_cases").mkdir(parents=True)
+    (registries_dir / "categories").mkdir(parents=True)
     (registries_dir / "products").mkdir(parents=True)
     (registries_dir / "templates").mkdir(parents=True)
 
-    (registries_dir / "use_cases" / "case.json").write_text(
+    (registries_dir / "categories" / "case.json").write_text(
         json.dumps(
             {
                 "id": "case",
@@ -180,13 +177,12 @@ def test_text_variable_font_must_come_from_registry_fonts(tmp_path: Path) -> Non
                 "id": "template",
                 "version": "1.0.0",
                 "product_id": "product",
-                "use_case_ids": ["case"],
+                "category_ids": ["case"],
                 "active": True,
                 "page_width_mm": 111,
                 "page_height_mm": 154,
                 "bleed_mm": 3,
-                "font_family": "Proof Sans",
-                "fonts": [{"family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
+                "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
                 "safe_areas": [
                     {
                         "id": "content-safe-area",
@@ -200,10 +196,10 @@ def test_text_variable_font_must_come_from_registry_fonts(tmp_path: Path) -> Non
                         "variables": [
                             {
                                 "id": "headline",
-                                "kind": "dynamicText",
-                                "key": "headline",
+                                "kind": "text",
+                                "field_id": "headline",
                                 "label": "Headline",
-                                "font_family": "Arial",
+                                "font_family_id": "arial",
                                 "font_weight": 700,
                                 "font_size_mm": 6.8,
                                 "min_font_size_mm": 4.5,
@@ -212,7 +208,6 @@ def test_text_variable_font_must_come_from_registry_fonts(tmp_path: Path) -> Non
                                 "align": "left",
                                 "max_length": 60,
                                 "max_lines": 3,
-                                "overflow": "shrink",
                                 "required": True,
                                 "default_value": "Scanne den QR-Code",
                             }
@@ -235,11 +230,11 @@ def test_text_variable_font_must_come_from_registry_fonts(tmp_path: Path) -> Non
 
 def test_invalid_registry_bundle_is_reported(tmp_path: Path) -> None:
     registries_dir = tmp_path / "registries"
-    (registries_dir / "use_cases").mkdir(parents=True)
+    (registries_dir / "categories").mkdir(parents=True)
     (registries_dir / "products").mkdir(parents=True)
     (registries_dir / "templates").mkdir(parents=True)
 
-    (registries_dir / "use_cases" / "broken.json").write_text("{\"id\": \"broken\"}", encoding="utf-8")
+    (registries_dir / "categories" / "broken.json").write_text("{\"id\": \"broken\"}", encoding="utf-8")
     (registries_dir / "products" / "product.json").write_text(
         json.dumps(
             {
@@ -266,13 +261,12 @@ def test_invalid_registry_bundle_is_reported(tmp_path: Path) -> None:
                 "id": "template",
                 "version": "1.0.0",
                 "product_id": "product",
-                "use_case_ids": ["broken"],
+                "category_ids": ["broken"],
                 "active": True,
                 "page_width_mm": 111,
                 "page_height_mm": 154,
                 "bleed_mm": 3,
-                "font_family": "Proof Sans",
-                "fonts": [{"family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
+                "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
                 "elements": [],
                 "variants": [{"id": "proof", "name": "Proof", "active": True}],
             }
@@ -282,19 +276,19 @@ def test_invalid_registry_bundle_is_reported(tmp_path: Path) -> None:
 
     bundle = load_registry_bundle(registries_dir)
 
-    assert bundle.use_cases == []
+    assert bundle.categories == []
     assert bundle.templates == []
     assert any(issue.code == "registry_schema_invalid" for issue in bundle.diagnostics)
-    assert any(issue.code == "template_unknown_use_case" for issue in bundle.diagnostics)
+    assert any(issue.code == "template_unknown_category" for issue in bundle.diagnostics)
 
 
 def test_duplicate_template_versions_are_rejected(tmp_path: Path) -> None:
     registries_dir = tmp_path / "registries"
-    (registries_dir / "use_cases").mkdir(parents=True)
+    (registries_dir / "categories").mkdir(parents=True)
     (registries_dir / "products").mkdir(parents=True)
     (registries_dir / "templates").mkdir(parents=True)
 
-    (registries_dir / "use_cases" / "case.json").write_text(
+    (registries_dir / "categories" / "case.json").write_text(
         json.dumps(
             {
                 "id": "case",
@@ -330,13 +324,12 @@ def test_duplicate_template_versions_are_rejected(tmp_path: Path) -> None:
         "id": "template",
         "version": "1.0.0",
         "product_id": "product",
-        "use_case_ids": ["case"],
+        "category_ids": ["case"],
         "active": True,
         "page_width_mm": 111,
         "page_height_mm": 154,
         "bleed_mm": 3,
-        "font_family": "Proof Sans",
-        "fonts": [{"family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
+        "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
         "elements": [],
         "variants": [{"id": "proof", "name": "Proof", "active": True}],
     }
@@ -351,11 +344,11 @@ def test_duplicate_template_versions_are_rejected(tmp_path: Path) -> None:
 
 def test_app_loads_registries_on_startup(tmp_path: Path, monkeypatch) -> None:
     registries_dir = tmp_path / "registries"
-    (registries_dir / "use_cases").mkdir(parents=True)
+    (registries_dir / "categories").mkdir(parents=True)
     (registries_dir / "products").mkdir(parents=True)
     (registries_dir / "templates").mkdir(parents=True)
 
-    (registries_dir / "use_cases" / "case.json").write_text(
+    (registries_dir / "categories" / "case.json").write_text(
         json.dumps(
             {
                 "id": "case",
@@ -393,13 +386,12 @@ def test_app_loads_registries_on_startup(tmp_path: Path, monkeypatch) -> None:
                 "id": "template",
                 "version": "1.0.0",
                 "product_id": "product",
-                "use_case_ids": ["case"],
+                "category_ids": ["case"],
                 "active": True,
                 "page_width_mm": 111,
                 "page_height_mm": 154,
                 "bleed_mm": 3,
-                "font_family": "Proof Sans",
-                "fonts": [{"family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
+                "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
                 "elements": [],
                 "variants": [{"id": "proof", "name": "Proof", "active": True}],
             }
@@ -414,6 +406,6 @@ def test_app_loads_registries_on_startup(tmp_path: Path, monkeypatch) -> None:
 
     with TestClient(app):
         bundle = app.state.registry_bundle
-        assert len(bundle.use_cases) == 1
+        assert len(bundle.categories) == 1
         assert len(bundle.products) == 1
         assert len(bundle.templates) == 1

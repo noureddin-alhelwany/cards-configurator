@@ -3,7 +3,7 @@
 ## Product
 
 Internal web application for one print-studio operator. The operator selects a
-QR use case, product and prepared template, enters content, uploads assets,
+QR category, product and prepared template, enters content, uploads assets,
 performs limited crop/logo adjustments, reviews quality warnings, approves the
 design, and generates a reproducible production PDF.
 
@@ -17,7 +17,7 @@ QR stands/cards for local businesses:
 - website
 - digital menu or price list
 
-Technically every use case resolves to a normalized URL and a QR code.
+Technically every category resolves to a normalized URL and a QR code.
 
 ## Product principle
 
@@ -27,7 +27,7 @@ print result. This is not a general design editor.
 ## MVP user flow
 
 ```text
-Select use case
+Select category
 → select product
 → select template
 → enter content
@@ -46,8 +46,9 @@ Select use case
 - Start with one product variant and at least one complete vertical template;
   expand to three to six templates after the rendering core is proven.
 - Templates and products are curated and versioned in the repository.
-- No free text movement, font selection, arbitrary elements, layers, rotations,
-  or page-size changes.
+- Text lives in controlled zones. The editor can switch between global font
+  styling and a per-zone override from the bundled font set, but there is no
+  freeform movement, arbitrary layers, rotations or page-size changes.
 - Preview and PDF must be geometrically consistent.
 - The printer/operator still performs a manual final print and QR scan check.
 - Local persistence is sufficient; architecture should allow PostgreSQL later.

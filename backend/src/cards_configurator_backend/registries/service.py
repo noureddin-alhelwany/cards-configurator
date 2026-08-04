@@ -16,7 +16,7 @@ def _data_url(mime_type: str, raw: bytes) -> AssetDataUrl:
 def build_proof_fixture(bundle: RegistryBundle, proof_assets_dir: Path) -> ProofFixture:
     template = next(template for template in bundle.templates if template.id == "proof_a6_card" and template.version == "1.6.0")
     product = next(product for product in bundle.products if product.id == template.product_id)
-    use_case = next(use_case for use_case in bundle.use_cases if use_case.id in template.use_case_ids)
+    category = next(category for category in bundle.categories if category.id in template.category_ids)
 
     logo_path = proof_assets_dir / "logo.png"
     logo_bytes = logo_path.read_bytes()
@@ -29,7 +29,7 @@ def build_proof_fixture(bundle: RegistryBundle, proof_assets_dir: Path) -> Proof
     )
 
     # Goes through the shared resolver so the proof renders the same QR the production path
-    # would. It used to encode `use_case.description` -- a sentence, not a URL, which also
+    # would. It used to encode `category.description` -- a sentence, not a URL, which also
     # bypassed URL normalisation.
     qr_element = next((element for element in template.elements if element.kind == "qr"), None)
     qr_bytes = build_qr_svg(
@@ -41,7 +41,7 @@ def build_proof_fixture(bundle: RegistryBundle, proof_assets_dir: Path) -> Proof
     return ProofFixture(
         template=template,
         product=product,
-        use_case=use_case,
+        category=category,
         layout_state=layout_state,
         assets={
             "logo": _data_url("image/png", logo_bytes),

@@ -20,7 +20,7 @@ completed_at: 2026-07-30
 
     ## Acceptance criteria
 
-- [ ] Templates werden nach Produkt und Anwendungsfall gefiltert.
+- [ ] Templates werden nach Produkt und Kategorie gefiltert.
 - [ ] Jedes Template zeigt Name und Vorschaubild.
 - [ ] Inaktive Templates werden nicht angezeigt.
 - [ ] Es werden zunächst drei bis sechs Templates unterstützt.
@@ -40,7 +40,7 @@ completed_at: 2026-07-30
 
 ## Result
 
-- Changed: added registry-backed template previews with name/thumbnail support, filtered the gallery by product and use case, and kept inactive templates hidden.
-- Decisions: keep product selection clickable and persistent; only the template list narrows to the active product/use-case combination.
+- Changed: added registry-backed template previews with name/thumbnail support, filtered the gallery by product and category, and kept inactive templates hidden.
+- Decisions: keep product selection clickable and persistent; only the template list narrows to the active product/category combination.
 - Verification: `pnpm vitest run src/App.test.tsx`, `make lint`, `make typecheck`, `make test`, `make build`.
 - Remaining risks: templates are still shown as a read-only selection list; the actual template-choosing workflow is deferred to US-04.

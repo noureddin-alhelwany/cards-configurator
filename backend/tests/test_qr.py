@@ -51,7 +51,7 @@ def _draft(text_values: dict[str, str]):
     return DraftState(
         id=1,
         name="draft",
-        use_case_id="google_reviews",
+        category_id="google_reviews",
         product_id="a6_card",
         template_id="proof_a6_card",
         template_version="1.6.0",

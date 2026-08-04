@@ -1,4 +1,4 @@
-import type { RegistryBundle, ProductDefinition, TemplateDefinition, TemplateVariantDefinition, UseCaseDefinition } from '../registries/types';
+import type { RegistryBundle, ProductDefinition, TemplateDefinition, TemplateVariantDefinition, CategoryDefinition } from '../registries/types';
 import DesignRenderer from '../design/DesignRenderer';
 import { buildTemplatePreviewFixture } from './selectionPreview';
 import { designStyleDescription, productBleedDescription, productDocumentFormat, productResolutionDescription, productSafeAreaDescription } from './selectionRules';
@@ -8,15 +8,15 @@ import { previewAssetPath } from './previewAssets';
 type TemplateCardProps = {
   template: TemplateDefinition;
   product: ProductDefinition | null;
-  useCase: UseCaseDefinition | null;
+  category: CategoryDefinition | null;
   selected: boolean;
   recommended?: boolean;
   onSelect: (template: TemplateDefinition) => void;
   disabled?: boolean;
 };
 
-export function TemplateCard({ template, product, useCase, selected, recommended = false, onSelect, disabled = false }: TemplateCardProps) {
-  const previewFixture = buildTemplatePreviewFixture(template, product, useCase);
+export function TemplateCard({ template, product, category, selected, recommended = false, onSelect, disabled = false }: TemplateCardProps) {
+  const previewFixture = buildTemplatePreviewFixture(template, product, category);
 
   return (
     <button
@@ -52,7 +52,7 @@ export function TemplateCard({ template, product, useCase, selected, recommended
 type DesignCardProps = {
   template: TemplateDefinition;
   product: ProductDefinition | null;
-  useCase: UseCaseDefinition | null;
+  category: CategoryDefinition | null;
   variant: TemplateVariantDefinition;
   selected: boolean;
   recommended?: boolean;
@@ -63,14 +63,14 @@ type DesignCardProps = {
 export function DesignCard({
   template,
   product,
-  useCase,
+  category,
   variant,
   selected,
   recommended = false,
   onSelect,
   disabled = false,
 }: DesignCardProps) {
-  const previewFixture = buildTemplatePreviewFixture(template, product, useCase);
+  const previewFixture = buildTemplatePreviewFixture(template, product, category);
   if (previewFixture) {
     previewFixture.layout_state.variant_id = variant.id;
   }
@@ -109,7 +109,7 @@ export function DesignCard({
 type ProductCardProps = {
   product: ProductDefinition;
   bundle: RegistryBundle;
-  selectedUseCaseId: string | null;
+  selectedCategoryId: string | null;
   selected: boolean;
   onSelect: (id: string) => void;
   recommended?: boolean;
@@ -119,7 +119,7 @@ type ProductCardProps = {
 export function ProductCard({
   product,
   bundle,
-  selectedUseCaseId,
+  selectedCategoryId,
   selected,
   onSelect,
   recommended = false,
@@ -144,33 +144,33 @@ export function ProductCard({
         <p className="product-card__format">{productDocumentFormat(product)}</p>
         <p className="product-card__meta">{productBleedDescription(product)}</p>
         <p className="product-card__meta">{productResolutionDescription(product)}</p>
-        <p className="product-card__meta">{productSafeAreaDescription(bundle, product.id, selectedUseCaseId)}</p>
+        <p className="product-card__meta">{productSafeAreaDescription(bundle, product.id, selectedCategoryId)}</p>
       </div>
     </button>
   );
 }
 
-type UseCaseCardProps = {
-  useCase: UseCaseDefinition;
+type CategoryCardProps = {
+  category: CategoryDefinition;
   selected: boolean;
   onSelect: (id: string) => void;
   disabled?: boolean;
 };
 
-export function UseCaseCard({ useCase, selected, onSelect, disabled = false }: UseCaseCardProps) {
+export function CategoryCard({ category, selected, onSelect, disabled = false }: CategoryCardProps) {
   return (
     <button
       type="button"
-      className={`use-case-card${selected ? ' use-case-card--selected' : ''}`}
+      className={`category-card${selected ? ' category-card--selected' : ''}`}
       aria-pressed={selected}
       disabled={disabled}
-      onClick={() => onSelect(useCase.id)}
+      onClick={() => onSelect(category.id)}
     >
-      <img className="use-case-card__image" src={previewAssetPath(useCase.preview_asset)} alt="" />
-      <div className="use-case-card__body">
-        <p className="use-case-card__eyebrow">Use case</p>
-        <h3>{useCase.name}</h3>
-        <p>{useCase.description}</p>
+      <img className="category-card__image" src={previewAssetPath(category.preview_asset)} alt="" />
+      <div className="category-card__body">
+        <p className="category-card__eyebrow">Kategorie</p>
+        <h3>{category.name}</h3>
+        <p>{category.description}</p>
       </div>
     </button>
   );

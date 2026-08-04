@@ -8,7 +8,7 @@ export type OrderSummary = {
   id: string;
   order_number: string;
   display_name: string | null;
-  use_case_id: string;
+  category_id: string;
   product_id: string;
   template_id: string;
   template_version: string;
@@ -19,7 +19,7 @@ export type OrderSummary = {
 };
 
 export type OrderDetail = OrderSummary & {
-  use_case_snapshot: Record<string, unknown>;
+  category_snapshot: Record<string, unknown>;
   product_snapshot: Record<string, unknown>;
   template_snapshot: Record<string, unknown>;
   layout_snapshot: Record<string, unknown>;

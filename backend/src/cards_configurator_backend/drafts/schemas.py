@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..registries.schemas import ElementAdjustment, LayoutState
 
 
 class TemplateSelectionRequest(BaseModel):
-    use_case_id: str
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
+
+    category_id: str
     product_id: str
     template_id: str
     template_version: str
@@ -28,10 +30,12 @@ class ApprovalRequest(BaseModel):
 
 
 class DraftState(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
+
     id: int
     name: str
     updated_at: str | None = None
-    use_case_id: str | None = None
+    category_id: str | None = None
     product_id: str | None = None
     template_id: str | None = None
     template_version: str | None = None

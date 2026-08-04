@@ -46,12 +46,11 @@ def test_update_template_from_svg_writes_slot_boxes_and_variant_design(tmp_path:
                 "id": "proof_a6_card",
                 "version": "1.6.0",
                 "product_id": "a6_card",
-                "use_case_ids": ["google_reviews"],
+                "category_ids": ["google_reviews"],
                 "page_width_mm": 111,
                 "page_height_mm": 154,
                 "bleed_mm": 3,
-                "font_family": "Proof Sans",
-                "fonts": [{"family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
+                "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
                 "elements": [
                     {
                         "kind": "text",
@@ -59,7 +58,7 @@ def test_update_template_from_svg_writes_slot_boxes_and_variant_design(tmp_path:
                         "box_mm": {"x_mm": 0, "y_mm": 0, "width_mm": 1, "height_mm": 1},
                         "z_index": 1,
                         "text": "Headline",
-                        "font_family": "Proof Sans",
+                        "font_family_id": "proof-sans",
                         "font_size_mm": 5,
                         "font_weight": 700,
                         "color": "#000000",
@@ -92,8 +91,6 @@ def test_update_template_from_svg_writes_slot_boxes_and_variant_design(tmp_path:
         variant_name="Classic",
         preview_asset="template_google_reviews_classic.png",
         accent_color="#315a86",
-        headline_font_family="Proof Sans",
-        headline_font_weight=700,
     )
 
     updated = json.loads(output_path.read_text(encoding="utf-8"))
@@ -112,8 +109,6 @@ def test_update_template_from_svg_writes_slot_boxes_and_variant_design(tmp_path:
         "source_asset": "backgrounds/proof_a6_card-1.6.0-classic.svg",
         "background_asset": "backgrounds/proof_a6_card-1.6.0-classic.svg",
         "accent_color": "#315a86",
-        "headline_font_family": "Proof Sans",
-        "headline_font_weight": 700,
     }
 
 
@@ -130,12 +125,11 @@ def test_update_template_from_svg_writes_reference_artwork_and_checks_geometry(t
                 "id": "proof_a6_card",
                 "version": "1.6.0",
                 "product_id": "a6_card",
-                "use_case_ids": ["google_reviews"],
+                "category_ids": ["google_reviews"],
                 "page_width_mm": 111,
                 "page_height_mm": 154,
                 "bleed_mm": 3,
-                "font_family": "Proof Sans",
-                "fonts": [{"family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
+                "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
                 "elements": [],
                 "variants": [],
             }
@@ -179,12 +173,11 @@ def test_update_template_from_svg_rejects_mismatched_reference_geometry(tmp_path
                 "id": "proof_a6_card",
                 "version": "1.6.0",
                 "product_id": "a6_card",
-                "use_case_ids": ["google_reviews"],
+                "category_ids": ["google_reviews"],
                 "page_width_mm": 111,
                 "page_height_mm": 154,
                 "bleed_mm": 3,
-                "font_family": "Proof Sans",
-                "fonts": [{"family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
+                "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
                 "elements": [],
                 "variants": [],
             }

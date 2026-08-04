@@ -1,4 +1,4 @@
-import type { RegistryBundle, TemplateDefinition, TemplateVariantDefinition, ProductDefinition, UseCaseDefinition } from './types';
+import type { RegistryBundle, TemplateDefinition, TemplateVariantDefinition, ProductDefinition, CategoryDefinition } from './types';
 
 export function activeRegistryTemplates(bundle: RegistryBundle | null) {
   return bundle?.templates.filter((template) => template.active) ?? [];
@@ -11,15 +11,15 @@ export function activeRegistryProduct(bundle: RegistryBundle | null, productId: 
   return bundle.products.find((product) => product.active && product.id === productId) ?? null;
 }
 
-export function activeRegistryUseCase(
+export function activeRegistryCategory(
   bundle: RegistryBundle | null,
   template: TemplateDefinition | null,
-): UseCaseDefinition | null {
+): CategoryDefinition | null {
   if (!bundle || !template) {
     return null;
   }
   return (
-    bundle.use_cases.find((useCase) => useCase.active && template.use_case_ids.includes(useCase.id)) ?? null
+    bundle.categories.find((category) => category.active && template.category_ids.includes(category.id)) ?? null
   );
 }
 

@@ -34,7 +34,7 @@ Als Nutzer möchte ich fertige Textvorschläge auswählen können, damit ich nic
 - Ein Vorschlag kann mit einer Aktion übernommen werden.
 - Der übernommene Text bleibt bearbeitbar.
 - Vorschläge respektieren die erlaubte Textlänge.
-- Die Komponente ist nicht an einen einzelnen Anwendungsfall gebunden.
+- Die Komponente ist nicht an eine einzelne Kategorie gebunden.
 - Die Struktur kann später um AI-Vorschläge erweitert werden.
 - AI-Funktionen selbst sind nicht Bestandteil dieser Story.
 

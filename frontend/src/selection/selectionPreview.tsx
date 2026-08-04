@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { ProductDefinition, TemplateDefinition, UseCaseDefinition } from '../registries/types';
+import type { ProductDefinition, TemplateDefinition, CategoryDefinition } from '../registries/types';
 import type { ElementAdjustment, ProofFixture, ValidationIssue } from '../design/types';
 import DesignPreviewFrame from '../design/DesignPreviewFrame';
 import { defaultTemplateVariantId } from '../design/variantResolution';
@@ -12,12 +12,12 @@ import { uiText } from '../ui/text';
 export function buildTemplatePreviewFixture(
   template: TemplateDefinition,
   product: ProductDefinition | null,
-  useCase: UseCaseDefinition | null,
+  category: CategoryDefinition | null,
   options?: {
     textMode?: 'demo' | 'blank';
   },
 ): ProofFixture | null {
-  if (!product || !useCase) {
+  if (!product || !category) {
     return null;
   }
 
@@ -28,7 +28,7 @@ export function buildTemplatePreviewFixture(
       .filter((field) => field.type === 'text' || field.type === 'url')
       .map((field, index) => {
         const value =
-          textMode === 'blank' ? '' : trimSuggestion(fieldDefaultValue(field, index, useCase), field.max_length);
+          textMode === 'blank' ? '' : trimSuggestion(fieldDefaultValue(field, index, category), field.max_length);
         return [field.id, value];
       }),
   );
@@ -62,7 +62,7 @@ export function buildTemplatePreviewFixture(
   return {
     template,
     product,
-    use_case: useCase,
+    category: category,
     layout_state: {
       variant_id: defaultTemplateVariantId(template) ?? '',
       element_adjustments: defaultAdjustmentsForTemplate(template),
@@ -76,7 +76,7 @@ export function buildTemplatePreviewFixture(
 type TemplateLivePreviewProps = {
   template: TemplateDefinition;
   product: ProductDefinition;
-  useCase: UseCaseDefinition;
+  category: CategoryDefinition;
   selectedVariantId: string | null;
   layoutValues: {
     text_values: Record<string, string>;
@@ -93,7 +93,7 @@ type TemplateLivePreviewProps = {
 export function TemplateLivePreview({
   template,
   product,
-  useCase,
+  category,
   selectedVariantId,
   layoutValues,
   assetPreviews,
@@ -169,7 +169,7 @@ export function TemplateLivePreview({
       ? {
           template,
           product,
-          use_case: useCase,
+          category: category,
           layout_state: {
             variant_id: selectedVariantId ?? defaultTemplateVariantId(template) ?? '',
             element_adjustments: layoutValues.element_adjustments,

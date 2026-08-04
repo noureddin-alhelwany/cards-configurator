@@ -13,17 +13,17 @@ Exit: one hard-coded fixture renders consistently in browser and PDF.
 
 Recommended sequence:
 
-1. US-01 use case
+1. US-01 category
 2. US-02 product
 3. US-03 template list
 4. US-04 template selection
-5. US-06 dynamic fields
+5. US-06 controlled text zones
 6. US-07 text
 7. US-08 URL/QR
 8. US-09 logo upload
 9. US-16 live preview
 10. US-18 required validation
-11. US-19 text overflow
+11. US-19 text fit validation
 12. US-21 QR size
 13. US-22 approval
 14. US-23 order creation

@@ -47,9 +47,9 @@ the renderer can never describe different cards.
 ## Findings the customer cannot fix
 
 A finding is only blocking when the customer can act on it. Template-owned values — a quiet
-zone that is too narrow for the encoded URL, a QR plate reaching past the trim line, static
-element text that overflows — are reported as non-blocking warnings addressed to the template
-author. Blocking there would refuse an order over something the form does not expose.
+zone that is too narrow for the encoded URL, a QR plate reaching past the trim line, text in a
+template-owned zone that overflows — are reported as non-blocking warnings addressed to the
+template author. Blocking there would refuse an order over something the form does not expose.
 
 ## QR
 

@@ -51,7 +51,7 @@ Als Entwickler möchte ich wiederverwendbare UI-Komponenten mit stabilen Schnitt
 - Komponenten enthalten keine fest verdrahtete finale Optik.
 - Klassen und Attribute werden nach Funktion statt Aussehen benannt.
 - Komponenten unterstützen klar definierte Zustände.
-- Komponenten sind nicht an einen einzelnen Use Case gekoppelt.
+- Komponenten sind nicht an eine einzelne Kategorie gekoppelt.
 - Varianten können später über Design-Tokens gestaltet werden.
 - Die Komponentenstruktur wird dokumentiert.
 - Das HTML muss nach dem späteren UI-Design nicht neu aufgebaut werden.

@@ -12,7 +12,7 @@
 - `backlog/todo/TECH-02-configuration-registries-and-schemas.md`
 - `backlog/todo/TECH-03-shared-renderer-proof.md`
 - `backlog/todo/TECH-04-production-render-pipeline-proof.md`
-- `backlog/todo/US-01-anwendungsfall-auswaehlen.md`
+- `backlog/done/US-01-kategorie-auswaehlen.md`
 - `backlog/todo/US-02-produkt-auswaehlen.md`
 - `backlog/todo/US-03-templates-anzeigen.md`
 - `backlog/todo/US-04-template-auswaehlen.md`

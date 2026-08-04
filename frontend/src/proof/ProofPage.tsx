@@ -95,7 +95,7 @@ export default function ProofPage() {
           <p className="proof-kicker">{uiText.proof.header.kicker}</p>
           <h1>{uiText.proof.header.title}</h1>
           <p className="proof-summary">
-            {fixture.use_case.name} · {fixture.product.name} · {fixture.template.name ?? uiText.common.designFallback}
+            {fixture.category.name} · {fixture.product.name} · {fixture.template.name ?? uiText.common.designFallback}
           </p>
         </header>
         <DesignRenderer

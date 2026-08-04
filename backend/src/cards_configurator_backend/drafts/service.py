@@ -31,7 +31,7 @@ def _empty_layout_state(variant_id: str = "") -> LayoutState:
 
 def _default_payload() -> dict[str, object]:
     return {
-        "use_case_id": None,
+        "category_id": None,
         "product_id": None,
         "template_id": None,
         "template_version": None,
@@ -50,7 +50,7 @@ def _draft_state_from_record(record: DraftRecord) -> DraftState:
         id=record.id,
         name=record.name,
         updated_at=record.updated_at.isoformat() if record.updated_at else None,
-        use_case_id=payload.get("use_case_id") if isinstance(payload.get("use_case_id"), str) else None,
+        category_id=payload.get("category_id") if isinstance(payload.get("category_id"), str) else None,
         product_id=payload.get("product_id") if isinstance(payload.get("product_id"), str) else None,
         template_id=payload.get("template_id") if isinstance(payload.get("template_id"), str) else None,
         template_version=payload.get("template_version")
@@ -169,8 +169,8 @@ def save_template_selection(session: Session, bundle: RegistryBundle, request: T
         raise HTTPException(status_code=404, detail="Template not found")
     if request.product_id != template.product_id:
         raise HTTPException(status_code=400, detail="Template does not belong to the selected product")
-    if request.use_case_id not in template.use_case_ids:
-        raise HTTPException(status_code=400, detail="Template does not support the selected use case")
+    if request.category_id not in template.category_ids:
+        raise HTTPException(status_code=400, detail="Template does not support the selected category")
 
     variant_id = request.variant_id
     active_variants = [variant for variant in template.variants if variant.active]
@@ -189,7 +189,7 @@ def save_template_selection(session: Session, bundle: RegistryBundle, request: T
     _assert_draft_is_editable(payload)
 
     draft.payload = {
-        "use_case_id": request.use_case_id,
+        "category_id": request.category_id,
         "product_id": request.product_id,
         "template_id": template.id,
         "template_version": template.version,

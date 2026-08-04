@@ -7,7 +7,7 @@ import type { RegistryBundle } from '../registries/types';
 import { ProductCard } from './selectionCards';
 
 const bundle: RegistryBundle = {
-  use_cases: [
+  categories: [
     {
       id: 'google_reviews',
       name: 'Google Reviews',
@@ -41,7 +41,7 @@ const bundle: RegistryBundle = {
       name: 'Bold',
       description: null,
       product_id: 'a6_card',
-      use_case_ids: ['google_reviews'],
+      category_ids: ['google_reviews'],
       active: true,
       fields: [],
       page_width_mm: 111,
@@ -50,7 +50,6 @@ const bundle: RegistryBundle = {
       preview_asset: null,
       background_asset: null,
       background_asset_sha256: null,
-      font_family: 'Proof Sans',
       safe_areas: [
         {
           id: 'content-safe-area',
@@ -73,7 +72,7 @@ describe('ProductCard', () => {
     render(
       <ProductCard
         bundle={bundle}
-        selectedUseCaseId="google_reviews"
+        selectedCategoryId="google_reviews"
         product={bundle.products[0]}
         selected={true}
         onSelect={() => {}}

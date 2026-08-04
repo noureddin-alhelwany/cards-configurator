@@ -4,17 +4,19 @@
 
 - Internal single-user web application without login.
 - QR stand/card product family.
-- Multiple URL-based use cases.
+- Multiple URL-based categories.
 - Three to six curated templates by MVP completion.
 - Prepared layout variants.
-- Dynamic forms with per-field limits.
+- Controlled text zones, QR fields and per-field limits.
+- Per-zone font selection from the bundled Fontsource set.
+- Optional per-zone personalizable text toggles.
 - PNG/JPEG and safely handled SVG logo uploads.
 - Image upload, automatic placement, crop and zoom.
 - Controlled logo movement and scaling.
 - URL normalization and QR generation.
 - Accurate 2D preview.
 - Optional simple product mockup.
-- Required-field, text-overflow, image-DPI and QR-size checks.
+- Required-field, text-fit, image-DPI and QR-size checks.
 - Approval checklist.
 - Order creation, list and detail view.
 - Reproducible production PDF.
@@ -27,7 +29,7 @@
 - Customer accounts or public customer access.
 - Cart, payment, checkout, invoices, discounts, shipping and email.
 - General template builder or Canva-like editor.
-- Arbitrary elements, layers, fonts, rotations or page sizes.
+- Arbitrary elements, layers, free-form font uploads, rotations or page sizes.
 - AI-generated layouts or generative image editing.
 - Automatic background removal.
 - Multiple print providers or production ERP workflow.

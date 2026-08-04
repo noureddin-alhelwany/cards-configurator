@@ -2,7 +2,7 @@
 id: US-02
 type: user-story
 title: "Produkt auswählen"
-epic: "1 — Produkt und Anwendungsfall"
+epic: "1 — Kategorie und Produkt"
 status: done
 priority: must
 depends_on: [TECH-02, US-01]
@@ -23,7 +23,7 @@ completed_at: 2026-07-30
 - [x] Produktname, Format und Vorschau werden angezeigt.
 - [x] Nur aktive Produkte werden angeboten.
 - [x] Das Produkt definiert Größe, Beschnitt und Auflösungsgrenzen.
-- [x] Ein Produkt kann mehreren Anwendungsfällen zugeordnet werden.
+- [x] Ein Produkt kann mehreren Kategorien zugeordnet werden.
 
 ## Architecture-specific implementation notes
 
@@ -40,6 +40,6 @@ completed_at: 2026-07-30
 ## Result
 
 - Changed: added selectable product cards, product detail metadata, and active-product filtering to the registry-driven selection page.
-- Decisions: keep the product choice local for this slice and derive multi-use-case support from the existing template registry links.
+- Decisions: keep the product choice local for this slice and derive multi-category support from the existing template registry links.
 - Verification: `make lint`, `make typecheck`, `make test`, `make build`.
 - Remaining risks: product selection is still not persisted in a draft entity yet.

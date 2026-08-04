@@ -12,7 +12,7 @@ export default function SelectionPage() {
   const {
     state,
     bundle,
-    selectedUseCase,
+    selectedCategory,
     selectedProduct,
     selectedTemplate,
     selectedTemplateKey,
@@ -216,7 +216,7 @@ export default function SelectionPage() {
                       key={product.id}
                       product={product}
                       bundle={bundle}
-                      selectedUseCaseId={selectedUseCase?.id ?? null}
+                      selectedCategoryId={selectedCategory?.id ?? null}
                       selected={product.id === selectedProduct?.id}
                       onSelect={handleProductSelect}
                       recommended={product.id === recommendedProductId}
@@ -258,7 +258,7 @@ export default function SelectionPage() {
                         key={variant.id}
                         template={matchingTemplates[0]}
                         product={selectedProduct}
-                        useCase={selectedUseCase}
+                        category={selectedCategory}
                         variant={variant}
                         selected={templateKey(matchingTemplates[0]) === selectedTemplateKey && variant.id === selectedVariantId}
                         recommended={variant.id === recommendedVariantId}
@@ -272,7 +272,7 @@ export default function SelectionPage() {
                         key={templateKey(template)}
                         template={template}
                         product={productById.get(template.product_id) ?? null}
-                        useCase={selectedUseCase}
+                        category={selectedCategory}
                         selected={templateKey(template) === selectedTemplateKey}
                         recommended={templateKey(template) === recommendedTemplateKey}
                         onSelect={handleTemplateSelect}
@@ -304,7 +304,7 @@ export default function SelectionPage() {
               </section>
             ) : null}
 
-            {activeStep.id === 'content' && selectedTemplate && selectedProduct && selectedUseCase ? (
+            {activeStep.id === 'content' && selectedTemplate && selectedProduct && selectedCategory ? (
               <SelectionContentPanel
                 selectedTemplate={selectedTemplate}
                 selectedVariantId={selectedVariantId}
@@ -333,7 +333,7 @@ export default function SelectionPage() {
               />
             ) : null}
 
-            {activeStep.id === 'review' && selectedTemplate && selectedProduct && selectedUseCase ? (
+            {activeStep.id === 'review' && selectedTemplate && selectedProduct && selectedCategory ? (
               <SelectionReviewPanel
                 selectedTemplate={selectedTemplate}
                 selectedProduct={selectedProduct}
@@ -376,7 +376,7 @@ export default function SelectionPage() {
                 previewMode={previewMode}
                 selectedTemplate={selectedTemplate}
                 selectedProduct={selectedProduct}
-                selectedUseCase={selectedUseCase}
+                selectedCategory={selectedCategory}
                 selectedVariantId={selectedVariantId}
                 layoutValues={layoutValues}
                 assetPreviews={assetPreviews}

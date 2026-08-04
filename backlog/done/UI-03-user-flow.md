@@ -40,7 +40,7 @@ Ein zusätzlicher Produktschritt wird nur eingeblendet, wenn mehrere sinnvolle P
 - Abgeschlossene Schritte können erneut geöffnet werden.
 - Noch nicht verfügbare Schritte können nicht aufgerufen werden.
 - Eingaben bleiben beim Zurückgehen erhalten.
-- Der Flow funktioniert für unterschiedliche Use Cases, Produkte und Templates.
+- Der Flow funktioniert für unterschiedliche Kategorien, Produkte und Templates.
 - Alle benötigten technischen IDs werden intern weiterhin gespeichert.
 
 ## Result

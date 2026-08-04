@@ -25,9 +25,9 @@ Als Produktteam möchten wir sicherstellen, dass das neue Frontend alle benötig
 
 | Funktion | Sichtbar vom Nutzer | Automatisch im Hintergrund | Backenddaten | UI-Bezeichnung |
 |---|---|---|---|---|
-| Anwendungsfälle laden und auswählen | Ja | Ja, Registrierung wird beim Start geladen | `GET /api/registries`, `bundle.use_cases` | `Auswahl`, `Anwendungsfall` |
-| kompatibles Produkt automatisch oder manuell auswählen | Ja | Ja, Produktliste wird über `compatibleProducts()` gefiltert; Nein beim manuellen Klick | `bundle.products`, `bundle.templates`, `selectedUseCaseId` | `Produkt`, `Produkt wechseln` |
-| kompatible Templates laden | Ja | Ja, Templates werden aus den Registries gefiltert | `bundle.templates`, `template.use_case_ids`, `template.product_id` | `Design`, `Vorlage` |
+| Kategorien laden und auswählen | Ja | Ja, Registrierung wird beim Start geladen | `GET /api/registries`, `bundle.categories` | `Auswahl`, `Kategorie` |
+| kompatibles Produkt automatisch oder manuell auswählen | Ja | Ja, Produktliste wird über `compatibleProducts()` gefiltert; Nein beim manuellen Klick | `bundle.products`, `bundle.templates`, `selectedCategoryId` | `Produkt`, `Produkt wechseln` |
+| kompatible Templates laden | Ja | Ja, Templates werden aus den Registries gefiltert | `bundle.templates`, `template.category_ids`, `template.product_id` | `Design`, `Vorlage` |
 | Template auswählen | Ja | Nein | `template.id`, `template.name`, `template.version` | `Vorlage auswählen` |
 | Felder aus Template-Konfiguration darstellen | Ja | Ja, Formular wird aus `template.fields` aufgebaut | `template.fields`, `layout_state` | `Felder` |
 | Varianten auswählen | Ja | Nein | `template.variants`, `draft.layout_state.variant_id` | `Layoutvarianten` |

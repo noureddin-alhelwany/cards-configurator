@@ -5,23 +5,24 @@
 A design combines:
 
 - physical canvas dimensions
-- dynamic field definitions
-- typed elements
+- controlled text and QR zones
+- typed renderable elements
 - layout variants
 - versioned fonts and static assets
 - validation constraints
 
 Terminology note: the user-facing language in the app is now `Design`; the internal schema
-and type names still use `Template` until we do a separate mechanical rename.
+and type names still use `Template` as the implementation name.
 
-Supported initial dynamic element types:
+Renderable element types in the current implementation:
 
 - text
 - image
-- logo
 - QR
-- shape
-- static asset
+
+Template fields describe the content mapping for the editor and order form.
+They can still describe logo, URL or static asset inputs, but the shared renderer
+only draws text, image and QR elements today.
 
 ## Build layer
 
@@ -74,7 +75,8 @@ Do not implement a second Python layout renderer.
 
 ## Fonts
 
-- Every design references bundled, versioned font files.
+- Every design references bundled, versioned font files by internal font id.
+- Text zones and text elements resolve only through those ids.
 - Browser and production render use the same files.
 - Production waits for `document.fonts.ready`.
 - A render-ready signal is required before screenshot/PDF capture.

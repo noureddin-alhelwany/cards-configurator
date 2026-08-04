@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
-import type { BoxMm, QrZoneDefinition, SafeAreaDefinition, SafeAreaVariableDefinition } from '../design/types';
-import { uiText } from '../ui/text';
+import type {
+  BoxMm,
+  QrZoneDefinition,
+  SafeAreaDefinition,
+  SafeAreaVariableDefinition,
+  TemplateFieldDefinition,
+} from '../design/types';
+import type { FontCatalogEntry } from '../fontCatalog';
 import './ZoneEditor.css';
 
-export type ZoneKind = 'dynamicText' | 'fixedText' | 'qr';
+export type ZoneKind = 'text' | 'qr';
 
 export type EditableZone = SafeAreaDefinition & {
   kind: ZoneKind;
@@ -20,7 +26,14 @@ type Props = {
   pageWidthMm: number;
   pageHeightMm: number;
   availableFonts: FontOption[];
-  globalFontFamilyId: string | null;
+  templateFields: TemplateFieldDefinition[];
+  fontSearch: string;
+  onFontSearchChange: (value: string) => void;
+  fontCategory: string;
+  onFontCategoryChange: (value: string) => void;
+  fontCategories: string[];
+  filteredFontCatalog: FontCatalogEntry[];
+  fontCatalogError: string | null;
   qrMinimumWidthMm: number | null;
   testValues: Record<string, string>;
   frame: ReactNode;
@@ -29,7 +42,6 @@ type Props = {
   onUpdateZone: (zoneId: string, nextZone: EditableZone) => void;
   onDeleteZone: (zoneId: string) => void;
   onUpdateTestValue: (variableId: string, value: string) => void;
-  showGuides: boolean;
 };
 
 type DragState = {
@@ -43,21 +55,17 @@ type DragState = {
 };
 
 const ZONE_KINDS: Array<{ kind: ZoneKind; label: string; description: string; widthMm: number; heightMm: number }> = [
-  { kind: 'dynamicText', label: 'Dynamischer Text', description: 'Nutzereingabe für Inhalte', widthMm: 58, heightMm: 20 },
-  { kind: 'fixedText', label: 'Fester Text', description: 'Statischer Text im Design', widthMm: 46, heightMm: 16 },
+  { kind: 'text', label: 'Text', description: 'Inhalt mit Checkbox für Personalisierung', widthMm: 58, heightMm: 20 },
   { kind: 'qr', label: 'QR-Code', description: 'QR-Zone', widthMm: 24, heightMm: 24 },
 ];
 
-const TEXT_ZONE_KINDS: ZoneKind[] = ['dynamicText', 'fixedText'];
-
 const ZONE_CREATE_OPTIONS: Array<{ kind: ZoneKind; label: string }> = [
-  { kind: 'dynamicText', label: 'Textzone' },
+  { kind: 'text', label: 'Text' },
   { kind: 'qr', label: 'QR-Code' },
 ];
 
 const VARIABLE_KIND_LABELS: Record<ZoneKind, string> = {
-  dynamicText: 'Dynamischer Text',
-  fixedText: 'Fester Text',
+  text: 'Text',
   qr: 'QR-Code',
 };
 
@@ -67,13 +75,12 @@ const TEXT_ALIGN_OPTIONS: Array<{ value: 'left' | 'center' | 'right'; label: str
   { value: 'right', label: 'Rechts' },
 ];
 
-const TEXT_OVERFLOW_OPTIONS: Array<{ value: 'shrink' | 'wrap' | 'error'; label: string }> = [
-  { value: 'shrink', label: 'Shrink' },
-  { value: 'wrap', label: 'Umbruch' },
-  { value: 'error', label: 'Fehler' },
+const FONT_WEIGHT_OPTIONS: Array<{ value: number; label: string }> = [
+  { value: 300, label: 'Light' },
+  { value: 400, label: 'Normal' },
+  { value: 700, label: 'Bold' },
 ];
 
-const DEFAULT_TEXT_FONT = 'Proof Sans';
 const DEFAULT_STAGE_SCALE = 1.8;
 const MAX_STAGE_SCALE = 3;
 const SCALE_BOOST = 1.3;
@@ -104,6 +111,27 @@ const DEFAULT_QR_ZONE: QrZoneDefinition = {
   background: '#ffffff',
   quiet_zone_mm: 2,
 };
+
+function fieldLabel(field: TemplateFieldDefinition) {
+  return field.label ?? field.id;
+}
+
+function fieldKindMatchesZone(field: TemplateFieldDefinition, kind: ZoneKind) {
+  if (kind === 'qr') {
+    return field.type === 'qr' || field.type === 'url';
+  }
+  return field.type === 'text';
+}
+
+function fontCategoryLabel(category: string | null | undefined) {
+  if (!category) {
+    return 'Sonstige';
+  }
+  return category
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
 
 function zoneKindMeta(kind: ZoneKind) {
   return ZONE_KINDS.find((option) => option.kind === kind) ?? ZONE_KINDS[0];
@@ -167,30 +195,15 @@ function zoneKindClass(kind: ZoneKind) {
 }
 
 function isTextZone(kind: ZoneKind) {
-  return kind === 'dynamicText' || kind === 'fixedText';
+  return kind === 'text';
 }
 
-function zoneTextValue(variable: SafeAreaVariableDefinition | null) {
+function zoneTextValue(variable: SafeAreaVariableDefinition | null, values: Record<string, string>) {
   if (!variable) {
     return '';
   }
-  return variable.default_value ?? '';
-}
-
-function effectiveZoneFontFamily(
-  availableFonts: FontOption[],
-  variable: SafeAreaVariableDefinition | null,
-  globalFontFamilyId: string | null,
-  currentGlobalFont: FontOption | null,
-) {
-  const fontId = variable?.font_family_id ?? globalFontFamilyId;
-  if (fontId) {
-    const resolved = availableFonts.find((font) => font.id === fontId)?.family ?? null;
-    if (resolved) {
-      return resolved;
-    }
-  }
-  return currentGlobalFont?.family ?? variable?.font_family ?? DEFAULT_TEXT_FONT;
+  const key = variable.field_id ?? variable.id;
+  return values[key] ?? variable.default_value ?? '';
 }
 
 function qrZoneOrDefault(zone: EditableZone): QrZoneDefinition {
@@ -266,53 +279,31 @@ function createVariable(
   kind: ZoneKind,
   index: number,
   availableFonts: FontOption[],
+  templateFields: TemplateFieldDefinition[],
 ): SafeAreaVariableDefinition {
   const defaultFont = availableFonts[0] ?? null;
+  const defaultField =
+    templateFields.find((field) => fieldKindMatchesZone(field, kind)) ??
+    templateFields[0] ??
+    null;
   return {
     id: nextVariableId(zoneId, kind, index),
     kind,
-    key: `${kind}_${index + 1}`,
-    label: `${VARIABLE_KIND_LABELS[kind]} ${index + 1}`,
-    font_family: defaultFont?.family ?? DEFAULT_TEXT_FONT,
-    font_family_id: null,
-    font_weight: kind === 'dynamicText' ? 700 : 400,
-    font_size_mm: kind === 'dynamicText' ? 6.8 : 4.4,
-    min_font_size_mm: kind === 'dynamicText' ? 4.5 : 3.2,
-    line_height: kind === 'dynamicText' ? 1.05 : 1.15,
+    field_id: defaultField?.id ?? null,
+    label: defaultField ? fieldLabel(defaultField) : `${VARIABLE_KIND_LABELS[kind]} ${index + 1}`,
+    font_family_id: defaultFont?.id ?? null,
+    font_weight: 700,
+    font_size_mm: 6.8,
+    min_font_size_mm: 4.5,
+    line_height: 1.05,
     letter_spacing_em: 0,
     color: '#1f1a17',
     align: 'left',
-    max_length: null,
-    max_lines: kind === 'dynamicText' ? 3 : 1,
-    overflow: 'shrink',
-    required: false,
-    default_value: null,
+    max_length: defaultField?.max_length ?? null,
+    max_lines: defaultField?.max_lines ?? null,
+    required: defaultField?.required ?? false,
+    default_value: defaultField?.default_value ?? null,
   };
-}
-
-function isSameVariableContent(a: SafeAreaVariableDefinition | null | undefined, b: SafeAreaVariableDefinition | null) {
-  if (!a || !b) {
-    return a === b;
-  }
-  return (
-    a.id === b.id &&
-    a.kind === b.kind &&
-    a.key === b.key &&
-    a.default_value === b.default_value &&
-    a.font_family_id === b.font_family_id &&
-    a.font_family === b.font_family &&
-    a.font_weight === b.font_weight &&
-    a.font_size_mm === b.font_size_mm &&
-    a.min_font_size_mm === b.min_font_size_mm &&
-    a.line_height === b.line_height &&
-    a.letter_spacing_em === b.letter_spacing_em &&
-    a.color === b.color &&
-    a.align === b.align &&
-    a.max_length === b.max_length &&
-    a.max_lines === b.max_lines &&
-    a.overflow === b.overflow &&
-    a.required === b.required
-  );
 }
 
 export default function ZoneEditor({
@@ -321,7 +312,14 @@ export default function ZoneEditor({
   pageWidthMm,
   pageHeightMm,
   availableFonts,
-  globalFontFamilyId,
+  templateFields,
+  fontSearch,
+  onFontSearchChange,
+  fontCategory,
+  onFontCategoryChange,
+  fontCategories,
+  filteredFontCatalog,
+  fontCatalogError,
   qrMinimumWidthMm,
   testValues,
   frame,
@@ -330,7 +328,6 @@ export default function ZoneEditor({
   onUpdateZone,
   onDeleteZone,
   onUpdateTestValue,
-  showGuides,
 }: Props) {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasWrapRef = useRef<HTMLDivElement>(null);
@@ -344,10 +341,18 @@ export default function ZoneEditor({
     [selectedZoneId, zones],
   );
   const selectedVariable = selectedZone?.variables?.[0] ?? null;
-  const currentGlobalFont = useMemo(
-    () => availableFonts.find((font) => font.id === globalFontFamilyId) ?? null,
-    [availableFonts, globalFontFamilyId],
+  const selectedVariableValueKey = selectedVariable?.field_id ?? selectedVariable?.id ?? null;
+  const availableFields = useMemo(
+    () => templateFields.filter((field) => fieldKindMatchesZone(field, selectedZone?.kind ?? 'text')),
+    [selectedZone?.kind, templateFields],
   );
+  const selectedField = useMemo(() => {
+    if (!selectedVariable?.field_id) {
+      return availableFields[0] ?? null;
+    }
+    return availableFields.find((field) => field.id === selectedVariable.field_id) ?? availableFields[0] ?? null;
+  }, [availableFields, selectedVariable?.field_id]);
+  const zoneFontValue = selectedVariable?.font_family_id ?? null;
 
   useEffect(() => {
     if (!selectedZoneId || zones.some((zone) => zone.id === selectedZoneId)) {
@@ -457,16 +462,23 @@ export default function ZoneEditor({
   function updateZone(zone: EditableZone, patch: Partial<EditableZone>) {
     if (patch.kind && patch.kind !== zone.kind) {
       const existingVariable = zone.variables?.[0] ?? null;
+      const nextField = templateFields.find((field) => fieldKindMatchesZone(field, patch.kind as ZoneKind)) ?? null;
       onUpdateZone(zone.id, {
         ...zone,
         ...patch,
         variables: [
           existingVariable
-            ? {
+              ? {
                 ...existingVariable,
                 kind: patch.kind,
+                field_id: nextField?.id ?? existingVariable.field_id ?? null,
+                label: nextField ? fieldLabel(nextField) : existingVariable.label,
+                max_length: nextField?.max_length ?? existingVariable.max_length,
+                max_lines: nextField?.max_lines ?? existingVariable.max_lines,
+                required: nextField?.required ?? existingVariable.required,
+                default_value: nextField?.default_value ?? existingVariable.default_value,
               }
-            : createVariable(zone.id, patch.kind, 0, availableFonts),
+            : createVariable(zone.id, patch.kind, 0, availableFonts, templateFields),
         ],
         box_mm: patch.box_mm ?? zone.box_mm,
       });
@@ -503,6 +515,9 @@ export default function ZoneEditor({
     onCreateZone(kind);
   }
 
+  const fontQueryActive = fontSearch.trim().length > 0 || fontCategory.length > 0;
+  const { featured: featuredFonts } = splitFontOptions(availableFonts);
+
   return (
     <section className="template-tool-zone-editor">
       <aside className="template-tool-card template-tool-zone-editor__sidebar">
@@ -528,20 +543,67 @@ export default function ZoneEditor({
 
             {isTextZone(selectedZone.kind) ? (
               <label className="template-tool-control template-tool-control--toggle">
-                <span>Text personalisierbar</span>
+                <span>Nutzer kann Text anpassen</span>
                 <input
                   type="checkbox"
-                  checked={selectedZone.kind === 'dynamicText'}
+                  checked={selectedZone.personalizable ?? false}
                   onChange={(event) =>
                     updateZone(selectedZone, {
-                      kind: event.target.checked ? 'dynamicText' : 'fixedText',
+                      personalizable: event.target.checked,
                     })
                   }
                 />
               </label>
             ) : null}
 
-            {isTextZone(selectedZone.kind) ? (
+            {selectedZone.kind === 'text' || selectedZone.kind === 'qr' ? (
+              <div className="template-tool-zone-editor__section">
+                <div className="template-tool-card__heading">
+                  <div>
+                    <h3>Zuordnung</h3>
+                    <p>{selectedField ? fieldLabel(selectedField) : 'Kein Feld gewählt'}</p>
+                  </div>
+                </div>
+                {availableFields.length > 1 ? (
+                  <label className="template-tool-control">
+                    <span>Feld</span>
+                    <select
+                      value={selectedField?.id ?? ''}
+                      onChange={(event) => {
+                        if (!selectedVariable) {
+                          return;
+                        }
+                        const nextField = availableFields.find((field) => field.id === event.target.value) ?? null;
+                        const valueKey = nextField?.id ?? selectedVariableValueKey ?? selectedVariable.id;
+                        const nextValue = testValues[valueKey] ?? selectedVariable?.default_value ?? '';
+                        updateVariable(selectedZone, selectedVariable.id, {
+                          field_id: nextField?.id ?? null,
+                          label: nextField ? fieldLabel(nextField) : selectedVariable.label,
+                          max_length: nextField?.max_length ?? null,
+                          max_lines: nextField?.max_lines ?? null,
+                          required: nextField?.required ?? false,
+                          default_value: nextField?.default_value ?? nextValue,
+                        });
+                        onUpdateTestValue(nextField?.id ?? selectedVariableValueKey ?? selectedVariable.id, nextValue);
+                      }}
+                      disabled={availableFields.length === 0}
+                    >
+                      {availableFields.length > 0 ? (
+                        availableFields.map((field) => (
+                          <option key={field.id} value={field.id}>
+                            {fieldLabel(field)}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="">Keine passenden Template-Felder</option>
+                      )}
+                    </select>
+                  </label>
+                ) : null}
+              </div>
+            ) : null}
+
+            {selectedZone.kind === 'text' ? (
               <div className="template-tool-zone-editor__section">
                 <div className="template-tool-card__heading">
                   <h3>Text</h3>
@@ -550,64 +612,56 @@ export default function ZoneEditor({
                   <span>Textinhalt</span>
                   <textarea
                     rows={3}
-                    value={selectedVariable?.default_value ?? ''}
+                    value={selectedVariableValueKey ? testValues[selectedVariableValueKey] ?? selectedVariable?.default_value ?? '' : ''}
                     onChange={(event) => {
                       if (!selectedVariable) {
                         return;
                       }
 
+                      const nextValue = event.target.value;
                       updateVariable(selectedZone, selectedVariable.id, {
-                        default_value: event.target.value,
+                        default_value: nextValue,
                       });
-                      if (selectedZone.kind === 'dynamicText') {
-                        onUpdateTestValue(selectedVariable.id, event.target.value);
-                      }
+                      onUpdateTestValue(selectedVariableValueKey ?? selectedVariable.id, nextValue);
                     }}
                     placeholder="Text für diese Zone"
                   />
                 </label>
-                <label className="template-tool-control">
-                  <span>Schriftfamilie</span>
-                  <select
-                    value={selectedVariable?.font_family_id ?? ''}
-                    onChange={(event) =>
-                      selectedVariable
-                        ? updateVariable(selectedZone, selectedVariable.id, {
-                            font_family_id: event.target.value === '' ? null : event.target.value,
-                          })
-                        : undefined
-                    }
-                    disabled={availableFonts.length === 0}
-                  >
-                    <option value="">Globale Schrift verwenden</option>
-                    {(() => {
-                      const { featured, rest } = splitFontOptions(availableFonts);
-                      return (
-                        <>
-                          {featured.length > 0 ? (
-                            <optgroup label="Favoriten">
-                              {featured.map((font) => (
-                                <option key={font.id} value={font.id}>
-                                  {font.family}
-                                </option>
-                              ))}
-                            </optgroup>
-                          ) : null}
-                          {rest.length > 0 ? <option value="" disabled>─────</option> : null}
-                          {rest.length > 0 ? (
-                            <optgroup label="Weitere Fonts">
-                              {rest.map((font) => (
-                                <option key={font.id} value={font.id}>
-                                  {font.family}
-                                </option>
-                              ))}
-                            </optgroup>
-                          ) : null}
-                        </>
-                      );
-                    })()}
-                  </select>
-                </label>
+              </div>
+            ) : null}
+
+            {selectedZone.kind === 'text' ? (
+              <div className="template-tool-zone-editor__section">
+                <div className="template-tool-card__heading">
+                  <h3>Schrift</h3>
+                </div>
+                <div className="template-tool-controls template-tool-controls--stack">
+                  <label className="template-tool-control template-tool-control--wide">
+                    <span>Schrift suchen</span>
+                    <input
+                      type="search"
+                      value={fontSearch}
+                      onChange={(event) => onFontSearchChange(event.target.value)}
+                      placeholder="Fontsource durchsuchen"
+                    />
+                  </label>
+                  <label className="template-tool-control template-tool-control--wide">
+                    <span>Kategorie</span>
+                    <select
+                      value={fontCategory}
+                      onChange={(event) => onFontCategoryChange(event.target.value)}
+                      disabled={fontCategories.length === 0}
+                    >
+                      <option value="">Alle Kategorien</option>
+                      {fontCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {fontCategoryLabel(category)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
                 <div className="template-tool-zone-editor__style-grid">
                   <label className="template-tool-control">
                     <span>Schriftgröße mm</span>
@@ -659,6 +713,25 @@ export default function ZoneEditor({
                     />
                   </label>
                   <label className="template-tool-control">
+                    <span>Gewicht</span>
+                    <select
+                      value={selectedVariable?.font_weight ?? 400}
+                      onChange={(event) =>
+                        selectedVariable
+                          ? updateVariable(selectedZone, selectedVariable.id, {
+                              font_weight: Number(event.target.value),
+                            })
+                          : undefined
+                      }
+                    >
+                      {FONT_WEIGHT_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="template-tool-control">
                     <span>Farbe</span>
                     <input
                       type="color"
@@ -690,95 +763,78 @@ export default function ZoneEditor({
                     </select>
                   </label>
                 </div>
-                <details className="template-tool-zone-editor__advanced">
-                  <summary>Erweitert</summary>
-                  <div className="template-tool-zone-editor__advanced-grid">
-                    <label className="template-tool-control">
-                      <span>Gewicht</span>
-                      <input
-                        type="number"
-                        min="100"
-                        max="900"
-                        step="100"
-                        value={selectedVariable?.font_weight ?? ''}
-                        onChange={(event) =>
-                          selectedVariable
-                            ? updateVariable(selectedZone, selectedVariable.id, {
-                                font_weight: Number(event.target.value),
-                              })
-                            : undefined
-                        }
-                      />
-                    </label>
-                    <label className="template-tool-control">
-                      <span>Mindestgröße mm</span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={selectedVariable?.min_font_size_mm ?? ''}
-                        onChange={(event) =>
-                          selectedVariable
-                            ? updateVariable(selectedZone, selectedVariable.id, {
-                                min_font_size_mm: event.target.value === '' ? null : Number(event.target.value),
-                              })
-                            : undefined
-                        }
-                      />
-                    </label>
-                    <label className="template-tool-control">
-                      <span>Zeichenlimit</span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={selectedVariable?.max_length ?? ''}
-                        onChange={(event) =>
-                          selectedVariable
-                            ? updateVariable(selectedZone, selectedVariable.id, {
-                                max_length: event.target.value === '' ? null : Number(event.target.value),
-                              })
-                            : undefined
-                        }
-                      />
-                    </label>
-                    <label className="template-tool-control">
-                      <span>Max. Zeilen</span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={selectedVariable?.max_lines ?? ''}
-                        onChange={(event) =>
-                          selectedVariable
-                            ? updateVariable(selectedZone, selectedVariable.id, {
-                                max_lines: event.target.value === '' ? null : Number(event.target.value),
-                              })
-                            : undefined
-                        }
-                      />
-                    </label>
-                    <label className="template-tool-control">
-                      <span>Überlauf</span>
-                      <select
-                        value={selectedVariable?.overflow ?? 'shrink'}
-                        onChange={(event) =>
-                          selectedVariable
-                            ? updateVariable(selectedZone, selectedVariable.id, {
-                                overflow: event.target.value as 'shrink' | 'wrap' | 'error',
-                              })
-                            : undefined
-                        }
-                      >
-                        {TEXT_OVERFLOW_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                </details>
+
+                <div className="template-tool-font-browser">
+                  {fontQueryActive ? (
+                    <div className="template-tool-font-browser__list" role="listbox" aria-label="Schrift für Zone">
+                      {filteredFontCatalog.length > 0 ? (
+                        filteredFontCatalog.map((font) => {
+                          const selected = font.id === zoneFontValue;
+                          return (
+                            <button
+                              key={font.id}
+                              type="button"
+                              className={`template-tool-font-browser__item${selected ? ' template-tool-font-browser__item--selected' : ''}`}
+                              onClick={() => {
+                                if (!selectedVariable) {
+                                  return;
+                                }
+                                updateVariable(selectedZone, selectedVariable.id, {
+                                  font_family_id: font.id,
+                                });
+                              }}
+                            >
+                              <span className="template-tool-font-browser__name">{font.family}</span>
+                              <span className="template-tool-font-browser__preview" style={{ fontFamily: font.family }}>
+                                AaBb 123
+                              </span>
+                              <span className="template-tool-font-browser__meta">
+                                {fontCategoryLabel(font.category)}
+                                {font.variable ? ' · Variable' : ''}
+                              </span>
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <p className="template-tool-font-browser__empty">Keine Fonts für diese Filter gefunden.</p>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="template-tool-font-browser__list" role="listbox" aria-label="Favoriten">
+                        {featuredFonts.length > 0 ? (
+                          featuredFonts.map((font) => {
+                            const selected = font.id === zoneFontValue;
+                            return (
+                              <button
+                                key={font.id}
+                                type="button"
+                                className={`template-tool-font-browser__item${selected ? ' template-tool-font-browser__item--selected' : ''}`}
+                                onClick={() => {
+                                  if (!selectedVariable) {
+                                    return;
+                                  }
+                                  updateVariable(selectedZone, selectedVariable.id, {
+                                    font_family_id: font.id,
+                                  });
+                                }}
+                              >
+                                <span className="template-tool-font-browser__name">{font.family}</span>
+                                <span className="template-tool-font-browser__preview" style={{ fontFamily: font.family }}>
+                                  AaBb 123
+                                </span>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <p className="template-tool-font-browser__empty">Keine Favoriten verfügbar.</p>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {fontCatalogError ? <p className="template-tool-status template-tool-status--warning">{fontCatalogError}</p> : null}
               </div>
             ) : null}
 
@@ -792,10 +848,10 @@ export default function ZoneEditor({
                   <span>Test-URL</span>
                   <input
                     type="text"
-                    value={selectedVariable ? testValues[selectedVariable.id] ?? selectedVariable.default_value ?? '' : ''}
+                    value={selectedVariableValueKey ? testValues[selectedVariableValueKey] ?? selectedVariable?.default_value ?? '' : ''}
                     onChange={(event) =>
                       selectedVariable
-                        ? onUpdateTestValue(selectedVariable.id, event.target.value)
+                        ? onUpdateTestValue(selectedVariableValueKey ?? selectedVariable.id, event.target.value)
                         : undefined
                     }
                     placeholder="https://example.com/review"
@@ -863,6 +919,58 @@ export default function ZoneEditor({
               </div>
             ) : null}
 
+            {selectedZone.kind === 'text' ? (
+              <details className="template-tool-zone-editor__advanced">
+                <summary>Override</summary>
+                <div className="template-tool-zone-editor__advanced-grid">
+                  <label className="template-tool-control">
+                    <span>Erforderlich</span>
+                    <input
+                      type="checkbox"
+                      checked={selectedVariable?.required ?? false}
+                      onChange={(event) =>
+                        selectedVariable
+                          ? updateVariable(selectedZone, selectedVariable.id, { required: event.target.checked })
+                          : undefined
+                      }
+                    />
+                  </label>
+                  <label className="template-tool-control">
+                    <span>Zeichenlimit</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={selectedVariable?.max_length ?? ''}
+                      onChange={(event) =>
+                        selectedVariable
+                          ? updateVariable(selectedZone, selectedVariable.id, {
+                              max_length: event.target.value === '' ? null : Number(event.target.value),
+                            })
+                          : undefined
+                      }
+                    />
+                  </label>
+                  <label className="template-tool-control">
+                    <span>Max. Zeilen</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={selectedVariable?.max_lines ?? ''}
+                      onChange={(event) =>
+                        selectedVariable
+                          ? updateVariable(selectedZone, selectedVariable.id, {
+                              max_lines: event.target.value === '' ? null : Number(event.target.value),
+                            })
+                          : undefined
+                      }
+                    />
+                  </label>
+                </div>
+              </details>
+            ) : null}
+
             <p className="template-tool-zone-editor__help">
               Ziehen verschiebt die Zone, der Griff unten rechts skaliert sie.
             </p>
@@ -894,9 +1002,8 @@ export default function ZoneEditor({
               {zones.map((zone) => {
                 const selected = zone.id === selectedZoneId;
                 const zoneVariable = zone.variables?.[0] ?? null;
-                const isEditableTextZone = selected && isTextZone(zone.kind);
-                const fontFamily = effectiveZoneFontFamily(availableFonts, zoneVariable, globalFontFamilyId, currentGlobalFont);
-                const value = zoneTextValue(zoneVariable);
+                const fontFamily = availableFonts.find((font) => font.id === zoneVariable?.font_family_id)?.family;
+                const value = zoneTextValue(zoneVariable, testValues);
                 return (
                   <div
                     key={zone.id}
@@ -915,7 +1022,7 @@ export default function ZoneEditor({
                         className="template-tool-zone-editor__zone-text template-tool-zone-editor__zone-text--static"
                         style={{
                           color: zoneVariable?.color ?? '#1f1a17',
-                          fontFamily,
+                          fontFamily: fontFamily ?? undefined,
                           fontSize: `${zoneVariable?.font_size_mm ?? 4.4}mm`,
                           fontWeight: zoneVariable?.font_weight ?? 400,
                           lineHeight: zoneVariable?.line_height ?? 1.15,

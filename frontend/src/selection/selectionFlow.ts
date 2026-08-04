@@ -228,53 +228,53 @@ export function visibleProducts(bundle: RegistryBundle): RegistryBundle['product
   return bundle.products.filter((product) => product.active);
 }
 
-export function compatibleProducts(bundle: RegistryBundle, selectedUseCaseId: string | null) {
+export function compatibleProducts(bundle: RegistryBundle, selectedCategoryId: string | null) {
   const activeProducts = visibleProducts(bundle);
-  if (!selectedUseCaseId) {
+  if (!selectedCategoryId) {
     return activeProducts;
   }
 
   const compatibleProductIds = new Set(
     bundle.templates
-      .filter((template) => template.active && template.use_case_ids.includes(selectedUseCaseId))
+      .filter((template) => template.active && template.category_ids.includes(selectedCategoryId))
       .map((template) => template.product_id),
   );
 
   return activeProducts.filter((product) => compatibleProductIds.has(product.id));
 }
 
-export function primaryUseCaseIdForProduct(bundle: RegistryBundle, productId: string) {
-  const useCaseIds = new Set<string>();
+export function primaryCategoryIdForProduct(bundle: RegistryBundle, productId: string) {
+  const categoryIds = new Set<string>();
   bundle.templates
     .filter((template) => template.active && template.product_id === productId)
-    .forEach((template) => template.use_case_ids.forEach((useCaseId) => useCaseIds.add(useCaseId)));
+    .forEach((template) => template.category_ids.forEach((categoryId) => categoryIds.add(categoryId)));
 
-  return bundle.use_cases.find((useCase) => useCase.active && useCaseIds.has(useCase.id))?.id ?? null;
+  return bundle.categories.find((category) => category.active && categoryIds.has(category.id))?.id ?? null;
 }
 
-export function visibleTemplates(bundle: RegistryBundle, selectedUseCaseId: string | null) {
+export function visibleTemplates(bundle: RegistryBundle, selectedCategoryId: string | null) {
   return bundle.templates.filter(
     (template) => {
       if (!template.active) {
         return false;
       }
-      if (!selectedUseCaseId) {
+      if (!selectedCategoryId) {
         return true;
       }
-      return template.use_case_ids.includes(selectedUseCaseId);
+      return template.category_ids.includes(selectedCategoryId);
     },
   );
 }
 
-export function visibleProductUseCaseNames(bundle: RegistryBundle, productId: string): string[] {
-  const useCaseIds = new Set<string>();
+export function visibleProductCategoryNames(bundle: RegistryBundle, productId: string): string[] {
+  const categoryIds = new Set<string>();
   bundle.templates
     .filter((template) => template.active && template.product_id === productId)
-    .forEach((template) => template.use_case_ids.forEach((useCaseId) => useCaseIds.add(useCaseId)));
+    .forEach((template) => template.category_ids.forEach((categoryId) => categoryIds.add(categoryId)));
 
-  return bundle.use_cases
-    .filter((useCase) => useCaseIds.has(useCase.id) && useCase.active)
-    .map((useCase) => useCase.name);
+  return bundle.categories
+    .filter((category) => categoryIds.has(category.id) && category.active)
+    .map((category) => category.name);
 }
 
 export function useSelectionFlow() {
@@ -284,7 +284,7 @@ export function useSelectionFlow() {
     error: null,
     draft: null,
   });
-  const [selectedUseCaseId, setSelectedUseCaseId] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<string | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
@@ -323,9 +323,9 @@ export function useSelectionFlow() {
           return;
         }
         setState({ bundle, health, error: null, draft });
-        const firstUseCase = bundle.use_cases.find((useCase) => useCase.active);
+        const firstCategory = bundle.categories.find((category) => category.active);
         const firstProduct = bundle.products.find((product) => product.active);
-        setSelectedUseCaseId(draft.use_case_id ?? firstUseCase?.id ?? null);
+        setSelectedCategoryId(draft.category_id ?? firstCategory?.id ?? null);
         setSelectedProductId(draft.product_id ?? firstProduct?.id ?? null);
         setSelectedTemplateKey(
           draft.template_id && draft.template_version ? `${draft.template_id}@${draft.template_version}` : null,
@@ -361,9 +361,9 @@ export function useSelectionFlow() {
   }
 
   const bundle = state.bundle;
-  const selectedUseCase = useMemo(
-    () => bundle?.use_cases.find((useCase) => useCase.id === selectedUseCaseId) ?? null,
-    [bundle, selectedUseCaseId],
+  const selectedCategory = useMemo(
+    () => bundle?.categories.find((category) => category.id === selectedCategoryId) ?? null,
+    [bundle, selectedCategoryId],
   );
   const selectedProduct = useMemo(
     () => bundle?.products.find((product) => product.id === selectedProductId) ?? null,
@@ -388,13 +388,13 @@ export function useSelectionFlow() {
   const approvalReady = Object.values(approvalChecklist).every(Boolean);
   const availableProducts = useMemo(() => (bundle ? visibleProducts(bundle) : []), [bundle]);
   const recommendedProducts = useMemo(
-    () => (bundle ? compatibleProducts(bundle, selectedUseCaseId) : []),
-    [bundle, selectedUseCaseId],
+    () => (bundle ? compatibleProducts(bundle, selectedCategoryId) : []),
+    [bundle, selectedCategoryId],
   );
   const wizardSteps = useMemo(() => buildWizardSteps(), []);
   const selectionState = useMemo(
     () => ({
-      selectedUseCase,
+      selectedCategory,
       selectedProduct,
       selectedTemplate,
       selectedVariant,
@@ -406,8 +406,8 @@ export function useSelectionFlow() {
         blocking: (qualityReport?.issues ?? []).some((issue) => issue.blocking),
       },
       previewState: {
-        live: Boolean(selectedTemplate && selectedProduct && selectedUseCase && wizardStepIndex < 3),
-        mockup: Boolean(selectedTemplate && selectedProduct && selectedUseCase && wizardStepIndex >= 3),
+        live: Boolean(selectedTemplate && selectedProduct && selectedCategory && wizardStepIndex < 3),
+        mockup: Boolean(selectedTemplate && selectedProduct && selectedCategory && wizardStepIndex >= 3),
       },
       approvalState: {
         checklist: approvalChecklist,
@@ -425,7 +425,7 @@ export function useSelectionFlow() {
       qualityReport?.issues,
       selectedProduct,
       selectedTemplate,
-      selectedUseCase,
+      selectedCategory,
       selectedVariant,
       wizardStepIndex,
     ],
@@ -433,7 +433,7 @@ export function useSelectionFlow() {
   const matchingTemplates = useMemo(() => {
     const templates =
       bundle
-        ? visibleTemplates(bundle, selectedUseCaseId).filter(
+        ? visibleTemplates(bundle, selectedCategoryId).filter(
             (template) => !selectedProductId || template.product_id === selectedProductId,
           )
         : [];
@@ -442,7 +442,7 @@ export function useSelectionFlow() {
       .map((template, index) => ({ template, index }))
       .sort((left, right) => templateRecommendationIndex(left.template, left.index) - templateRecommendationIndex(right.template, right.index))
       .map(({ template }) => template);
-  }, [bundle, selectedProductId, selectedUseCaseId]);
+  }, [bundle, selectedProductId, selectedCategoryId]);
   const productById = useMemo(
     () => new Map(bundle?.products.map((product) => [product.id, product] as const) ?? []),
     [bundle],
@@ -465,9 +465,9 @@ export function useSelectionFlow() {
   const previewMode: PreviewMode = selectionState.previewState.live ? 'live' : selectionState.previewState.mockup ? 'mockup' : 'hidden';
 
   function syncSelectionFromDraft(draft: DraftState) {
-    const firstUseCase = bundle?.use_cases.find((useCase) => useCase.active);
+    const firstCategory = bundle?.categories.find((category) => category.active);
     const firstProduct = bundle?.products.find((product) => product.active);
-    setSelectedUseCaseId(draft.use_case_id ?? firstUseCase?.id ?? null);
+    setSelectedCategoryId(draft.category_id ?? firstCategory?.id ?? null);
     setSelectedProductId(draft.product_id ?? firstProduct?.id ?? null);
     setSelectedTemplateKey(draft.template_id && draft.template_version ? `${draft.template_id}@${draft.template_version}` : null);
     setSelectedVariantId(draft.layout_state.variant_id || null);
@@ -580,9 +580,9 @@ export function useSelectionFlow() {
   }, [selectedTemplateKey, layoutValues, selectedVariantId]);
 
   function applyProductSelection(productId: string) {
-    const nextUseCaseId = bundle ? primaryUseCaseIdForProduct(bundle, productId) : null;
+    const nextCategoryId = bundle ? primaryCategoryIdForProduct(bundle, productId) : null;
     setSelectedProductId(productId);
-    setSelectedUseCaseId(nextUseCaseId ?? bundle?.use_cases.find((useCase) => useCase.active)?.id ?? selectedUseCaseId);
+    setSelectedCategoryId(nextCategoryId ?? bundle?.categories.find((category) => category.active)?.id ?? selectedCategoryId);
     setSelectedTemplateKey(null);
     setSelectedVariantId(null);
     setLayoutValues(emptyLayoutValues());
@@ -622,17 +622,17 @@ export function useSelectionFlow() {
   }
 
   async function handleTemplateSelect(template: TemplateDefinition, variant?: TemplateVariantDefinition) {
-    if (!selectedUseCaseId || !selectedProductId || isApproved) {
+    if (!selectedCategoryId || !selectedProductId || isApproved) {
       return;
     }
-    const demoUseCase =
-      selectedUseCase ?? bundle?.use_cases.find((useCase) => useCase.id === selectedUseCaseId) ?? bundle?.use_cases.find((useCase) => useCase.active) ?? null;
-    if (!demoUseCase) {
+    const demoCategory =
+      selectedCategory ?? bundle?.categories.find((category) => category.id === selectedCategoryId) ?? bundle?.categories.find((category) => category.active) ?? null;
+    if (!demoCategory) {
       return;
     }
     const fallbackVariant = variant ?? activeVariant(template, selectedVariantId);
     const response = await saveTemplateSelection({
-      use_case_id: selectedUseCaseId,
+      category_id: selectedCategoryId,
       product_id: selectedProductId,
       template_id: template.id,
       template_version: template.version,
@@ -653,7 +653,7 @@ export function useSelectionFlow() {
       template.fields
         .filter((field) => field.type === 'text' || field.type === 'url')
         .map((field, index) => {
-          return [field.id, trimSuggestion(fieldDefaultValue(field, index, demoUseCase), field.max_length)];
+          return [field.id, trimSuggestion(fieldDefaultValue(field, index, demoCategory), field.max_length)];
         }),
     );
     if (Object.keys(seededTextValues).length > 0) {
@@ -755,7 +755,7 @@ export function useSelectionFlow() {
   }
 
   async function handleApprovalSubmit() {
-    if (!selectedTemplate || !selectedUseCase || !selectedProduct || isApproved) {
+    if (!selectedTemplate || !selectedCategory || !selectedProduct || isApproved) {
       return;
     }
     setValidationRevealAll(true);
@@ -833,11 +833,11 @@ export function useSelectionFlow() {
   return {
     state,
     bundle,
-    selectedUseCase,
+    selectedCategory,
     selectedProduct,
     selectedTemplate,
     selectedVariant,
-    selectedUseCaseId,
+    selectedCategoryId,
     selectedProductId,
     selectedTemplateKey,
     selectedVariantId,

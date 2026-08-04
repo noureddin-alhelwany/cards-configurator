@@ -34,10 +34,10 @@ def _build_registries(
     sha256: str | None = None,
 ) -> Path:
     registries_dir = tmp_path / "registries"
-    for name in ("use_cases", "products", "templates"):
+    for name in ("categories", "products", "templates"):
         (registries_dir / name).mkdir(parents=True, exist_ok=True)
 
-    (registries_dir / "use_cases" / "case.json").write_text(
+    (registries_dir / "categories" / "case.json").write_text(
         json.dumps(
             {
                 "id": "case",
@@ -73,13 +73,12 @@ def _build_registries(
         "id": "template",
         "version": "1.0.0",
         "product_id": "product",
-        "use_case_ids": ["case"],
+        "category_ids": ["case"],
         "active": True,
         "page_width_mm": 111,
         "page_height_mm": 154,
         "bleed_mm": 3,
-        "font_family": "Proof Sans",
-        "fonts": [{"family": "Proof Sans", "file": "ProofSans.ttf", "weight": 400, "style": "normal"}],
+        "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "ProofSans.ttf", "weight": 400, "style": "normal"}],
         "fields": [],
         "elements": [
             {
@@ -88,7 +87,7 @@ def _build_registries(
                 "box_mm": {"x_mm": 10, "y_mm": 10, "width_mm": 80, "height_mm": 20},
                 "z_index": 1,
                 "text": "Headline",
-                "font_family": "Proof Sans",
+                "font_family_id": "proof-sans",
                 "font_size_mm": 6,
                 "font_weight": 400,
                 "color": "#1f1a17",

@@ -26,10 +26,10 @@ Als Nutzer möchte ich nur relevante Produktinformationen sehen, damit die Anwen
 Im Nutzer-Frontend erscheinen nicht:
 
 - Backendstatus
-- technische Use-Case-ID
+- technische Kategorie-ID
 - Produkt-Slug
 - Template-Version
-- Anzahl kompatibler Use Cases
+- Anzahl kompatibler Kategorien
 - Rohvalidierungen
 - gespeicherte Testaufträge
 - interne Feldnamen

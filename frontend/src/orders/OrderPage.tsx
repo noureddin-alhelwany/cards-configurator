@@ -79,7 +79,7 @@ export default function OrderPage({ orderId }: { orderId: string }) {
 
   const previewSrc = useMemo(() => `/api/orders/${encodeURIComponent(orderId)}/preview`, [orderId]);
   const mockupSrc = useMemo(() => `/api/orders/${encodeURIComponent(orderId)}/mockup`, [orderId]);
-  const useCaseName = snapshotString(order?.use_case_snapshot, 'name') ?? 'Use Case';
+  const categoryName = snapshotString(order?.category_snapshot, 'name') ?? 'Kategorie';
   const productName = snapshotString(order?.product_snapshot, 'name') ?? 'Produkt';
   const templateName = snapshotString(order?.template_snapshot, 'name') ?? 'Design';
   const variantName = variantLabelFromTemplateSnapshot(order?.template_snapshot, order?.variant_id ?? null);
@@ -136,7 +136,7 @@ export default function OrderPage({ orderId }: { orderId: string }) {
 
         <OrderSnapshotSection
           displayName={displayName}
-          useCaseName={useCaseName}
+          categoryName={categoryName}
           productName={productName}
           templateName={templateName}
           variantName={variantName}

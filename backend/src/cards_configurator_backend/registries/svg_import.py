@@ -86,8 +86,6 @@ def update_template_from_svg(
     variant_name: str | None = None,
     preview_asset: str | None = None,
     accent_color: str | None = None,
-    headline_font_family: str | None = None,
-    headline_font_weight: int | None = None,
 ) -> None:
     payload = json.loads(template_path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
@@ -139,10 +137,6 @@ def update_template_from_svg(
             variant["background_asset"] = asset_value
         if accent_color is not None:
             variant["accent_color"] = accent_color
-        if headline_font_family is not None:
-            variant["headline_font_family"] = headline_font_family
-        if headline_font_weight is not None:
-            variant["headline_font_weight"] = headline_font_weight
 
     output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
@@ -161,8 +155,6 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--variant-name", help="Variant name to create or update")
     parser.add_argument("--preview-asset", help="Preview asset to write into the variant")
     parser.add_argument("--accent-color", help="Variant accent colour")
-    parser.add_argument("--headline-font-family", help="Variant headline font family")
-    parser.add_argument("--headline-font-weight", type=int, help="Variant headline font weight")
     return parser
 
 
@@ -182,7 +174,5 @@ def main(argv: list[str] | None = None) -> int:
         variant_name=args.variant_name,
         preview_asset=args.preview_asset,
         accent_color=args.accent_color,
-        headline_font_family=args.headline_font_family,
-        headline_font_weight=args.headline_font_weight,
     )
     return 0
