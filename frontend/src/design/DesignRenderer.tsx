@@ -7,7 +7,7 @@ import type {
   TemplateElementDefinition,
   TemplateFieldDefinition,
   TemplateDefinition,
-  TemplateVariantDefinition,
+  TemplateDesignDefinition,
   TextElementDefinition,
   ValidationIssue,
 } from './types';
@@ -268,7 +268,7 @@ function canvasStyle(
   pageWidth: number,
   pageHeight: number,
   bleed: number,
-  selectedVariant: TemplateVariantDefinition | null | undefined,
+  selectedVariant: TemplateDesignDefinition | null | undefined,
 ) {
   return {
     '--page-width': `${pageWidth}mm`,

@@ -76,15 +76,15 @@ export function designStyleName(template: TemplateDefinition) {
 }
 
 export function selectedDesignName(template: TemplateDefinition, variantId: string | null) {
-  const selectedVariant = activeVariant(template, variantId);
+  const selectedVariant = activeDesign(template, variantId);
   if (selectedVariant) {
     return selectedVariant.name;
   }
   return designStyleName(template);
 }
 
-export function activeVariants(template: TemplateDefinition) {
-  return (template.designs ?? template.variants ?? []).filter((variant) => variant.active);
+export function activeDesigns(template: TemplateDefinition) {
+  return (template.designs ?? template.designs ?? []).filter((variant) => variant.active);
 }
 
 export function fieldLabel(field: TemplateDefinition['fields'][number], index: number) {
@@ -252,10 +252,10 @@ export function templateKey(template: TemplateDefinition) {
   return `${template.id}@${template.version}`;
 }
 
-export function activeVariant(template: TemplateDefinition, variantId: string | null) {
+export function activeDesign(template: TemplateDefinition, variantId: string | null) {
   return (
-    (template.designs ?? template.variants ?? []).find((variant) => variant.active && variant.id === variantId) ??
-    (template.designs ?? template.variants ?? []).find((variant) => variant.active) ??
+    (template.designs ?? template.designs ?? []).find((variant) => variant.active && variant.id === variantId) ??
+    (template.designs ?? template.designs ?? []).find((variant) => variant.active) ??
     null
   );
 }

@@ -36,7 +36,7 @@ function buildFixture(): ProofFixture {
         },
       ],
       fonts: [],
-      variants: [],
+      designs: [],
       fields: [
         {
           id: 'headline',
@@ -207,7 +207,7 @@ function fixtureWithBackground(asset = 'template_google_reviews_bold_preview.png
 function fixtureWithVariantBackground() {
   const fixture = fixtureWithQr();
   fixture.template.background_asset = 'template_google_reviews_bold_preview.png';
-  fixture.template.variants = [
+  fixture.template.designs = [
     {
       id: 'classic',
       name: 'Classic',

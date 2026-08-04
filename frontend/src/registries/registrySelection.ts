@@ -24,25 +24,21 @@ export function activeRegistryCategory(
 }
 
 export function activeRegistryDesigns(template: TemplateDefinition | null) {
-  const designs = template?.designs ?? template?.variants ?? [];
+  const designs = template?.designs ?? [];
   return designs.filter((design) => design.active);
 }
 
-export function activeRegistryVariant(
+export function activeRegistryDesign(
   template: TemplateDefinition | null,
   variantId: string | null,
 ): TemplateDesignDefinition | null {
   if (!template) {
     return null;
   }
-  const designs = template.designs ?? template.variants ?? [];
+  const designs = template.designs ?? [];
   return (
     designs.find((design) => design.active && design.id === variantId) ??
     designs.find((design) => design.active) ??
     null
   );
-}
-
-export function activeRegistryVariants(template: TemplateDefinition | null) {
-  return activeRegistryDesigns(template);
 }

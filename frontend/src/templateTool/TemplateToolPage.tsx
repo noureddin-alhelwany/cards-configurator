@@ -10,8 +10,8 @@ import {
   activeRegistryProduct,
   activeRegistryTemplates,
   activeRegistryCategory,
-  activeRegistryVariant,
-  activeRegistryVariants,
+  activeRegistryDesign,
+  activeRegistryDesigns,
 } from '../registries/registrySelection';
 import ZoneEditor, { type EditableZone, type ZoneKind } from './ZoneEditor';
 import { loadFontCatalog, loadFontFace, type FontCatalogEntry } from '../fontCatalog';
@@ -55,7 +55,7 @@ function templateLabel(template: TemplateDefinition) {
 }
 
 function templateSubtitle(template: TemplateDefinition) {
-  return `${template.product_id} · ${activeRegistryVariants(template).length} Designs`;
+  return `${template.product_id} · ${activeRegistryDesigns(template).length} Designs`;
 }
 
 function assetUrl(asset: string | null | undefined) {
@@ -90,14 +90,14 @@ function fieldForZone(template: TemplateDefinition, kind: 'text' | 'qr', fieldId
 
 function resolvePreviewAsset(
   selectedTemplate: TemplateDefinition | null,
-  selectedVariant: ReturnType<typeof activeRegistryVariant>,
+  selectedVariant: ReturnType<typeof activeRegistryDesign>,
 ) {
   return assetUrl(selectedVariant?.preview_asset ?? selectedTemplate?.preview_asset ?? null);
 }
 
 function resolveSourceAsset(
   selectedTemplate: TemplateDefinition | null,
-  selectedVariant: ReturnType<typeof activeRegistryVariant>,
+  selectedVariant: ReturnType<typeof activeRegistryDesign>,
 ) {
   return assetUrl(
     selectedVariant?.source_asset ??
@@ -245,7 +245,7 @@ function buildPreviewFixture(
   selectedProduct: NonNullable<ReturnType<typeof activeRegistryProduct>>,
   selectedCategory: NonNullable<ReturnType<typeof activeRegistryCategory>>,
   zones: EditableZone[],
-  selectedVariant: ReturnType<typeof activeRegistryVariant>,
+  selectedVariant: ReturnType<typeof activeRegistryDesign>,
   testValues: Record<string, string>,
   fontDefinitions: FontDefinition[],
 ) {
@@ -264,18 +264,18 @@ function buildPreviewFixture(
   }
 
   fixture.layout_state.text_values = previewTextValues;
-  fixture.template = {
-    ...fixture.template,
-    fonts: fontDefinitions,
-    safe_areas: zones,
-    background_asset: null,
-    source_asset: null,
-    designs: (fixture.template.designs ?? fixture.template.variants ?? []).map((variant) => ({
-      ...variant,
+    fixture.template = {
+      ...fixture.template,
+      fonts: fontDefinitions,
+      safe_areas: zones,
       background_asset: null,
       source_asset: null,
-    })),
-  };
+      designs: (fixture.template.designs ?? []).map((design) => ({
+        ...design,
+        background_asset: null,
+        source_asset: null,
+      })),
+    };
   if (selectedVariant) {
     fixture.layout_state.variant_id = selectedVariant.id;
   }
@@ -315,7 +315,7 @@ function renderTemplateToolStage({
 }: {
   previewFixture: NonNullable<ReturnType<typeof buildPreviewFixture>>;
   selectedTemplate: TemplateDefinition;
-  selectedVariant: ReturnType<typeof activeRegistryVariant>;
+  selectedVariant: ReturnType<typeof activeRegistryDesign>;
   zones: EditableZone[];
   selectedZoneId: string | null;
   testValues: Record<string, string>;
@@ -466,7 +466,7 @@ export default function TemplateToolPage() {
       return;
     }
 
-    const designs = activeRegistryVariants(selectedTemplate);
+    const designs = activeRegistryDesigns(selectedTemplate);
     const nextDesignId = designs.find((design) => design.id === selectedVariantId)?.id ?? designs[0]?.id ?? null;
     if (nextDesignId !== selectedVariantId) {
       setSelectedVariantId(nextDesignId);
@@ -522,7 +522,7 @@ export default function TemplateToolPage() {
   );
 
   const selectedVariant = useMemo(() => {
-    return activeRegistryVariant(selectedTemplate, selectedVariantId);
+    return activeRegistryDesign(selectedTemplate, selectedVariantId);
   }, [selectedTemplate, selectedVariantId]);
 
   const previewAsset = resolvePreviewAsset(selectedTemplate, selectedVariant);
@@ -804,7 +804,7 @@ export default function TemplateToolPage() {
                     onChange={(event) => setSelectedVariantId(event.target.value)}
                   >
                     {selectedTemplate
-                      ? activeRegistryVariants(selectedTemplate).map((design) => (
+                      ? activeRegistryDesigns(selectedTemplate).map((design) => (
                           <option key={design.id} value={design.id}>
                             {design.name}
                           </option>

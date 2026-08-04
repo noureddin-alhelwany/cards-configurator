@@ -205,7 +205,7 @@ test('renders the registry selection flow and keeps only available products visi
             max_lines: null,
           },
         ],
-        variants: [
+        designs: [
           {
             id: 'bold',
             name: 'Bold',
@@ -241,7 +241,7 @@ test('renders the registry selection flow and keeps only available products visi
         product_id: 'a6_card',
         active: false,
         fields: [],
-        variants: [],
+        designs: [],
       },
     ],
   };
@@ -495,7 +495,7 @@ test('renders the registry selection flow and keeps only available products visi
   expect(screen.getByRole('textbox', { name: 'Überschrift' })).toBeInTheDocument();
   expect(screen.getByRole('textbox', { name: 'QR-Ziel' })).toBeInTheDocument();
   expect(screen.queryByRole('tab')).not.toBeInTheDocument();
-  expect(screen.queryByText('Layoutvarianten')).not.toBeInTheDocument();
+  expect(screen.queryByText('Designs')).not.toBeInTheDocument();
   expect(screen.queryByText(/zu klein für dieses Produkt/)).not.toBeInTheDocument();
 
   const headlineInput = screen.getByRole('textbox', { name: 'Überschrift' });
@@ -664,7 +664,7 @@ test('selecting a product advances directly to the design step', async () => {
             max_lines: null,
           },
         ],
-        variants: [
+        designs: [
           {
             id: 'logo-focused',
             name: 'Logo',
@@ -702,7 +702,7 @@ test('selecting a product advances directly to the design step', async () => {
             max_lines: null,
           },
         ],
-        variants: [
+        designs: [
           {
             id: 'logo-focused',
             name: 'Logo',
@@ -865,7 +865,7 @@ test('approves a draft and locks editing afterward', async () => {
             max_lines: null,
           },
         ],
-        variants: [
+        designs: [
           {
             id: 'logo-focused',
             name: 'Logo',
@@ -1266,7 +1266,7 @@ test('renders registry field copy for the review link and offers no example-link
             default_value: '',
           },
         ],
-        variants: [
+        designs: [
           {
             id: 'bold',
             name: 'Bold',
@@ -1346,10 +1346,10 @@ test('renders registry field copy for the review link and offers no example-link
   expect(screen.queryByText('Link und QR')).not.toBeInTheDocument();
   expect(screen.queryByText('Felder')).not.toBeInTheDocument();
 
-  // Removed surfaces: no image field, no variant picker, no permanent feedback box.
+  // Removed surfaces: no image field, no design picker, no permanent feedback box.
   expect(screen.queryByLabelText('Bild hochladen')).not.toBeInTheDocument();
   expect(screen.queryByLabelText('Foto hochladen')).not.toBeInTheDocument();
-  expect(screen.queryByText('Layoutvarianten')).not.toBeInTheDocument();
+  expect(screen.queryByText('Designs')).not.toBeInTheDocument();
   expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   expect(screen.queryByText('Rückmeldungen')).not.toBeInTheDocument();
   expect(screen.queryByText('Alles sieht gut aus')).not.toBeInTheDocument();

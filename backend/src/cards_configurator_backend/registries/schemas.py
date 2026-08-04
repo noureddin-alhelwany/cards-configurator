@@ -2,14 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal
 
-from pydantic import (
-    AliasChoices,
-    BaseModel,
-    ConfigDict,
-    Field,
-    field_validator,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class RegistryIssue(BaseModel):
@@ -212,9 +205,6 @@ class TemplateDesignDefinition(BaseModel):
         return self
 
 
-TemplateVariantDefinition = TemplateDesignDefinition
-
-
 class TemplateFieldDefinition(BaseModel):
     id: str
     type: Literal["text", "logo", "url", "image", "qr", "shape", "static_asset"]
@@ -259,14 +249,7 @@ class TemplateDefinition(BaseModel):
     qr_rules: list[QrRuleDefinition] = Field(default_factory=list)
     fonts: list[FontDefinition]
     elements: list[RenderableElementDefinition]
-    designs: list[TemplateDesignDefinition] = Field(
-        default_factory=list,
-        validation_alias=AliasChoices("designs", "variants"),
-    )
-
-    @property
-    def variants(self) -> list[TemplateDesignDefinition]:
-        return self.designs
+    designs: list[TemplateDesignDefinition] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def normalize_font_ids(self) -> TemplateDefinition:

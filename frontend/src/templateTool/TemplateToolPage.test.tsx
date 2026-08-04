@@ -127,7 +127,7 @@ test('renders the internal template tool with separate preview and source layers
             quiet_zone_mm: 4,
           },
         ],
-        variants: [
+        designs: [
           {
             id: 'bold',
             name: 'Bold',

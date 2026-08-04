@@ -1,7 +1,7 @@
 import type { LayoutState, TemplateDefinition, TemplateDesignDefinition } from './types';
 
-export function defaultTemplateVariantId(template: TemplateDefinition): string | null {
-  return (template.designs ?? template.variants ?? []).find((variant) => variant.active)?.id ?? null;
+export function defaultTemplateDesignId(template: TemplateDefinition): string | null {
+  return (template.designs ?? template.designs ?? []).find((variant) => variant.active)?.id ?? null;
 }
 
 export function activeTemplateVariant(
@@ -9,8 +9,8 @@ export function activeTemplateVariant(
   variantId: string | null | undefined,
 ): TemplateDesignDefinition | null {
   return (
-    (template.designs ?? template.variants ?? []).find((variant) => variant.active && variant.id === variantId) ??
-    (template.designs ?? template.variants ?? []).find((variant) => variant.active) ??
+    (template.designs ?? template.designs ?? []).find((variant) => variant.active && variant.id === variantId) ??
+    (template.designs ?? template.designs ?? []).find((variant) => variant.active) ??
     null
   );
 }

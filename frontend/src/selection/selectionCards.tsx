@@ -1,4 +1,4 @@
-import type { ProductDefinition, TemplateDefinition, TemplateVariantDefinition, CategoryDefinition } from '../registries/types';
+import type { ProductDefinition, TemplateDefinition, TemplateDesignDefinition, CategoryDefinition } from '../registries/types';
 import DesignRenderer from '../design/DesignRenderer';
 import { buildTemplatePreviewFixture } from './selectionPreview';
 import { designStyleDescription } from './selectionRules';
@@ -53,10 +53,10 @@ type DesignCardProps = {
   template: TemplateDefinition;
   product: ProductDefinition | null;
   category: CategoryDefinition | null;
-  variant: TemplateVariantDefinition;
+  variant: TemplateDesignDefinition;
   selected: boolean;
   recommended?: boolean;
-  onSelect: (template: TemplateDefinition, variant: TemplateVariantDefinition) => void;
+  onSelect: (template: TemplateDefinition, variant: TemplateDesignDefinition) => void;
   disabled?: boolean;
 };
 

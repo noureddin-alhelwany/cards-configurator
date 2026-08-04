@@ -177,7 +177,7 @@ def save_template_selection(session: Session, bundle: RegistryBundle, request: T
         raise HTTPException(status_code=400, detail="Selected category does not belong to the selected product")
 
     variant_id = request.variant_id
-    active_variants = [variant for variant in template.variants if variant.active]
+    active_variants = [variant for variant in template.designs if variant.active]
     if variant_id is None:
         variant_id = active_variants[0].id if active_variants else ""
     elif variant_id not in {variant.id for variant in active_variants}:

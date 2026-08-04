@@ -19,7 +19,6 @@ from .schemas import (
     TemplateDefinition,
     TemplateDesignDefinition,
     TemplateFieldDefinition,
-    TemplateVariantDefinition,
     TextElementDefinition,
     TextRuleDefinition,
 )
@@ -45,7 +44,6 @@ __all__ = [
     "TemplateDefinition",
     "TemplateDesignDefinition",
     "TemplateFieldDefinition",
-    "TemplateVariantDefinition",
     "TextElementDefinition",
     "TextRuleDefinition",
     "extract_slot_boxes",

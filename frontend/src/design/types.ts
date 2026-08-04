@@ -145,8 +145,6 @@ export type TemplateDesignDefinition = {
   accent_color?: string | null;
 };
 
-export type TemplateVariantDefinition = TemplateDesignDefinition;
-
 export type TemplateDefinition = {
   schema_version: number;
   id: string;
@@ -171,7 +169,6 @@ export type TemplateDefinition = {
   fonts: FontDefinition[];
   elements: TemplateElementDefinition[];
   designs?: TemplateDesignDefinition[];
-  variants?: TemplateDesignDefinition[];
 };
 
 export type TemplateFieldDefinition = {

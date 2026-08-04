@@ -3,12 +3,12 @@ import type { RegistryBundle, TemplateDefinition } from '../registries/types';
 import type { DraftState, TemplateSelectionRequest } from '../drafts/types';
 import type { ElementAdjustment, ValidationIssue } from '../design/types';
 import type { OrderDetail } from '../orders/types';
-import type { TemplateVariantDefinition } from '../registries/types';
+import type { TemplateDesignDefinition } from '../registries/types';
 import { assetElementForField, clamp, defaultAdjustmentsForTemplate, type AssetMetadata } from './selectionHelpers';
 import { loadRegistries } from '../registries/loadRegistries';
 import {
-  activeVariant,
-  activeVariants,
+  activeDesign,
+  activeDesigns,
   buildWizardSteps,
   fieldDefaultValue,
   fieldLabel,
@@ -357,7 +357,7 @@ export function useSelectionFlow() {
     [bundle, selectedTemplateKey],
   );
   const selectedVariant = useMemo(
-    () => (selectedTemplate ? activeVariant(selectedTemplate, selectedVariantId) : null),
+    () => (selectedTemplate ? activeDesign(selectedTemplate, selectedVariantId) : null),
     [selectedTemplate, selectedVariantId],
   );
 
@@ -437,7 +437,7 @@ export function useSelectionFlow() {
   );
   const visibleBlockingIssues = visibleValidationIssues.filter((issue) => issue.blocking);
   const recommendedTemplateKey = matchingTemplates[0] ? templateKey(matchingTemplates[0]) : null;
-  const recommendedVariantId = matchingTemplates[0] ? activeVariants(matchingTemplates[0])[0]?.id ?? null : null;
+  const recommendedVariantId = matchingTemplates[0] ? activeDesigns(matchingTemplates[0])[0]?.id ?? null : null;
   const recommendedProductId = recommendedProducts[0]?.id ?? null;
   const previewMode: PreviewMode = selectionState.previewState.live ? 'live' : selectionState.previewState.mockup ? 'mockup' : 'hidden';
 
@@ -486,7 +486,7 @@ export function useSelectionFlow() {
     if (!selectedTemplate) {
       return;
     }
-    const resolvedVariant = activeVariant(selectedTemplate, selectedVariantId);
+    const resolvedVariant = activeDesign(selectedTemplate, selectedVariantId);
     if (resolvedVariant?.id === selectedVariantId) {
       return;
     }
@@ -598,7 +598,7 @@ export function useSelectionFlow() {
     setWizardStepIndex((current) => Math.max(0, current - 1));
   }
 
-  async function handleTemplateSelect(template: TemplateDefinition, variant?: TemplateVariantDefinition) {
+  async function handleTemplateSelect(template: TemplateDefinition, variant?: TemplateDesignDefinition) {
     if (!selectedCategoryId || !selectedProductId || isApproved) {
       return;
     }
@@ -607,7 +607,7 @@ export function useSelectionFlow() {
     if (!demoCategory) {
       return;
     }
-    const fallbackVariant = variant ?? activeVariant(template, selectedVariantId);
+    const fallbackVariant = variant ?? activeDesign(template, selectedVariantId);
     const response = await saveTemplateSelection({
       category_id: selectedCategoryId,
       product_id: selectedProductId,

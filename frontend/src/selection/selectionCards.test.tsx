@@ -53,7 +53,7 @@ const bundle: RegistryBundle = {
       qr_rules: [],
       fonts: [],
       elements: [],
-      variants: [],
+      designs: [],
     },
   ],
   diagnostics: [],

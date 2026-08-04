@@ -4,7 +4,7 @@ import { SelectionPreviewPanel, SelectionReviewPanel } from './selectionPanels';
 import { SelectionContentPanel } from './selectionContentStep';
 import { ProductCard, TemplateCard, DesignCard } from './selectionCards';
 import { useSelectionFlow } from './selectionFlow';
-import { activeVariants, templateKey, validationDisplayPath } from './selectionRules';
+import { activeDesigns, templateKey, validationDisplayPath } from './selectionRules';
 import type { ValidationIssue } from '../design/types';
 import { uiText } from '../ui/text';
 
@@ -243,15 +243,15 @@ export default function SelectionPage() {
                 <div className="selection-section__heading">
                   <h2>{uiText.selection.sections.design}</h2>
                   <p>
-                    {matchingTemplates.length === 1 && activeVariants(matchingTemplates[0]).length > 1
-                      ? activeVariants(matchingTemplates[0]).length
+                    {matchingTemplates.length === 1 && activeDesigns(matchingTemplates[0]).length > 1
+                      ? activeDesigns(matchingTemplates[0]).length
                       : matchingTemplates.length}{' '}
                     Einträge
                   </p>
                 </div>
                 <div className="template-grid">
-                  {matchingTemplates.length === 1 && activeVariants(matchingTemplates[0]).length > 1 ? (
-                    activeVariants(matchingTemplates[0]).map((variant) => (
+                  {matchingTemplates.length === 1 && activeDesigns(matchingTemplates[0]).length > 1 ? (
+                    activeDesigns(matchingTemplates[0]).map((variant) => (
                       <DesignCard
                         key={variant.id}
                         template={matchingTemplates[0]}
