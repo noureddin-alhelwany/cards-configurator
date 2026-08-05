@@ -1,7 +1,7 @@
 {
   "id": "cat-2",
-  "name": "Terminbuchungskarte",
-  "description": "Der QR-Code führt direkt zur Online-Terminbuchung oder Terminseite.",
-  "preview_asset": "booking.png",
+  "name": "cat-2",
+  "description": "cat-2",
+  "preview_asset": "categories/cat-2.svg",
   "active": true
 }

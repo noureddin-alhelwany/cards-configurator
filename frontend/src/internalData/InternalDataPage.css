@@ -38,25 +38,36 @@
   align-items: flex-start;
 }
 
-.internal-data-grid {
+.internal-data-summary {
   display: grid;
-  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
-  gap: 20px;
-  align-items: start;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.internal-data-card--sidebar,
+.internal-data-summary__item {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(155, 122, 89, 0.14);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.internal-data-summary__value {
+  font-size: 1.35rem;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.internal-data-summary__label {
+  color: #6f5a48;
+  font-size: 0.86rem;
+}
+
 .internal-data-card--editor,
 .internal-data-card--section {
   display: grid;
   gap: 16px;
-}
-
-.internal-data-card--sidebar {
-  position: sticky;
-  top: 24px;
-  max-height: calc(100vh - 48px);
-  overflow: auto;
 }
 
 .internal-data-kicker {
@@ -137,25 +148,64 @@
   color: #5b4635;
 }
 
-.internal-data-tabs {
+.internal-data-sections {
   display: grid;
-  gap: 8px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
 }
 
-.internal-data-tab {
+.internal-data-section-tab {
   border: 1px solid rgba(155, 122, 89, 0.18);
   background: rgba(255, 255, 255, 0.7);
-  border-radius: 999px;
-  padding: 10px 12px;
+  border-radius: 16px;
+  padding: 12px 14px;
   font: inherit;
   cursor: pointer;
+  font-weight: 600;
 }
 
-.internal-data-tab--active {
+.internal-data-section-tab--active {
   background: rgba(138, 93, 45, 0.14);
   border-color: rgba(138, 93, 45, 0.35);
-  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(140, 92, 43, 0.12);
+}
+
+.internal-data-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.internal-data-card--subsection {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.internal-data-select {
+  display: grid;
+  gap: 8px;
+}
+
+.internal-data-select select {
+  appearance: none;
+  border: 1px solid rgba(155, 122, 89, 0.18);
+  background: rgba(255, 255, 255, 0.86);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font: inherit;
+  color: #2f241b;
+}
+
+.internal-data-registry-list {
+  display: grid;
+  gap: 10px;
+}
+
+.internal-data-registry-list .internal-data-list-item {
+  width: 100%;
+}
+
+.internal-data-registry-list .internal-data-list-item--selected {
+  border-color: rgba(140, 92, 43, 0.62);
+  box-shadow: 0 10px 24px rgba(140, 92, 43, 0.14);
 }
 
 .internal-data-list {
@@ -168,6 +218,47 @@
   gap: 12px;
 }
 
+.internal-data-asset-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.internal-data-asset-group {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(155, 122, 89, 0.16);
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.internal-data-asset-group__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.internal-data-asset-group__header h3 {
+  margin: 0 0 6px;
+  font-size: 1.02rem;
+}
+
+.internal-data-asset-group__header p {
+  margin: 0;
+}
+
+.internal-data-asset-group__count {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(138, 93, 45, 0.12);
+  color: #8a5d2d;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .internal-data-row {
   display: flex;
   justify-content: space-between;
@@ -177,6 +268,47 @@
   border-radius: 16px;
   border: 1px solid rgba(155, 122, 89, 0.16);
   background: rgba(255, 255, 255, 0.72);
+}
+
+.internal-data-asset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.internal-data-asset-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(155, 122, 89, 0.16);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.internal-data-asset-card__thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  border: 1px solid rgba(155, 122, 89, 0.16);
+  background: #fff;
+  object-fit: cover;
+}
+
+.internal-data-asset-card__body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.internal-data-asset-card__body p {
+  margin: 0;
+  color: #6f5a48;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.internal-data-asset-card__action {
+  justify-self: start;
 }
 
 .internal-data-list--diagnostics {
@@ -240,13 +372,9 @@
     padding: 18px;
   }
 
-  .internal-data-grid {
+  .internal-data-summary,
+  .internal-data-sections {
     grid-template-columns: 1fr;
-  }
-
-  .internal-data-card--sidebar {
-    position: static;
-    max-height: none;
   }
 
   .internal-data-hero {

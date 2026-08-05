@@ -348,6 +348,26 @@ def get_asset(asset_id: str) -> dict[str, object]:
     return load_asset(settings.data_dir, asset_id)
 
 
+@router.get("/assets/{asset_id}/preview")
+def get_asset_preview(asset_id: str) -> FileResponse:
+    settings = get_settings()
+    asset = load_asset(settings.data_dir, asset_id)
+    preview_path = asset.get("preview_path")
+    if not isinstance(preview_path, str):
+        raise HTTPException(status_code=404, detail="Asset preview not found")
+    return FileResponse(preview_path, media_type=str(asset.get("mime_type") or "application/octet-stream"))
+
+
+@router.get("/assets/{asset_id}/original")
+def get_asset_original(asset_id: str) -> FileResponse:
+    settings = get_settings()
+    asset = load_asset(settings.data_dir, asset_id)
+    original_path = asset.get("original_path") or asset.get("render_path") or asset.get("preview_path")
+    if not isinstance(original_path, str):
+        raise HTTPException(status_code=404, detail="Asset original not found")
+    return FileResponse(original_path, media_type=str(asset.get("mime_type") or "application/octet-stream"))
+
+
 @router.post("/render/proof")
 async def render_proof(request: Request) -> dict[str, object]:
     settings = get_settings()

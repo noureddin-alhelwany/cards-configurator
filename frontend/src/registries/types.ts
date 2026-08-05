@@ -9,13 +9,13 @@ import type {
   ProofFixture,
   QrElementDefinition,
   QrRuleDefinition,
-  SafeAreaDefinition,
   TemplateDefinition,
   TemplateElementDefinition,
   TemplateFieldDefinition,
   TemplateDesignDefinition,
   TextRuleDefinition,
   TextElementDefinition,
+  ZoneDefinition,
   CategoryDefinition,
 } from '../design/types';
 
@@ -30,13 +30,13 @@ export type {
   ProofFixture,
   QrElementDefinition,
   QrRuleDefinition,
-  SafeAreaDefinition,
   TemplateDefinition,
   TemplateElementDefinition,
   TemplateFieldDefinition,
   TemplateDesignDefinition,
   TextRuleDefinition,
   TextElementDefinition,
+  ZoneDefinition,
   CategoryDefinition,
 };
 

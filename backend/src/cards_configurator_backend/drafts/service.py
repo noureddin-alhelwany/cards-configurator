@@ -23,6 +23,7 @@ from .schemas import (
 )
 
 DEFAULT_DRAFT_NAME = "Current draft"
+UNASSIGNED_ZONE_VALUE = "not_assigned"
 
 
 def _empty_layout_state(design_id: str = "") -> LayoutState:
@@ -136,6 +137,37 @@ def _find_template(bundle: RegistryBundle, template_id: str, template_version: s
     )
 
 
+def _active_design(template: TemplateDefinition, design_id: str | None):
+    if design_id is not None:
+        return next((design for design in template.designs if design.active and design.id == design_id), None)
+    return next((design for design in template.designs if design.active), None)
+
+
+def _normalize_zone_default_value(value: str | None) -> str:
+    if value == UNASSIGNED_ZONE_VALUE:
+        return ""
+    return value or ""
+
+
+def _static_zone_defaults(template: TemplateDefinition, design_id: str | None) -> dict[str, str]:
+    design = _active_design(template, design_id)
+    if design is None:
+        return {}
+
+    field_defaults = {field.id: field.default_value for field in template.fields}
+    defaults: dict[str, str] = {}
+    for zone in design.zones:
+        if zone.personalizable:
+            continue
+        for variable in zone.variables or []:
+            field_id = variable.field_id or variable.id
+            if not field_id:
+                continue
+            fallback = field_defaults.get(field_id)
+            defaults[field_id] = _normalize_zone_default_value(variable.default_value) or _normalize_zone_default_value(fallback)
+    return defaults
+
+
 def _clamp_element_adjustments(
     template: TemplateDefinition | None,
     adjustments: dict[str, ElementAdjustment],
@@ -170,8 +202,9 @@ def _clamp_element_adjustments(
     return clamped
 
 
-def _normalize_layout_text_values(template: TemplateDefinition, text_values: dict[str, str]) -> dict[str, str]:
+def _normalize_layout_text_values(template: TemplateDefinition, design_id: str | None, text_values: dict[str, str]) -> dict[str, str]:
     normalized_values = dict(text_values)
+    normalized_values.update(_static_zone_defaults(template, design_id))
     for field in template.fields:
         if field.type != "url":
             continue
@@ -220,7 +253,12 @@ def save_template_selection(session: Session, bundle: RegistryBundle, request: T
         "template_id": template.id,
         "template_version": template.version,
         "design_id": design_id or None,
-        "layout_state": _empty_layout_state(design_id=design_id).model_dump(),
+        "layout_state": LayoutState(
+            design_id=design_id,
+            element_adjustments={},
+            text_values=_normalize_layout_text_values(template, design_id, {}),
+            asset_values={},
+        ).model_dump(),
     }
     draft.updated_at = datetime.now(UTC)
     session.commit()
@@ -255,7 +293,7 @@ def update_layout_state(session: Session, bundle: RegistryBundle, request: Layou
     if request.text_values is not None:
         layout_state.text_values.update(request.text_values)
         if template is not None:
-            layout_state.text_values = _normalize_layout_text_values(template, layout_state.text_values)
+            layout_state.text_values = _normalize_layout_text_values(template, layout_state.design_id, layout_state.text_values)
     if request.asset_values is not None:
         layout_state.asset_values.update(request.asset_values)
     if request.element_adjustments is not None:

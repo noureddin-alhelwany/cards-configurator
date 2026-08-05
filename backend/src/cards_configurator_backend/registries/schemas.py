@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class RegistryIssue(BaseModel):
@@ -87,6 +87,7 @@ class TextElementDefinition(ElementBase):
     font_weight: int = 700
     color: str = "#1f1a17"
     line_height: float = 1.1
+    letter_spacing_em: float | None = None
     align: Literal["left", "center", "right"] = "left"
     # Vertical anchor inside the box. Without it auto-fit is visibly wrong: a two-line
     # headline that shrinks to one line stays glued to the top of its box and drifts away
@@ -134,7 +135,7 @@ RenderableElementDefinition = Annotated[
 ]
 
 
-class SafeAreaVariableDefinition(BaseModel):
+class ZoneVariableDefinition(BaseModel):
     id: str
     kind: Literal["text", "qr"]
     field_id: str | None = None
@@ -144,6 +145,7 @@ class SafeAreaVariableDefinition(BaseModel):
     font_size_mm: float = 4.0
     min_font_size_mm: float | None = None
     line_height: float = 1.1
+    letter_spacing_em: float | None = None
     color: str = "#1f1a17"
     align: Literal["left", "center", "right"] = "left"
     max_length: int | None = None
@@ -152,14 +154,14 @@ class SafeAreaVariableDefinition(BaseModel):
     default_value: str | None = None
 
 
-class SafeAreaDefinition(BaseModel):
+class ZoneDefinition(BaseModel):
     id: str
     box_mm: BoxMm
     label: str | None = None
     kind: Literal["text", "qr"] = "text"
     personalizable: bool = False
     qr: QrZoneDefinition | None = None
-    variables: list[SafeAreaVariableDefinition] = Field(default_factory=list)
+    variables: list[ZoneVariableDefinition] = Field(default_factory=list)
 
 
 class QrZoneDefinition(BaseModel):
@@ -169,7 +171,7 @@ class QrZoneDefinition(BaseModel):
     quiet_zone_mm: float = 2.0
 
 
-SafeAreaDefinition.model_rebuild()
+ZoneDefinition.model_rebuild()
 
 
 class TextRuleDefinition(BaseModel):
@@ -188,6 +190,8 @@ class QrRuleDefinition(BaseModel):
 
 
 class TemplateDesignDefinition(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
+
     id: str
     name: str
     active: bool = True
@@ -197,6 +201,11 @@ class TemplateDesignDefinition(BaseModel):
     background_asset_sha256: str | None = None
     accent_color: str | None = None
     fonts: list[FontDefinition] = Field(default_factory=list)
+    zones: list[ZoneDefinition] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices("zones", "safe_areas"),
+        serialization_alias="zones",
+    )
 
     @model_validator(mode="after")
     def sync_source_asset(self) -> TemplateDesignDefinition:
@@ -236,7 +245,6 @@ class TemplateDefinition(BaseModel):
     bleed_mm: float
     reference_asset: str | None = None
     fields: list[TemplateFieldDefinition] = Field(default_factory=list)
-    safe_areas: list[SafeAreaDefinition] = Field(default_factory=list)
     text_rules: list[TextRuleDefinition] = Field(default_factory=list)
     qr_rules: list[QrRuleDefinition] = Field(default_factory=list)
     elements: list[RenderableElementDefinition]
@@ -244,36 +252,34 @@ class TemplateDefinition(BaseModel):
 
     @model_validator(mode="after")
     def normalize_font_ids(self) -> TemplateDefinition:
-        font_ids: set[str] = set()
-        for design in self.designs:
-            if not design.active:
-                continue
-            for font in design.fonts:
-                font_ids.add(font.id or font.family)
-
-        for safe_area in self.safe_areas:
-            for variable in safe_area.variables:
-                if variable.kind != "text":
+        active_designs = [design for design in self.designs if design.active]
+        for design in active_designs:
+            font_ids = {font.id or font.family for font in design.fonts}
+            for safe_area in design.zones:
+                for variable in safe_area.variables:
+                    if variable.kind != "text":
+                        continue
+                    if not font_ids:
+                        raise ValueError(
+                            f"zone variable '{variable.id}' requires a registered font but design '{design.id}' defines none"
+                        )
+                    if variable.font_family_id is None:
+                        raise ValueError(f"zone variable '{variable.id}' needs a font_family_id")
+                    if variable.font_family_id not in font_ids:
+                        raise ValueError(
+                            f"zone variable '{variable.id}' uses unknown font '{variable.font_family_id}'"
+                        )
+            for element in self.elements:
+                if element.kind != "text":
                     continue
                 if not font_ids:
                     raise ValueError(
-                        f"safe area variable '{variable.id}' requires a registered font but template '{self.id}' defines none"
+                        f"text element '{element.id}' requires a registered font but design '{design.id}' defines none"
                     )
-                if variable.font_family_id is None:
-                    raise ValueError(f"safe area variable '{variable.id}' needs a font_family_id")
-                if variable.font_family_id not in font_ids:
-                    raise ValueError(
-                        f"safe area variable '{variable.id}' uses unknown font '{variable.font_family_id}'"
-                    )
-        for element in self.elements:
-            if element.kind != "text":
-                continue
-            if not font_ids:
-                raise ValueError(f"text element '{element.id}' requires a registered font but template '{self.id}' defines none")
-            if element.font_family_id is None:
-                raise ValueError(f"text element '{element.id}' needs a font_family_id")
-            if element.font_family_id not in font_ids:
-                raise ValueError(f"text element '{element.id}' uses unknown font '{element.font_family_id}'")
+                if element.font_family_id is None:
+                    raise ValueError(f"text element '{element.id}' needs a font_family_id")
+                if element.font_family_id not in font_ids:
+                    raise ValueError(f"text element '{element.id}' uses unknown font '{element.font_family_id}'")
         return self
 
     @model_validator(mode="after")

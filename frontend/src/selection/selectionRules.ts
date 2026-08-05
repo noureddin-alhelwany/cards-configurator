@@ -1,4 +1,4 @@
-import type { TemplateDefinition, CategoryDefinition } from '../registries/types';
+import type { TemplateDefinition, ZoneDefinition, CategoryDefinition } from '../registries/types';
 import type { ValidationIssue } from '../design/types';
 import { fieldRole } from '../design/fieldRoles';
 import type { TemplateFieldRole } from '../design/fieldRoles';
@@ -85,6 +85,74 @@ export function selectedDesignName(template: TemplateDefinition, variantId: stri
 
 export function activeDesigns(template: TemplateDefinition) {
   return (template.designs ?? []).filter((variant) => variant.active);
+}
+
+export function activeDesign(template: TemplateDefinition, variantId: string | null) {
+  const designs = activeDesigns(template);
+  if (variantId) {
+    const selected = designs.find((design) => design.id === variantId);
+    if (selected) {
+      return selected;
+    }
+  }
+  return designs[0] ?? null;
+}
+
+function fieldIdForZoneVariable(variable: NonNullable<ZoneDefinition['variables']>[number]) {
+  return variable.field_id ?? variable.id;
+}
+
+function normalizeZoneDefaultValue(value: string | null | undefined) {
+  return value === 'not_assigned' ? '' : value ?? '';
+}
+
+export function zoneFieldAccessForDesign(template: TemplateDefinition, variantId: string | null) {
+  const design = activeDesign(template, variantId);
+  const access = new Map<string, { personalizable: boolean; defaultValue: string | null }>();
+  if (!design) {
+    return access;
+  }
+  for (const zone of design.zones ?? []) {
+    for (const variable of zone.variables ?? []) {
+      if (variable.kind !== 'text') {
+        continue;
+      }
+      access.set(fieldIdForZoneVariable(variable), {
+        personalizable: zone.personalizable ?? false,
+        defaultValue: normalizeZoneDefaultValue(variable.default_value),
+      });
+    }
+  }
+  return access;
+}
+
+export function editableTextFieldIds(template: TemplateDefinition, variantId: string | null) {
+  const access = zoneFieldAccessForDesign(template, variantId);
+  if (access.size === 0) {
+    return new Set(template.fields.filter((field) => field.type === 'text' || field.type === 'url').map((field) => field.id));
+  }
+  return new Set(
+    template.fields
+      .filter((field) => field.type === 'text' || field.type === 'url')
+      .filter((field) => access.get(field.id)?.personalizable !== false)
+      .map((field) => field.id),
+  );
+}
+
+export function staticTextDefaultsForDesign(template: TemplateDefinition, variantId: string | null) {
+  const access = zoneFieldAccessForDesign(template, variantId);
+  const defaults: Record<string, string> = {};
+  for (const field of template.fields) {
+    if (field.type !== 'text' && field.type !== 'url') {
+      continue;
+    }
+    const info = access.get(field.id);
+    if (!info || info.personalizable) {
+      continue;
+    }
+    defaults[field.id] = info.defaultValue || field.default_value || '';
+  }
+  return defaults;
 }
 
 export function fieldLabel(field: TemplateDefinition['fields'][number], index: number) {
@@ -250,14 +318,6 @@ export function validationDisplayPath(issue: ValidationIssue) {
 
 export function templateKey(template: TemplateDefinition) {
   return `${template.id}@${template.version}`;
-}
-
-export function activeDesign(template: TemplateDefinition, variantId: string | null) {
-  return (
-    (template.designs ?? template.designs ?? []).find((variant) => variant.active && variant.id === variantId) ??
-    (template.designs ?? template.designs ?? []).find((variant) => variant.active) ??
-    null
-  );
 }
 
 const GOOGLE_REVIEWS_TEMPLATE_ID = 'proof_a6_card';

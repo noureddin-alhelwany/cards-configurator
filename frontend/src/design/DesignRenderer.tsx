@@ -59,6 +59,7 @@ function textFitFor(element: TextElementDefinition, text: string, maxLines: numb
       box_height_mm: element.box_mm.height_mm,
       font_size_mm: element.font_size_mm,
       line_height: element.line_height,
+      letter_spacing_em: element.letter_spacing_em,
       max_lines: maxLines,
       min_font_size_mm: element.min_font_size_mm,
     },
@@ -106,6 +107,7 @@ function renderTextElement(
         fontSize: `${element.font_size_mm * fitScale}mm`,
         fontWeight: element.font_weight,
         lineHeight: element.line_height,
+        letterSpacing: element.letter_spacing_em != null ? `${element.letter_spacing_em}em` : undefined,
         textAlign: element.align,
         transform: `translate(${adjustment.offset_x * 4}mm, ${adjustment.offset_y * 4}mm) scale(${adjustment.scale})`,
       }}

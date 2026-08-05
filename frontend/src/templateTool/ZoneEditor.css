@@ -47,6 +47,41 @@
   background: rgba(250, 245, 238, 0.58);
 }
 
+.template-tool-zone-editor__accordion {
+  gap: 0;
+}
+
+.template-tool-zone-editor__accordion > summary {
+  list-style: none;
+}
+
+.template-tool-zone-editor__accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.template-tool-zone-editor__accordion-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #4d3d30;
+}
+
+.template-tool-zone-editor__accordion-summary-meta {
+  color: #7e6653;
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.template-tool-zone-editor__accordion-body {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+}
+
 .template-tool-zone-editor__variable-list {
   display: grid;
   gap: 12px;

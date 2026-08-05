@@ -28,6 +28,7 @@ export type TextFitInput = {
   box_height_mm: number;
   font_size_mm: number;
   line_height: number;
+  letter_spacing_em?: number | null;
   max_lines: number | null;
   /** Absolute floor in mm; `null` falls back to `DEFAULT_MIN_FIT_SCALE * font_size_mm`. */
   min_font_size_mm?: number | null;
@@ -47,6 +48,10 @@ function clampUnit(value: number) {
   return Math.min(1, Math.max(0, value));
 }
 
+function effectiveGlyphWidthEm(input: TextFitInput) {
+  return Math.max(0.1, AVG_GLYPH_WIDTH_EM + (input.letter_spacing_em ?? 0));
+}
+
 export function minFitScale(input: TextFitInput) {
   if (input.min_font_size_mm != null && input.font_size_mm > 0) {
     return clampUnit(input.min_font_size_mm / input.font_size_mm);
@@ -63,7 +68,8 @@ export function minFitScale(input: TextFitInput) {
  */
 export function estimateTextFit(input: TextFitInput, text: string): TextFitResult {
   const paragraphs = text.trim().split('\n');
-  const charsPerLine = Math.max(1, Math.floor(input.box_width_mm / (input.font_size_mm * AVG_GLYPH_WIDTH_EM)));
+  const glyphWidthEm = effectiveGlyphWidthEm(input);
+  const charsPerLine = Math.max(1, Math.floor(input.box_width_mm / (input.font_size_mm * glyphWidthEm)));
   const longestLine = Math.max(...paragraphs.map((paragraph) => paragraph.length), 1);
   const estimatedLines = paragraphs.reduce((total, paragraph) => {
     const normalizedLength = Math.max(paragraph.length, 1);
@@ -72,7 +78,7 @@ export function estimateTextFit(input: TextFitInput, text: string): TextFitResul
 
   const widthScale = Math.min(
     1,
-    input.box_width_mm / Math.max(longestLine * input.font_size_mm * AVG_GLYPH_WIDTH_EM, 0.1),
+    input.box_width_mm / Math.max(longestLine * input.font_size_mm * glyphWidthEm, 0.1),
   );
   const heightScale = Math.min(
     1,

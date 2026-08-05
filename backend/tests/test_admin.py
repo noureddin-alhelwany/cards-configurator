@@ -57,11 +57,10 @@ def _write_valid_registries(registries_dir: Path) -> None:
                 "page_height_mm": 154,
                 "bleed_mm": 3,
                 "fonts": [],
-                "safe_areas": [],
                 "text_rules": [],
                 "qr_rules": [],
                 "elements": [],
-                "designs": [{"id": "default", "name": "Default", "active": True}],
+                "designs": [{"id": "default", "name": "Default", "active": True, "zones": []}],
             }
         ),
         encoding="utf-8",
@@ -105,11 +104,10 @@ def test_admin_data_registry_and_delete_routes(tmp_path: Path, monkeypatch) -> N
                 "page_height_mm": 154,
                 "bleed_mm": 3,
                 "fonts": [],
-                "safe_areas": [],
                 "text_rules": [],
                 "qr_rules": [],
                 "elements": [],
-                "designs": [{"id": "default", "name": "Default", "active": True}],
+                "designs": [{"id": "default", "name": "Default", "active": True, "zones": []}],
             }
         )
         write_response = client.put("/api/admin/registries/template/template.json", json={"content": updated_content})

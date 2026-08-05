@@ -25,13 +25,6 @@ function buildFixture(): ProofFixture {
       page_width_mm: 111,
       page_height_mm: 154,
       bleed_mm: 3,
-      safe_areas: [
-        {
-          id: 'content',
-          box_mm: { x_mm: 12, y_mm: 12, width_mm: 87, height_mm: 130 },
-          label: 'Safe Area',
-        },
-      ],
       fields: [
         {
           id: 'headline',
@@ -59,6 +52,7 @@ function buildFixture(): ProofFixture {
           font_weight: 700,
           color: '#1f1a17',
           line_height: 1.05,
+          letter_spacing_em: 0.08,
           align: 'left',
           valign: 'top',
           min_font_size_mm: null,
@@ -73,6 +67,13 @@ function buildFixture(): ProofFixture {
           source_asset: null,
           background_asset: null,
           accent_color: null,
+          zones: [
+            {
+              id: 'content',
+              box_mm: { x_mm: 12, y_mm: 12, width_mm: 87, height_mm: 130 },
+              label: 'Zone',
+            },
+          ],
           fonts: [
             {
               id: 'proof-sans',
@@ -140,6 +141,7 @@ test('production variant emits none of the preview chrome', () => {
   // The card itself is still drawn.
   expect(container.querySelector('[data-testid="proof-canvas"]')).not.toBeNull();
   expect(container.querySelector('.design-element--text')?.textContent).toBe('Scanne den QR-Code');
+  expect((container.querySelector('.design-element--text') as HTMLElement | null)?.style.letterSpacing).toBe('0.08em');
 });
 
 test('production variant declares the page size from the template geometry', () => {

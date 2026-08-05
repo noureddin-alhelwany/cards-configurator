@@ -15,6 +15,7 @@ export default function SelectionPage() {
     selectedCategory,
     selectedProduct,
     selectedTemplate,
+    selectedVariant,
     selectedTemplateKey,
     selectedVariantId,
     wizardStepIndex,
@@ -305,6 +306,7 @@ export default function SelectionPage() {
             {activeStep.id === 'content' && selectedTemplate && selectedProduct && selectedCategory ? (
               <SelectionContentPanel
                 selectedTemplate={selectedTemplate}
+                selectedVariant={selectedVariant}
                 selectedVariantId={selectedVariantId}
                 layoutValues={layoutValues}
                 assetPreviews={assetPreviews}

@@ -3,6 +3,7 @@ import type { TemplateDefinition } from '../registries/types';
 import type { ElementAdjustment, ValidationIssue } from '../design/types';
 import { assetElementForField, type AssetMetadata } from './selectionHelpers';
 import {
+  editableTextFieldIds,
   fieldGroupLabel,
   fieldHelperText,
   fieldLabel,
@@ -344,6 +345,7 @@ export function ContentAssetField({
 
 type ContentFieldSectionsProps = {
   template: TemplateDefinition;
+  selectedVariantId: string | null;
   layoutValues: LayoutValues;
   assetPreviews: Record<string, string>;
   assetDetails: Record<string, AssetMetadata>;
@@ -358,6 +360,7 @@ type ContentFieldSectionsProps = {
 
 export function ContentFieldSections({
   template,
+  selectedVariantId,
   layoutValues,
   assetPreviews,
   assetDetails,
@@ -369,7 +372,12 @@ export function ContentFieldSections({
   onFieldInteract,
   disabled = false,
 }: ContentFieldSectionsProps) {
-  const sections = useContentSections(template);
+  const editableFieldIds = useMemo(() => editableTextFieldIds(template, selectedVariantId), [selectedVariantId, template]);
+  const sections = useContentSections(template).filter((section) =>
+    section.fields.some(({ field }) =>
+      field.type === 'logo' || field.type === 'image' ? true : editableFieldIds.has(field.id),
+    ),
+  );
 
   function issueFor(fieldId: string) {
     return validationIssues.find((issue) => validationDisplayPath(issue) === fieldId) ?? null;
@@ -388,6 +396,9 @@ export function ContentFieldSections({
             ) : null}
           </div>
           {section.fields.map(({ field, index }) => {
+            if (field.type !== 'logo' && field.type !== 'image' && !editableFieldIds.has(field.id)) {
+              return null;
+            }
             const shared = {
               field,
               index,

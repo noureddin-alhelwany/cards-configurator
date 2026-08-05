@@ -51,37 +51,6 @@ def test_valid_registry_bundle_loads(tmp_path: Path) -> None:
                 "page_height_mm": 154,
                 "bleed_mm": 3,
                 "reference_asset": "reference/template-reference.svg",
-                "safe_areas": [
-                    {
-                        "id": "content-safe-area",
-                        "box_mm": {
-                            "x_mm": 8,
-                            "y_mm": 8,
-                            "width_mm": 95,
-                            "height_mm": 138,
-                        },
-                        "label": "Content safe area",
-                        "variables": [
-                            {
-                                "id": "headline",
-                                "kind": "text",
-                                "field_id": "headline",
-                                "label": "Headline",
-                                "font_family_id": "proof-sans",
-                                "font_weight": 700,
-                                "font_size_mm": 6.8,
-                                "min_font_size_mm": 4.5,
-                                "line_height": 1.05,
-                                "color": "#1f1a17",
-                                "align": "left",
-                                "max_length": 60,
-                                "max_lines": 3,
-                                "required": True,
-                                "default_value": "Scanne den QR-Code",
-                            }
-                        ],
-                    }
-                ],
                 "text_rules": [
                     {
                         "version": 1,
@@ -106,6 +75,38 @@ def test_valid_registry_bundle_loads(tmp_path: Path) -> None:
                         "name": "Proof",
                         "active": True,
                         "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
+                        "zones": [
+                            {
+                                "id": "content-safe-area",
+                                "box_mm": {
+                                    "x_mm": 8,
+                                    "y_mm": 8,
+                                    "width_mm": 95,
+                                    "height_mm": 138,
+                                },
+                                "label": "Content zone",
+                                "variables": [
+                                    {
+                                        "id": "headline",
+                                        "kind": "text",
+                                        "field_id": "headline",
+                                        "label": "Headline",
+                                        "font_family_id": "proof-sans",
+                                        "font_weight": 700,
+                                        "font_size_mm": 6.8,
+                                        "min_font_size_mm": 4.5,
+                                        "line_height": 1.05,
+                                        "letter_spacing_em": 0.08,
+                                        "color": "#1f1a17",
+                                        "align": "left",
+                                        "max_length": 60,
+                                        "max_lines": 3,
+                                        "required": True,
+                                        "default_value": "Scanne den QR-Code",
+                                    }
+                                ],
+                            }
+                        ],
                     }
                 ],
             }
@@ -120,12 +121,13 @@ def test_valid_registry_bundle_loads(tmp_path: Path) -> None:
     assert [template.id for template in bundle.templates] == ["template"]
     template = bundle.templates[0]
     assert template.reference_asset == "reference/template-reference.svg"
-    assert template.safe_areas[0].box_mm.model_dump() == {
+    assert template.designs[0].zones[0].box_mm.model_dump() == {
         "x_mm": 8.0,
         "y_mm": 8.0,
         "width_mm": 95.0,
         "height_mm": 138.0,
     }
+    assert template.designs[0].zones[0].variables[0].letter_spacing_em == 0.08
     assert template.text_rules[0].version == 1
     assert template.qr_rules[0].preset == "rounded-safe"
     assert bundle.diagnostics == []
@@ -172,37 +174,6 @@ def test_text_variable_font_must_come_from_registry_fonts(tmp_path: Path) -> Non
                 "page_width_mm": 111,
                 "page_height_mm": 154,
                 "bleed_mm": 3,
-                "safe_areas": [
-                    {
-                        "id": "content-safe-area",
-                        "box_mm": {
-                            "x_mm": 8,
-                            "y_mm": 8,
-                            "width_mm": 95,
-                            "height_mm": 138,
-                        },
-                        "label": "Content safe area",
-                        "variables": [
-                            {
-                                "id": "headline",
-                                "kind": "text",
-                                "field_id": "headline",
-                                "label": "Headline",
-                                "font_family_id": "arial",
-                                "font_weight": 700,
-                                "font_size_mm": 6.8,
-                                "min_font_size_mm": 4.5,
-                                "line_height": 1.05,
-                                "color": "#1f1a17",
-                                "align": "left",
-                                "max_length": 60,
-                                "max_lines": 3,
-                                "required": True,
-                                "default_value": "Scanne den QR-Code",
-                            }
-                        ],
-                    }
-                ],
                 "elements": [],
                 "designs": [
                     {
@@ -210,6 +181,38 @@ def test_text_variable_font_must_come_from_registry_fonts(tmp_path: Path) -> Non
                         "name": "Proof",
                         "active": True,
                         "fonts": [{"id": "proof-sans", "family": "Proof Sans", "file": "/fonts/ProofSans.ttf"}],
+                        "zones": [
+                            {
+                                "id": "content-safe-area",
+                                "box_mm": {
+                                    "x_mm": 8,
+                                    "y_mm": 8,
+                                    "width_mm": 95,
+                                    "height_mm": 138,
+                                },
+                                "label": "Content zone",
+                                "variables": [
+                                    {
+                                        "id": "headline",
+                                        "kind": "text",
+                                        "field_id": "headline",
+                                        "label": "Headline",
+                                        "font_family_id": "arial",
+                                        "font_weight": 700,
+                                        "font_size_mm": 6.8,
+                                        "min_font_size_mm": 4.5,
+                                        "line_height": 1.05,
+                                        "letter_spacing_em": 0.08,
+                                        "color": "#1f1a17",
+                                        "align": "left",
+                                        "max_length": 60,
+                                        "max_lines": 3,
+                                        "required": True,
+                                        "default_value": "Scanne den QR-Code",
+                                    }
+                                ],
+                            }
+                        ],
                     }
                 ],
             }

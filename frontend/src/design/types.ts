@@ -37,6 +37,7 @@ export type TextElementDefinition = {
   font_weight: number;
   color: string;
   line_height: number;
+  letter_spacing_em?: number | null;
   align: 'left' | 'center' | 'right';
   /** Vertical anchor in the box; `top` is drawn without a wrapper. */
   valign: 'top' | 'middle' | 'bottom';
@@ -84,14 +85,14 @@ export type TemplateElementDefinition =
   | ImageElementDefinition
   | QrElementDefinition;
 
-export type SafeAreaDefinition = {
+export type ZoneDefinition = {
   id: string;
   box_mm: BoxMm;
   label: string | null;
   kind?: 'text' | 'qr';
   personalizable?: boolean;
   qr?: QrZoneDefinition | null;
-  variables?: SafeAreaVariableDefinition[];
+  variables?: ZoneVariableDefinition[];
 };
 
 export type QrZoneDefinition = {
@@ -101,7 +102,7 @@ export type QrZoneDefinition = {
   quiet_zone_mm: number;
 };
 
-export type SafeAreaVariableDefinition = {
+export type ZoneVariableDefinition = {
   id: string;
   kind: 'text' | 'qr';
   field_id?: string | null;
@@ -144,6 +145,7 @@ export type TemplateDesignDefinition = {
   background_asset?: string | null;
   accent_color?: string | null;
   fonts?: FontDefinition[];
+  zones?: ZoneDefinition[];
 };
 
 export type TemplateDefinition = {
@@ -159,7 +161,6 @@ export type TemplateDefinition = {
   page_height_mm: number;
   bleed_mm: number;
   reference_asset?: string | null;
-  safe_areas?: SafeAreaDefinition[];
   text_rules?: TextRuleDefinition[];
   qr_rules?: QrRuleDefinition[];
   elements: TemplateElementDefinition[];

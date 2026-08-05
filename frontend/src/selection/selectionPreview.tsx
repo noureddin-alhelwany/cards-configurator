@@ -6,7 +6,7 @@ import { defaultTemplateDesignId } from '../design/variantResolution';
 import { defaultAdjustmentsForTemplate } from './selectionHelpers';
 import { emptyPreviewAsset, placeholderQrDataUrl } from './previewAssets';
 import { brandingFallbackDataUrl, businessNameFromLayout } from '../design/branding';
-import { fieldDefaultValue, fieldLabel, trimSuggestion } from './selectionRules';
+import { fieldDefaultValue, fieldLabel, staticTextDefaultsForDesign, trimSuggestion } from './selectionRules';
 import { uiText } from '../ui/text';
 
 export function buildTemplatePreviewFixture(
@@ -32,6 +32,7 @@ export function buildTemplatePreviewFixture(
         return [field.id, value];
       }),
   );
+  Object.assign(text_values, staticTextDefaultsForDesign(template, defaultTemplateDesignId(template)));
 
   const assets: ProofFixture['assets'] = {};
   const demoBusinessName = businessNameFromLayout(template, { text_values });
@@ -203,7 +204,7 @@ export function TemplateLivePreview({
                           : emptyPreviewAsset('Bild'),
                     },
                   ];
-                }),
+              }),
             ),
             ...(qrPreview
               ? {

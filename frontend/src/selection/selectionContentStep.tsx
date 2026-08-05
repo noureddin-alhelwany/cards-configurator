@@ -1,4 +1,4 @@
-import type { TemplateDefinition } from '../registries/types';
+import type { TemplateDefinition, TemplateDesignDefinition } from '../registries/types';
 import type { ElementAdjustment, ValidationIssue } from '../design/types';
 import type { AssetMetadata } from './selectionHelpers';
 import { uiText } from '../ui/text';
@@ -10,6 +10,7 @@ import type { DraftLayoutValues } from './selectionTypes';
 
 type SelectionContentPanelProps = {
   selectedTemplate: TemplateDefinition;
+  selectedVariant: TemplateDesignDefinition | null;
   selectedVariantId: string | null;
   layoutValues: DraftLayoutValues;
   assetPreviews: Record<string, string>;
@@ -44,6 +45,7 @@ type SelectionContentPanelProps = {
  */
 export function SelectionContentPanel({
   selectedTemplate,
+  selectedVariant,
   selectedVariantId,
   layoutValues,
   assetPreviews,
@@ -109,6 +111,7 @@ export function SelectionContentPanel({
       <form className="content-form" onSubmit={(event) => event.preventDefault()}>
         <ContentFieldSections
           template={selectedTemplate}
+          selectedVariantId={selectedVariant?.id ?? selectedVariantId}
           layoutValues={layoutValues}
           assetPreviews={assetPreviews}
           assetDetails={assetDetails}

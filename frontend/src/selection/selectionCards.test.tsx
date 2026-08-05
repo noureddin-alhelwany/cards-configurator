@@ -39,13 +39,6 @@ const bundle: RegistryBundle = {
       page_width_mm: 111,
       page_height_mm: 154,
       bleed_mm: 3,
-      safe_areas: [
-        {
-          id: 'content-safe-area',
-          box_mm: { x_mm: 8, y_mm: 8, width_mm: 95, height_mm: 138 },
-          label: 'Content safe area',
-        },
-      ],
       text_rules: [],
       qr_rules: [],
       elements: [],
@@ -58,6 +51,13 @@ const bundle: RegistryBundle = {
           source_asset: null,
           background_asset: null,
           accent_color: null,
+          zones: [
+            {
+              id: 'content-safe-area',
+              box_mm: { x_mm: 8, y_mm: 8, width_mm: 95, height_mm: 138 },
+              label: 'Content zone',
+            },
+          ],
           fonts: [],
         },
       ],

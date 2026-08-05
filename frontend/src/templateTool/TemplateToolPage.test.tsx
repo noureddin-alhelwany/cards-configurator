@@ -48,7 +48,6 @@ test('renders the internal template tool with separate preview and source layers
         page_width_mm: 111,
         page_height_mm: 154,
         bleed_mm: 3,
-        safe_areas: [],
         text_rules: [],
         qr_rules: [],
         fields: [
@@ -108,15 +107,16 @@ test('renders the internal template tool with separate preview and source layers
           },
         ],
         designs: [
-          {
-            id: 'warm',
-            name: 'Warm',
-            active: true,
-            preview_asset: 'preview/template_google_reviews_warm.png',
-            source_asset: 'source/template_google_reviews_warm.png',
-            background_asset: 'backgrounds/template_google_reviews_warm.svg',
-            accent_color: '#a67b4d',
-            fonts: [
+        {
+          id: 'warm',
+          name: 'Warm',
+          active: true,
+          preview_asset: 'preview/template_google_reviews_warm.png',
+          source_asset: 'source/template_google_reviews_warm.png',
+          background_asset: 'backgrounds/template_google_reviews_warm.svg',
+          accent_color: '#a67b4d',
+          zones: [],
+          fonts: [
               {
                 id: 'proof-sans',
                 family: 'Proof Sans',
@@ -138,9 +138,30 @@ test('renders the internal template tool with separate preview and source layers
     ],
     diagnostics: [],
   };
+  const adminData = {
+    registries: [
+      {
+        kind: 'template',
+        path: 'proof_a6_card-1.6.0.json',
+        id: 'proof_a6_card',
+        title: 'Google Reviews Host',
+        version: '1.6.0',
+        active: true,
+        order_count: 0,
+        asset_count: 0,
+        error: null,
+      },
+    ],
+  };
 
-  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const requestUrl = input instanceof Request ? input.url : String(input);
+    if (requestUrl === '/api/admin/data') {
+      return {
+        ok: true,
+        json: async () => adminData,
+      } as Response;
+    }
     if (requestUrl === '/api/registries') {
       return {
         ok: true,
@@ -202,6 +223,16 @@ test('renders the internal template tool with separate preview and source layers
         }),
       } as Response;
     }
+    if (requestUrl === '/api/admin/registries/template/proof_a6_card-1.6.0.json') {
+      return {
+        ok: true,
+        json: async () => ({
+          kind: 'template',
+          path: 'proof_a6_card-1.6.0.json',
+          content: String(init?.body ?? ''),
+        }),
+      } as Response;
+    }
     throw new Error(`Unexpected fetch: ${String(input)}`);
   });
 
@@ -211,6 +242,7 @@ test('renders the internal template tool with separate preview and source layers
   render(<App />);
 
   expect(await screen.findByText('Templates und Design-Overlays')).toBeInTheDocument();
+  expect(fetchMock).toHaveBeenCalledWith('/api/admin/data');
   expect(fetchMock).toHaveBeenCalledWith('/api/registries');
   expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog');
   expect(screen.getByLabelText('Preview anzeigen')).toBeInTheDocument();
@@ -230,7 +262,7 @@ test('renders the internal template tool with separate preview and source layers
   await screen.findByLabelText('Schrift suchen');
   expect(screen.getByText('Zuordnung')).toBeInTheDocument();
   expect(screen.getByText('Headline')).toBeInTheDocument();
-  expect(screen.getByLabelText('Textinhalt')).toHaveValue('Scanne den QR-Code');
+  expect(screen.getByLabelText('Textinhalt')).toHaveValue('');
   expect(await screen.findByRole('button', { name: /Inter/ })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Libre Baskerville/ })).toBeInTheDocument();
   expect(screen.getAllByText('AaBb 123').length).toBeGreaterThanOrEqual(2);
@@ -240,7 +272,7 @@ test('renders the internal template tool with separate preview and source layers
   await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog/abril-fatface'));
   expect(await screen.findByRole('button', { name: /Abril Fatface/ })).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Schrift suchen'), { target: { value: '' } });
-  expect(screen.getByLabelText('Textinhalt')).toHaveValue('Scanne den QR-Code');
+  expect(screen.getByLabelText('Textinhalt')).toHaveValue('');
 
   const stage = document.querySelector('.template-tool-zone-editor__canvas-content') as HTMLElement | null;
   expect(stage).not.toBeNull();

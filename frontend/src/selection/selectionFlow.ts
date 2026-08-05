@@ -10,6 +10,7 @@ import {
   activeDesign,
   activeDesigns,
   buildWizardSteps,
+  editableTextFieldIds,
   fieldDefaultValue,
   fieldLabel,
   templateKey,
@@ -615,10 +616,11 @@ export function useSelectionFlow() {
       template_version: template.version,
       design_id: fallbackVariant?.id ?? null,
     });
+    const selectedDesignId = response.design_id ?? response.layout_state.design_id ?? fallbackVariant?.id ?? null;
     setSelectedTemplateKey(
       response.template_id && response.template_version ? `${response.template_id}@${response.template_version}` : null,
     );
-    setSelectedVariantId(response.design_id ?? response.layout_state.design_id ?? fallbackVariant?.id ?? null);
+    setSelectedVariantId(selectedDesignId);
     setLayoutValues(layoutValuesFromState(response.layout_state));
     setDraft(response);
     setWizardStepIndex(contentStepIndex);
@@ -626,9 +628,11 @@ export function useSelectionFlow() {
     setExpandedAssetFieldId(null);
     setPreviewExpanded(false);
     resetValidationRevealState();
+    const editableFields = editableTextFieldIds(template, selectedDesignId);
     const seededTextValues = Object.fromEntries(
       template.fields
         .filter((field) => field.type === 'text' || field.type === 'url')
+        .filter((field) => editableFields.has(field.id))
         .map((field, index) => {
           return [field.id, trimSuggestion(fieldDefaultValue(field, index, demoCategory), field.max_length)];
         }),

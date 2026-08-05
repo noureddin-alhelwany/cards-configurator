@@ -53,3 +53,20 @@ test('trailing whitespace cannot change the verdict', () => {
   };
   expect(estimateTextFit(input, '  Scanne den QR-Code \n\n ')).toEqual(estimateTextFit(input, 'Scanne den QR-Code'));
 });
+
+test('letter spacing affects the fit heuristic', () => {
+  const input: TextFitInput = {
+    box_width_mm: 70,
+    box_height_mm: 22,
+    font_size_mm: 6.8,
+    line_height: 1.05,
+    letter_spacing_em: 0.08,
+    max_lines: 3,
+  };
+
+  const compact = estimateTextFit({ ...input, letter_spacing_em: 0 }, 'Scanne den QR-Code');
+  const spaced = estimateTextFit(input, 'Scanne den QR-Code');
+
+  expect(spaced.rawScale).toBeLessThanOrEqual(compact.rawScale);
+  expect(spaced.scale).toBeLessThanOrEqual(compact.scale);
+});

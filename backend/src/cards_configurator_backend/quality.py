@@ -69,6 +69,24 @@ def _qr_elements(template: TemplateDefinition) -> list[QrElementDefinition]:
     return [element for element in template.elements if element.kind == "qr"]
 
 
+def _active_design(template: TemplateDefinition, design_id: str | None):
+    if design_id is not None:
+        return next((design for design in template.designs if design.active and design.id == design_id), None)
+    return next((design for design in template.designs if design.active), None)
+
+
+def _field_personalizable(template: TemplateDefinition, field_id: str, design_id: str | None) -> bool:
+    design = _active_design(template, design_id)
+    if design is None:
+        return True
+    for zone in design.zones:
+        for variable in zone.variables or []:
+            variable_field_id = variable.field_id or variable.id
+            if variable_field_id == field_id:
+                return zone.personalizable
+    return True
+
+
 def _hex_to_rgb(color: str) -> tuple[float, float, float] | None:
     value = color.strip().lstrip("#")
     if len(value) == 3:
@@ -123,6 +141,10 @@ def _min_fit_scale(element: TextElementDefinition) -> float:
     return DEFAULT_MIN_FIT_SCALE
 
 
+def _effective_glyph_width_em(element: TextElementDefinition) -> float:
+    return max(0.1, AVG_GLYPH_WIDTH_EM + (element.letter_spacing_em or 0.0))
+
+
 def _estimate_text_scale(element: TextElementDefinition, text: str, max_lines: int | None) -> tuple[float, float, int]:
     """Mirror of `frontend/src/design/textFit.ts` — see the contract note there.
 
@@ -132,10 +154,11 @@ def _estimate_text_scale(element: TextElementDefinition, text: str, max_lines: i
     whether a card is printable.
     """
     paragraphs = text.strip().split("\n")
-    chars_per_line = max(1, math.floor(element.box_mm.width_mm / (element.font_size_mm * AVG_GLYPH_WIDTH_EM)))
+    glyph_width_em = _effective_glyph_width_em(element)
+    chars_per_line = max(1, math.floor(element.box_mm.width_mm / (element.font_size_mm * glyph_width_em)))
     longest_line = max((len(paragraph) for paragraph in paragraphs), default=1)
     estimated_lines = sum(max(1, math.ceil(max(len(paragraph), 1) / chars_per_line)) for paragraph in paragraphs)
-    width_scale = min(1.0, element.box_mm.width_mm / max(longest_line * element.font_size_mm * AVG_GLYPH_WIDTH_EM, 0.1))
+    width_scale = min(1.0, element.box_mm.width_mm / max(longest_line * element.font_size_mm * glyph_width_em, 0.1))
     height_scale = min(
         1.0, element.box_mm.height_mm / max(estimated_lines * element.font_size_mm * element.line_height, 0.1)
     )
@@ -203,9 +226,10 @@ def validate_current_draft(data_dir: Path, bundle: RegistryBundle, draft: DraftS
         if raw_scale >= 1.0:
             continue
 
+        editable = bound_field is not None and _field_personalizable(template, bound_field.id, layout_state.design_id)
+
         # Static copy has no field, so the customer cannot fix it. Report it to the template
         # author as a warning rather than blocking an order they cannot influence.
-        editable = bound_field is not None
         issues.append(
             _issue(
                 "text_overflow",

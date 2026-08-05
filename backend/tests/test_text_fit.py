@@ -41,6 +41,7 @@ def _element(case_input: dict[str, Any]) -> TextElementDefinition:
         text="",
         font_family="Proof Sans",
         font_size_mm=case_input["font_size_mm"],
+        letter_spacing_em=case_input.get("letter_spacing_em"),
         line_height=case_input["line_height"],
         min_font_size_mm=case_input.get("min_font_size_mm"),
     )
@@ -84,3 +85,18 @@ def test_trailing_whitespace_cannot_change_the_verdict() -> None:
     plain = _estimate_text_scale(element, "Scanne den QR-Code", 3)
     padded = _estimate_text_scale(element, "  Scanne den QR-Code \n\n ", 3)
     assert plain == padded
+
+
+def test_letter_spacing_changes_the_fit_heuristic() -> None:
+    compact = _element(
+        {"box_width_mm": 70, "box_height_mm": 22, "font_size_mm": 6.8, "line_height": 1.05, "letter_spacing_em": 0.0}
+    )
+    spaced = _element(
+        {"box_width_mm": 70, "box_height_mm": 22, "font_size_mm": 6.8, "line_height": 1.05, "letter_spacing_em": 0.08}
+    )
+
+    compact_result = _estimate_text_scale(compact, "Scanne den QR-Code", 3)
+    spaced_result = _estimate_text_scale(spaced, "Scanne den QR-Code", 3)
+
+    assert spaced_result[0] <= compact_result[0]
+    assert spaced_result[1] <= compact_result[1]
