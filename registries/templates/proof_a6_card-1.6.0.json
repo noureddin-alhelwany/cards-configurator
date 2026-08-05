@@ -294,10 +294,10 @@
         {
           "id": "zone-text-1785926970483-6qtbwd-2",
           "box_mm": {
-            "x_mm": 16.088193232284407,
-            "y_mm": 35.843655765848155,
-            "width_mm": 79.43095544511098,
-            "height_mm": 7.741030437987142
+            "x_mm": 19.755284031707244,
+            "y_mm": 34.34435733020631,
+            "width_mm": 72.90052365313605,
+            "height_mm": 10.5
           },
           "label": "text",
           "kind": "text",
@@ -311,16 +311,115 @@
               "label": "Unternehmensname",
               "font_family_id": "proof-sans",
               "font_weight": 700,
-              "font_size_mm": 6.8,
+              "font_size_mm": 10,
               "min_font_size_mm": 4.5,
               "line_height": 1.05,
-              "letter_spacing_em": 0.3,
+              "letter_spacing_em": 0.4,
               "color": "#cc794c",
               "align": "center",
               "max_length": 40,
               "max_lines": 1,
               "required": true,
-              "default_value": "VIKTORIA"
+              "default_value": ""
+            }
+          ]
+        },
+        {
+          "id": "zone-text-1785942828515-90hcor-2",
+          "box_mm": {
+            "x_mm": 45.10376665385442,
+            "y_mm": 43.781118072187404,
+            "width_mm": 21.22342213740214,
+            "height_mm": 3.5077172079395353
+          },
+          "label": "text",
+          "kind": "text",
+          "personalizable": true,
+          "qr": null,
+          "variables": [
+            {
+              "id": "var-zone-text-2-text-1",
+              "kind": "text",
+              "field_id": "body",
+              "label": "Beschreibung",
+              "font_family_id": "proof-sans",
+              "font_weight": 700,
+              "font_size_mm": 3,
+              "min_font_size_mm": 4.5,
+              "line_height": 1.05,
+              "letter_spacing_em": 0.5,
+              "color": "#ca7d52",
+              "align": "center",
+              "max_length": 90,
+              "max_lines": 3,
+              "required": false,
+              "default_value": "SALON"
+            }
+          ]
+        },
+        {
+          "id": "zone-text-1785943588062-mp32zl-4",
+          "box_mm": {
+            "x_mm": 23.91180676771561,
+            "y_mm": 143.76748680009686,
+            "width_mm": 37.89194303915512,
+            "height_mm": 2.1
+          },
+          "label": "text",
+          "kind": "text",
+          "personalizable": true,
+          "qr": null,
+          "variables": [
+            {
+              "id": "var-zone-text-4-text-1",
+              "kind": "text",
+              "field_id": "website",
+              "label": "Website",
+              "font_family_id": "proof-sans",
+              "font_weight": 700,
+              "font_size_mm": 2,
+              "min_font_size_mm": 4.5,
+              "line_height": 1.05,
+              "letter_spacing_em": 0,
+              "color": "#391b07",
+              "align": "left",
+              "max_length": 60,
+              "max_lines": 1,
+              "required": false,
+              "default_value": "www.studio-sonnenschein.de"
+            }
+          ]
+        },
+        {
+          "id": "zone-text-1785943685338-aog14v-5",
+          "box_mm": {
+            "x_mm": 71.47926351621282,
+            "y_mm": 143.62236759567523,
+            "width_mm": 37.80374980687072,
+            "height_mm": 2.1
+          },
+          "label": "text",
+          "kind": "text",
+          "personalizable": true,
+          "qr": null,
+          "variables": [
+            {
+              "id": "var-zone-text-5-text-1",
+              "kind": "text",
+              "field_id": "instagram",
+              "label": "Instagram",
+              "font_family_id": "proof-sans",
+              "font_weight": 700,
+              "font_size_mm": 2,
+              "min_font_size_mm": 4.5,
+              "line_height": 1.05,
+              "letter_spacing_em": 0,
+              "color": "#1f1a17",
+              "align": "left",
+              "max_length": 40,
+              "max_lines": 1,
+              "required": false,
+              "default_value": "@studio_sonnenschein"
             }
           ]
         }

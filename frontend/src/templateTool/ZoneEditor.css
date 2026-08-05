@@ -38,7 +38,7 @@
   padding-top: 8px;
 }
 
-.template-tool-zone-editor__section {
+.template-tool-zone-editor__inline-controls {
   display: grid;
   gap: 12px;
   padding: 14px;
@@ -47,39 +47,31 @@
   background: rgba(250, 245, 238, 0.58);
 }
 
-.template-tool-zone-editor__accordion {
-  gap: 0;
+.template-tool-zone-editor__inline-header {
+  display: grid;
+  gap: 4px;
 }
 
-.template-tool-zone-editor__accordion > summary {
-  list-style: none;
+.template-tool-zone-editor__inline-header h3,
+.template-tool-zone-editor__inline-header p {
+  margin: 0;
 }
 
-.template-tool-zone-editor__accordion > summary::-webkit-details-marker {
-  display: none;
-}
-
-.template-tool-zone-editor__accordion-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  cursor: pointer;
+.template-tool-zone-editor__inline-header h3 {
+  font-size: 1rem;
   font-weight: 600;
   color: #4d3d30;
 }
 
-.template-tool-zone-editor__accordion-summary-meta {
+.template-tool-zone-editor__inline-header p {
   color: #7e6653;
-  font-weight: 500;
   font-size: 0.9rem;
-  text-align: right;
 }
 
-.template-tool-zone-editor__accordion-body {
+.template-tool-zone-editor__inline-grid {
   display: grid;
-  gap: 12px;
-  padding-top: 12px;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .template-tool-zone-editor__variable-list {
@@ -177,16 +169,17 @@
   display: grid;
   grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
-  border: 0.25mm solid rgba(82, 119, 164, 1);
-  background: rgba(82, 119, 164, 0.18);
+  overflow: hidden;
+  border: 0.3mm solid rgba(201, 138, 46, 1);
+  background: rgba(201, 138, 46, 0.08);
   pointer-events: auto;
   cursor: move;
   user-select: none;
 }
 
 .template-tool-zone-editor__zone--text {
-  border-color: rgba(132, 92, 57, 1);
-  background: rgba(132, 92, 57, 0.18);
+  border-color: rgba(201, 138, 46, 1);
+  background: rgba(201, 138, 46, 0.08);
 }
 
 .template-tool-zone-editor__zone--qr {
@@ -195,7 +188,7 @@
 }
 
 .template-tool-zone-editor__zone--selected {
-  outline: 0.3mm solid rgba(47, 36, 27, 1);
+  outline: 0.3mm solid rgba(123, 75, 31, 1);
 }
 
 .template-tool-zone-editor__zone-text {
@@ -207,7 +200,7 @@
   box-sizing: border-box;
   border: 0;
   margin: 0;
-  padding: 0 2.8mm;
+  padding: 0;
   background: transparent;
   color: inherit;
   resize: none;
@@ -220,9 +213,48 @@
   user-select: text;
 }
 
-.template-tool-zone-editor__zone-text--static {
+.template-tool-zone-editor__text-shell {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
   pointer-events: none;
+  user-select: none;
+}
+
+.template-tool-zone-editor__zone-text--editable {
   display: block;
+  grid-area: 1 / 1;
+  pointer-events: auto;
+  background: transparent;
+  overflow: hidden;
+  resize: none;
+  outline: none;
+}
+
+.template-tool-zone-editor__zone-text--field {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.template-tool-zone-editor__zone-text--single-line {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .template-tool-zone-editor__resize {

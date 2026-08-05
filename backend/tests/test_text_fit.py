@@ -60,13 +60,17 @@ def test_fixture_is_shared_with_the_frontend() -> None:
 def test_text_fit_matches_shared_fixture(case: dict[str, Any]) -> None:
     tolerance = _load()["tolerance"]
     element = _element(case["input"])
-    scale, raw_scale, estimated_lines = _estimate_text_scale(element, case["text"], case["input"]["max_lines"])
+    scale, raw_scale, estimated_lines, effective_letter_spacing_em = _estimate_text_scale(
+        element, case["text"], case["input"]["max_lines"]
+    )
     expected = case["expected"]
 
     assert estimated_lines == expected["estimated_lines"]
     assert scale == pytest.approx(expected["scale"], abs=tolerance)
     assert raw_scale == pytest.approx(expected["raw_scale"], abs=tolerance)
     assert _min_fit_scale(element) == pytest.approx(expected["min_scale"], abs=tolerance)
+    if "effective_letter_spacing_em" in expected:
+        assert effective_letter_spacing_em == pytest.approx(expected["effective_letter_spacing_em"], abs=tolerance)
 
 
 def test_constants_match_the_documented_values() -> None:
@@ -87,12 +91,12 @@ def test_trailing_whitespace_cannot_change_the_verdict() -> None:
     assert plain == padded
 
 
-def test_letter_spacing_changes_the_fit_heuristic() -> None:
+def test_letter_spacing_is_reduced_before_shrinking_the_font() -> None:
     compact = _element(
-        {"box_width_mm": 70, "box_height_mm": 22, "font_size_mm": 6.8, "line_height": 1.05, "letter_spacing_em": 0.0}
+        {"box_width_mm": 30, "box_height_mm": 22, "font_size_mm": 6.8, "line_height": 1.05, "letter_spacing_em": 0.0}
     )
     spaced = _element(
-        {"box_width_mm": 70, "box_height_mm": 22, "font_size_mm": 6.8, "line_height": 1.05, "letter_spacing_em": 0.08}
+        {"box_width_mm": 30, "box_height_mm": 22, "font_size_mm": 6.8, "line_height": 1.05, "letter_spacing_em": 0.08}
     )
 
     compact_result = _estimate_text_scale(compact, "Scanne den QR-Code", 3)
@@ -100,3 +104,4 @@ def test_letter_spacing_changes_the_fit_heuristic() -> None:
 
     assert spaced_result[0] <= compact_result[0]
     assert spaced_result[1] <= compact_result[1]
+    assert spaced_result[3] == pytest.approx(0.0)

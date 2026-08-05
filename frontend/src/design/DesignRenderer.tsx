@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties } from 'react';
+import { useEffect, useRef, type CSSProperties } from 'react';
 import type {
   ImageElementDefinition,
   LayoutState,
@@ -12,7 +12,7 @@ import type {
   ValidationIssue,
 } from './types';
 import { resolveQrValue } from './qr';
-import { estimateTextFit } from './textFit';
+import { useTextFitRuntime } from './useTextFitRuntime';
 import { BACKGROUND_ASSET_ID, markRenderError } from './renderReadiness';
 import { activeTemplateVariant, resolveTemplateBackgroundAsset } from './variantResolution';
 import { ensureTemplateFontsLoaded, resolveFontFamilyName } from './fonts';
@@ -52,18 +52,83 @@ function fieldForElement(fields: TemplateFieldDefinition[], elementId: string) {
   return fields.find((field) => field.id === elementId) ?? null;
 }
 
-function textFitFor(element: TextElementDefinition, text: string, maxLines: number | null) {
-  return estimateTextFit(
-    {
-      box_width_mm: element.box_mm.width_mm,
-      box_height_mm: element.box_mm.height_mm,
-      font_size_mm: element.font_size_mm,
-      line_height: element.line_height,
-      letter_spacing_em: element.letter_spacing_em,
-      max_lines: maxLines,
-      min_font_size_mm: element.min_font_size_mm,
-    },
-    text,
+function TextElementNode({
+  element,
+  layoutState,
+  validationIssues,
+  fields,
+  template,
+  variant,
+}: {
+  element: TextElementDefinition;
+  layoutState: LayoutState;
+  validationIssues: ValidationIssue[] | undefined;
+  fields: TemplateFieldDefinition[];
+  template: TemplateDefinition;
+  variant: RenderVariant;
+}) {
+  const adjustment = adjustmentFor(layoutState, element.id);
+  const field = fieldForElement(fields, element.id);
+  const textValue = layoutState.text_values[element.id] ?? element.text;
+  const fontFamily = resolveFontFamilyName(template, element.font_family_id);
+  const issue = variant === 'production' ? null : issueForElement(validationIssues, element.id);
+  const nodeRef = useRef<HTMLDivElement | null>(null);
+  const { appliedFit, baseFit } = useTextFitRuntime({
+    ref: nodeRef,
+    text: textValue,
+    fontFamily,
+    fontWeight: element.font_weight,
+    textAlign: element.align,
+    box_width_mm: element.box_mm.width_mm,
+    box_height_mm: element.box_mm.height_mm,
+    font_size_mm: element.font_size_mm,
+    line_height: element.line_height,
+    letter_spacing_em: element.letter_spacing_em,
+    max_lines: field?.max_lines ?? null,
+    min_font_size_mm: element.min_font_size_mm,
+    padding: '0',
+    whiteSpace: 'pre-wrap',
+    overflowWrap: 'anywhere',
+    wordBreak: 'break-word',
+  });
+  const reduced = baseFit.rawScale < 1 && variant !== 'production';
+
+  // Validation outlines are a preview affordance; they must never be printed.
+  const verticalStyle: CSSProperties =
+    element.valign === 'top'
+      ? {}
+      : {
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: element.valign === 'middle' ? 'center' : 'flex-end',
+        };
+
+  return (
+    <div
+      ref={nodeRef}
+      key={element.id}
+      className={`design-element design-element--text${reduced ? ' design-element--text--reduced' : ''}${issue ? ` design-element--issue design-element--issue--${issue.severity}` : ''}`}
+      style={{
+        ...documentBoxStyle(element.box_mm),
+        ...verticalStyle,
+        zIndex: element.z_index,
+        color: element.color,
+        fontFamily: fontFamily ?? undefined,
+        fontSize: `${element.font_size_mm * appliedFit.scale}mm`,
+        fontWeight: element.font_weight,
+        lineHeight: element.line_height,
+        letterSpacing:
+          appliedFit.letterSpacingEm != null
+            ? `${appliedFit.letterSpacingEm}em`
+            : element.letter_spacing_em != null
+              ? `${element.letter_spacing_em}em`
+              : undefined,
+        textAlign: element.align,
+        transform: `translate(${adjustment.offset_x * 4}mm, ${adjustment.offset_y * 4}mm) scale(${adjustment.scale})`,
+      }}
+    >
+      {textValue}
+    </div>
   );
 }
 
@@ -75,45 +140,16 @@ function renderTextElement(
   template: TemplateDefinition,
   variant: RenderVariant,
 ) {
-  const adjustment = adjustmentFor(layoutState, element.id);
-  const field = fieldForElement(fields, element.id);
-  const textValue = layoutState.text_values[element.id] ?? element.text;
-  const { scale: fitScale, rawScale } = textFitFor(element, textValue, field?.max_lines ?? null);
-  const fontFamily = resolveFontFamilyName(template, element.font_family_id);
-  // Validation outlines are a preview affordance; they must never be printed.
-  const issue = variant === 'production' ? null : issueForElement(validationIssues, element.id);
-  // `opacity` below 1 creates a compositing layer that Chrome may flatten to raster.
-  const reduced = rawScale < 1 && variant !== 'production';
-  // Only `middle`/`bottom` need a flex box. `top` is what a block already does, and not
-  // emitting the wrapper for it keeps every existing template pixel-identical.
-  const verticalStyle: CSSProperties =
-    element.valign === 'top'
-      ? {}
-      : {
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: element.valign === 'middle' ? 'center' : 'flex-end',
-        };
   return (
-    <div
+    <TextElementNode
       key={element.id}
-      className={`design-element design-element--text${reduced ? ' design-element--text--reduced' : ''}${issue ? ` design-element--issue design-element--issue--${issue.severity}` : ''}`}
-      style={{
-        ...documentBoxStyle(element.box_mm),
-        ...verticalStyle,
-        zIndex: element.z_index,
-        color: element.color,
-        fontFamily: fontFamily ?? undefined,
-        fontSize: `${element.font_size_mm * fitScale}mm`,
-        fontWeight: element.font_weight,
-        lineHeight: element.line_height,
-        letterSpacing: element.letter_spacing_em != null ? `${element.letter_spacing_em}em` : undefined,
-        textAlign: element.align,
-        transform: `translate(${adjustment.offset_x * 4}mm, ${adjustment.offset_y * 4}mm) scale(${adjustment.scale})`,
-      }}
-    >
-      {textValue}
-    </div>
+      element={element}
+      layoutState={layoutState}
+      validationIssues={validationIssues}
+      fields={fields}
+      template={template}
+      variant={variant}
+    />
   );
 }
 

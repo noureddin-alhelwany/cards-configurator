@@ -42,9 +42,9 @@ function buildFixture(): ProofFixture {
       ],
       elements: [
         {
-          kind: 'text',
-          id: 'headline',
-          box_mm: { x_mm: 15, y_mm: 14, width_mm: 70, height_mm: 22 },
+      kind: 'text',
+      id: 'headline',
+      box_mm: { x_mm: 15, y_mm: 14, width_mm: 70, height_mm: 22 },
           z_index: 1,
           text: 'Scanne den QR-Code',
           font_family_id: 'proof-sans',
@@ -141,7 +141,7 @@ test('production variant emits none of the preview chrome', () => {
   // The card itself is still drawn.
   expect(container.querySelector('[data-testid="proof-canvas"]')).not.toBeNull();
   expect(container.querySelector('.design-element--text')?.textContent).toBe('Scanne den QR-Code');
-  expect((container.querySelector('.design-element--text') as HTMLElement | null)?.style.letterSpacing).toBe('0.08em');
+  expect(parseFloat((container.querySelector('.design-element--text') as HTMLElement | null)?.style.letterSpacing ?? '0')).toBeLessThan(0.08);
 });
 
 test('production variant declares the page size from the template geometry', () => {

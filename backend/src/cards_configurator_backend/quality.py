@@ -141,11 +141,29 @@ def _min_fit_scale(element: TextElementDefinition) -> float:
     return DEFAULT_MIN_FIT_SCALE
 
 
-def _effective_glyph_width_em(element: TextElementDefinition) -> float:
-    return max(0.1, AVG_GLYPH_WIDTH_EM + (element.letter_spacing_em or 0.0))
+def _measure_text_fit(
+    element: TextElementDefinition,
+    text: str,
+    max_lines: int | None,
+    letter_spacing_em: float,
+) -> tuple[float, float, int]:
+    paragraphs = text.strip().split("\n")
+    glyph_width_em = max(0.1, AVG_GLYPH_WIDTH_EM + letter_spacing_em)
+    font_size_mm = max(0.001, element.font_size_mm)
+    chars_per_line = max(1, math.floor(element.box_mm.width_mm / (font_size_mm * glyph_width_em)))
+    longest_line = max((len(paragraph) for paragraph in paragraphs), default=1)
+    estimated_lines = sum(max(1, math.ceil(max(len(paragraph), 1) / chars_per_line)) for paragraph in paragraphs)
+    width_scale = min(1.0, element.box_mm.width_mm / max(longest_line * font_size_mm * glyph_width_em, 0.1))
+    height_scale = min(
+        1.0, element.box_mm.height_mm / max(estimated_lines * font_size_mm * element.line_height, 0.1)
+    )
+    line_scale = min(1.0, max_lines / estimated_lines) if max_lines else 1.0
+    return min(width_scale, height_scale, line_scale), width_scale, estimated_lines
 
 
-def _estimate_text_scale(element: TextElementDefinition, text: str, max_lines: int | None) -> tuple[float, float, int]:
+def _estimate_text_scale(
+    element: TextElementDefinition, text: str, max_lines: int | None
+) -> tuple[float, float, int, float | None]:
     """Mirror of `frontend/src/design/textFit.ts` — see the contract note there.
 
     The constants and the operation order are kept identical on both sides, and
@@ -153,19 +171,35 @@ def _estimate_text_scale(element: TextElementDefinition, text: str, max_lines: i
     same fixture. Diverging here means the preview and the quality gate disagree about
     whether a card is printable.
     """
-    paragraphs = text.strip().split("\n")
-    glyph_width_em = _effective_glyph_width_em(element)
-    chars_per_line = max(1, math.floor(element.box_mm.width_mm / (element.font_size_mm * glyph_width_em)))
-    longest_line = max((len(paragraph) for paragraph in paragraphs), default=1)
-    estimated_lines = sum(max(1, math.ceil(max(len(paragraph), 1) / chars_per_line)) for paragraph in paragraphs)
-    width_scale = min(1.0, element.box_mm.width_mm / max(longest_line * element.font_size_mm * glyph_width_em, 0.1))
-    height_scale = min(
-        1.0, element.box_mm.height_mm / max(estimated_lines * element.font_size_mm * element.line_height, 0.1)
-    )
-    line_scale = min(1.0, max_lines / estimated_lines) if max_lines else 1.0
-    raw_scale = min(width_scale, height_scale, line_scale)
+    original_spacing = element.letter_spacing_em
+    base_spacing = max(0.0, original_spacing or 0.0)
+    raw_scale, _, estimated_lines = _measure_text_fit(element, text, max_lines, base_spacing)
+    effective_spacing = original_spacing
+
+    if base_spacing > 0.0 and raw_scale < 1.0:
+        zero_spacing_raw_scale, _, zero_spacing_estimated_lines = _measure_text_fit(element, text, max_lines, 0.0)
+        if zero_spacing_raw_scale >= 1.0:
+            lower_bound = 0.0
+            upper_bound = base_spacing
+            best_spacing = 0.0
+            for _ in range(24):
+                midpoint = (lower_bound + upper_bound) / 2
+                probe_raw_scale, _, probe_estimated_lines = _measure_text_fit(element, text, max_lines, midpoint)
+                if probe_raw_scale >= 1.0:
+                    best_spacing = midpoint
+                    lower_bound = midpoint
+                    raw_scale, _, estimated_lines = probe_raw_scale, _, probe_estimated_lines
+                else:
+                    upper_bound = midpoint
+            effective_spacing = best_spacing
+            raw_scale, _, estimated_lines = _measure_text_fit(element, text, max_lines, best_spacing)
+        else:
+            effective_spacing = 0.0
+            raw_scale = zero_spacing_raw_scale
+            estimated_lines = zero_spacing_estimated_lines
+
     min_scale = _min_fit_scale(element)
-    return max(min_scale, raw_scale), raw_scale, estimated_lines
+    return max(min_scale, raw_scale), raw_scale, estimated_lines, effective_spacing
 
 
 def validate_current_draft(data_dir: Path, bundle: RegistryBundle, draft: DraftState) -> QualityReport:
@@ -221,7 +255,7 @@ def validate_current_draft(data_dir: Path, bundle: RegistryBundle, draft: DraftS
             continue
 
         max_lines = bound_field.max_lines if bound_field else None
-        scale, raw_scale, estimated_lines = _estimate_text_scale(element, text, max_lines)
+        scale, raw_scale, estimated_lines, effective_letter_spacing_em = _estimate_text_scale(element, text, max_lines)
         min_scale = _min_fit_scale(element)
         if raw_scale >= 1.0:
             continue
@@ -248,6 +282,7 @@ def validate_current_draft(data_dir: Path, bundle: RegistryBundle, draft: DraftS
                     "max_lines": max_lines,
                     "max_length": bound_field.max_length if bound_field else None,
                     "editable": editable,
+                    "effective_letter_spacing_em": effective_letter_spacing_em,
                 },
             )
         )

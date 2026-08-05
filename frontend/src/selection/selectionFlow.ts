@@ -17,6 +17,7 @@ import {
   templateRecommendationIndex,
   trimSuggestion,
   validationDisplayPath,
+  zoneTextVariableForField,
 } from './selectionRules';
 import { uiText } from '../ui/text';
 
@@ -634,7 +635,8 @@ export function useSelectionFlow() {
         .filter((field) => field.type === 'text' || field.type === 'url')
         .filter((field) => editableFields.has(field.id))
         .map((field, index) => {
-          return [field.id, trimSuggestion(fieldDefaultValue(field, index, demoCategory), field.max_length)];
+          const zoneVariable = zoneTextVariableForField(template, selectedDesignId, field.id);
+          return [field.id, trimSuggestion(fieldDefaultValue(field, index, demoCategory), zoneVariable?.max_length ?? field.max_length)];
         }),
     );
     if (Object.keys(seededTextValues).length > 0) {

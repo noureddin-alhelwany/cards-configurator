@@ -131,6 +131,25 @@ export function designHasQrZone(template: TemplateDefinition, variantId: string 
   return (design?.zones ?? []).some((zone) => zone.kind === 'qr');
 }
 
+export function zoneTextVariableForField(
+  template: TemplateDefinition,
+  variantId: string | null,
+  fieldId: string,
+) {
+  const design = activeDesign(template, variantId);
+  if (!design) {
+    return null;
+  }
+  for (const zone of design.zones ?? []) {
+    for (const variable of zone.variables ?? []) {
+      if (variable.kind === 'text' && fieldIdForZoneVariable(variable) === fieldId) {
+        return variable;
+      }
+    }
+  }
+  return null;
+}
+
 export function editableTextFieldIds(template: TemplateDefinition, variantId: string | null) {
   const access = zoneFieldAccessForDesign(template, variantId);
   const hasQrZone = designHasQrZone(template, variantId);

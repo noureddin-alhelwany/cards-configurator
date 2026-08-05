@@ -14,7 +14,13 @@ type Case = {
   name: string;
   input: TextFitInput & { max_lines: number | null };
   text: string;
-  expected: { scale: number; raw_scale: number; estimated_lines: number; min_scale: number };
+  expected: {
+    scale: number;
+    raw_scale: number;
+    estimated_lines: number;
+    min_scale: number;
+    effective_letter_spacing_em?: number | null;
+  };
 };
 
 const cases = fixture.cases as unknown as Case[];
@@ -32,6 +38,9 @@ describe('estimateTextFit matches the shared fixture', () => {
       expect(result.scale).toBeCloseTo(testCase.expected.scale, 6);
       expect(result.rawScale).toBeCloseTo(testCase.expected.raw_scale, 6);
       expect(minFitScale(testCase.input)).toBeCloseTo(testCase.expected.min_scale, 6);
+      if (testCase.expected.effective_letter_spacing_em !== undefined) {
+        expect(result.effectiveLetterSpacingEm).toBeCloseTo(testCase.expected.effective_letter_spacing_em ?? 0, 6);
+      }
     });
   }
 });
@@ -54,7 +63,7 @@ test('trailing whitespace cannot change the verdict', () => {
   expect(estimateTextFit(input, '  Scanne den QR-Code \n\n ')).toEqual(estimateTextFit(input, 'Scanne den QR-Code'));
 });
 
-test('letter spacing affects the fit heuristic', () => {
+test('letter spacing is reduced before shrinking the font', () => {
   const input: TextFitInput = {
     box_width_mm: 70,
     box_height_mm: 22,
@@ -69,4 +78,6 @@ test('letter spacing affects the fit heuristic', () => {
 
   expect(spaced.rawScale).toBeLessThanOrEqual(compact.rawScale);
   expect(spaced.scale).toBeLessThanOrEqual(compact.scale);
+  expect(spaced.effectiveLetterSpacingEm).toBeGreaterThanOrEqual(0);
+  expect(spaced.effectiveLetterSpacingEm).toBeLessThanOrEqual(0.08);
 });

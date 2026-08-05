@@ -265,10 +265,9 @@ test('renders the internal template tool with separate preview and source layers
   expect(screen.queryByAltText('QR: https://example.com/review')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Text erstellen' }));
 
-  await screen.findByLabelText('Schrift suchen');
-  expect(screen.getByText('Zuordnung')).toBeInTheDocument();
-  expect(screen.getByRole('combobox', { name: 'Feld' })).toHaveValue('');
-  expect(screen.getByLabelText('Textinhalt')).toHaveValue('');
+  await screen.findByLabelText(/Text in Zone/);
+  const zoneTextArea = screen.getByLabelText(/Text in Zone/) as HTMLTextAreaElement;
+  expect(zoneTextArea).toHaveValue('');
   expect(await screen.findByRole('button', { name: /Inter/ })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Libre Baskerville/ })).toBeInTheDocument();
   expect(screen.getAllByText('AaBb 123').length).toBeGreaterThanOrEqual(2);
@@ -278,7 +277,7 @@ test('renders the internal template tool with separate preview and source layers
   await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog/abril-fatface'));
   expect(await screen.findByRole('button', { name: /Abril Fatface/ })).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Schrift suchen'), { target: { value: '' } });
-  expect(screen.getByLabelText('Textinhalt')).toHaveValue('');
+  expect(zoneTextArea).toHaveValue('');
 
   const stage = document.querySelector('.template-tool-zone-editor__canvas-content') as HTMLElement | null;
   expect(stage).not.toBeNull();
@@ -300,16 +299,16 @@ test('renders the internal template tool with separate preview and source layers
   const draggableZone = document.querySelector('[data-testid^="template-tool-zone-zone-text"]') as HTMLElement | null;
   expect(draggableZone).not.toBeNull();
   const draggableZoneElement = draggableZone as HTMLElement;
-  expect(draggableZoneElement.querySelector('.template-tool-zone-editor__zone-text--static')).not.toBeNull();
+  expect(draggableZoneElement.querySelector('.template-tool-zone-editor__zone-text--editable')).not.toBeNull();
 
-  fireEvent.change(screen.getByLabelText('Textinhalt'), { target: { value: 'Hallo Fix' } });
-  expect(screen.getByLabelText('Textinhalt')).toHaveValue('Hallo Fix');
+  fireEvent.change(zoneTextArea, { target: { value: 'Hallo Fix' } });
+  expect(zoneTextArea).toHaveValue('Hallo Fix');
   await waitFor(() => {
-    const previewText = document.querySelector<HTMLElement>('.template-tool-zone-editor__zone-text--static');
+    const previewText = document.querySelector<HTMLTextAreaElement>('.template-tool-zone-editor__zone-text--editable');
     expect(previewText).not.toBeNull();
-    expect(previewText?.textContent).toContain('Hallo Fix');
+    expect(previewText?.value).toContain('Hallo Fix');
   });
-  const previewTextBefore = document.querySelector<HTMLElement>('.template-tool-zone-editor__zone-text--static');
+  const previewTextBefore = document.querySelector<HTMLTextAreaElement>('.template-tool-zone-editor__zone-text--editable');
   expect(previewTextBefore?.style.fontFamily).toContain('Proof Sans');
 
   const initialLeft = draggableZoneElement.style.left;
@@ -319,8 +318,21 @@ test('renders the internal template tool with separate preview and source layers
   fireEvent.mouseUp(window);
   expect(draggableZoneElement.style.left).not.toBe(initialLeft);
   expect(draggableZoneElement.style.top).not.toBe(initialTop);
-  expect(draggableZoneElement.querySelector('.template-tool-zone-editor__zone-text--static')).toHaveTextContent('Hallo Fix');
-  expect(screen.getByText('Zuordnung')).toBeInTheDocument();
+  expect(draggableZoneElement.querySelector('.template-tool-zone-editor__zone-text--editable')).toHaveValue('Hallo Fix');
+  expect(
+    fetchMock.mock.calls.filter(
+      ([input, init]) => String(input) === '/api/admin/registries/template/proof_a6_card-1.6.0.json' && init?.method === 'PUT',
+    ),
+  ).toHaveLength(0);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+  await waitFor(() => {
+    expect(
+      fetchMock.mock.calls.filter(
+        ([input, init]) => String(input) === '/api/admin/registries/template/proof_a6_card-1.6.0.json' && init?.method === 'PUT',
+      ),
+    ).toHaveLength(1);
+  });
 
   fireEvent.change(screen.getByLabelText('Schrift suchen'), { target: { value: 'Inter' } });
   fireEvent.change(screen.getByLabelText('Kategorie'), { target: { value: 'sans-serif' } });
@@ -328,7 +340,7 @@ test('renders the internal template tool with separate preview and source layers
   fireEvent.click(screen.getByRole('button', { name: /Inter/ }));
   expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog/inter');
   await waitFor(() => {
-    const previewText = document.querySelector<HTMLElement>('.template-tool-zone-editor__zone-text--static');
+    const previewText = document.querySelector<HTMLTextAreaElement>('.template-tool-zone-editor__zone-text--editable');
     expect(previewText?.style.fontFamily).toContain('Inter');
   });
 

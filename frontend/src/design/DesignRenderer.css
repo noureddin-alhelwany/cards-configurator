@@ -56,7 +56,8 @@
 
 .design-element--text {
   white-space: pre-wrap;
-  text-wrap: balance;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   /*
    * Once auto-fit hits its shrink floor, further text has to go somewhere. Without this it
    * prints over the artwork and over its neighbours; clipped is not good either, but it is
@@ -68,7 +69,6 @@
 
 .design-element--text--reduced {
   opacity: 0.98;
-  letter-spacing: -0.01em;
 }
 
 .design-element--image,

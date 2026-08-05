@@ -21,7 +21,7 @@ const template: TemplateDefinition = {
       id: 'headline',
       type: 'text',
       required: true,
-      max_length: 60,
+      max_length: 10,
       max_lines: 3,
       label: 'Überschrift',
       help_text: null,
@@ -114,10 +114,10 @@ const template: TemplateDefinition = {
               letter_spacing_em: 0,
               color: '#000000',
               align: 'left',
-              max_length: 60,
+              max_length: 10,
               max_lines: 3,
               required: true,
-              default_value: 'Scanne den QR-Code',
+              default_value: 'Kurz',
             },
           ],
           qr: null,
@@ -160,7 +160,7 @@ describe('ContentFieldSections', () => {
       <ContentFieldSections
         template={template}
         selectedVariantId="warm"
-        layoutValues={{ text_values: { headline: 'Scanne den QR-Code', body: 'Dieser Text bleibt fix.' }, asset_values: {}, element_adjustments: {} }}
+        layoutValues={{ text_values: { headline: 'Kurz', body: 'Dieser Text bleibt fix.' }, asset_values: {}, element_adjustments: {} }}
         assetPreviews={{}}
         assetDetails={{}}
         assetErrors={{}}
@@ -173,6 +173,8 @@ describe('ContentFieldSections', () => {
     );
 
     expect(screen.getByRole('textbox', { name: 'Überschrift' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Überschrift' })).toHaveAttribute('maxlength', '10');
+    expect(screen.getByText('4 / 10 Zeichen')).toBeInTheDocument();
     expect(screen.queryByLabelText('Beschreibung')).toBeNull();
     expect(screen.queryByLabelText('Website')).toBeNull();
     expect(screen.queryByLabelText('QR-Ziel')).toBeNull();

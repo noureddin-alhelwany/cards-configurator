@@ -116,6 +116,33 @@ function normalizeZoneDefaultValue(value: string | null | undefined) {
   return value === UNASSIGNED_ZONE_VALUE ? '' : value ?? '';
 }
 
+function singleLineZoneHeightMm(variable: ZoneVariableDefinition | null | undefined) {
+  if (!variable) {
+    return 2;
+  }
+  return Math.max(2, variable.font_size_mm * variable.line_height);
+}
+
+function enforceSingleLineZoneHeight(zone: EditableZone): EditableZone {
+  const variable = zone.variables?.[0] ?? null;
+  if (zone.kind !== 'text' || !variable || (variable.max_lines ?? null) !== 1) {
+    return zone;
+  }
+
+  const nextHeight = singleLineZoneHeightMm(variable);
+  if (Math.abs(zone.box_mm.height_mm - nextHeight) < 0.01) {
+    return zone;
+  }
+
+  return {
+    ...zone,
+    box_mm: {
+      ...zone.box_mm,
+      height_mm: nextHeight,
+    },
+  };
+}
+
 function resolvePreviewAsset(
   selectedTemplate: TemplateDefinition | null,
   selectedVariant: ReturnType<typeof activeRegistryDesign>,
@@ -181,50 +208,42 @@ function fontOptionsFromDefinitions(fonts: Array<{ id?: string; family: string }
 }
 
 function normalizeZones(template: TemplateDefinition, designZones: TemplateDesignDefinition['zones'] | undefined, fonts: FontOption[]): EditableZone[] {
-  return (designZones ?? []).map((safeArea, index) => ({
-    ...safeArea,
-    id: safeArea.id || `zone-${index + 1}`,
-    kind: safeArea.kind ?? 'text',
-    variables: (() => {
-      const kind = safeArea.kind ?? 'text';
-      const sourceVariable =
-        (safeArea.variables ?? []).find((variable) => variable.kind === kind) ?? (safeArea.variables ?? [])[0] ?? null;
-      const fieldId = sourceVariable?.field_id ?? null;
-      const field = fieldForZone(template, kind, fieldId);
-      const defaultFont = fonts[0] ?? null;
-      const nextVariable = sourceVariable
-        ? {
-            ...sourceVariable,
-            kind,
-            field_id: field?.id ?? fieldId ?? null,
-            label: field ? fieldDisplayLabel(field) : sourceVariable.label,
-            font_family_id: sourceVariable.font_family_id ?? defaultFont?.id ?? null,
-            max_length: sourceVariable.max_length ?? field?.max_length ?? null,
-            max_lines: sourceVariable.max_lines ?? field?.max_lines ?? null,
-            required: sourceVariable.required ?? field?.required ?? false,
-            default_value: normalizeZoneDefaultValue(sourceVariable.default_value ?? field?.default_value ?? null),
-          }
-        : createZoneVariable(
-            safeArea.id || `zone-${index + 1}`,
-            kind,
-            0,
-            fonts,
-            template,
-            null,
-          );
-
-      return [nextVariable];
-    })(),
-    qr:
-      safeArea.kind === 'qr'
-        ? safeArea.qr ?? {
-            error_correction: 'm',
-            color: '#1f1a17',
-            background: '#ffffff',
-            quiet_zone_mm: 2,
-          }
-        : safeArea.qr ?? null,
-  }));
+  return (designZones ?? []).map((safeArea, index) => {
+    const kind = safeArea.kind ?? 'text';
+    const sourceVariable =
+      (safeArea.variables ?? []).find((variable) => variable.kind === kind) ?? (safeArea.variables ?? [])[0] ?? null;
+    const fieldId = sourceVariable?.field_id ?? null;
+    const field = fieldForZone(template, kind, fieldId);
+    const defaultFont = fonts[0] ?? null;
+    const nextVariable = sourceVariable
+      ? {
+          ...sourceVariable,
+          kind,
+          field_id: field?.id ?? fieldId ?? null,
+          label: field ? fieldDisplayLabel(field) : sourceVariable.label,
+          font_family_id: sourceVariable.font_family_id ?? defaultFont?.id ?? null,
+          max_length: sourceVariable.max_length ?? field?.max_length ?? null,
+          max_lines: sourceVariable.max_lines ?? field?.max_lines ?? null,
+          required: sourceVariable.required ?? field?.required ?? false,
+          default_value: normalizeZoneDefaultValue(sourceVariable.default_value ?? field?.default_value ?? null),
+        }
+      : createZoneVariable(safeArea.id || `zone-${index + 1}`, kind, 0, fonts, template, null);
+    return enforceSingleLineZoneHeight({
+      ...safeArea,
+      id: safeArea.id || `zone-${index + 1}`,
+      kind,
+      variables: [nextVariable],
+      qr:
+        safeArea.kind === 'qr'
+          ? safeArea.qr ?? {
+              error_correction: 'm',
+              color: '#1f1a17',
+              background: '#ffffff',
+              quiet_zone_mm: 2,
+            }
+          : safeArea.qr ?? null,
+    });
+  });
 }
 
 function createZone(
@@ -237,7 +256,7 @@ function createZone(
 ): EditableZone {
   const defaults = kind === 'qr' ? { width_mm: 24, height_mm: 24 } : { width_mm: 58, height_mm: 20 };
   const offset = 12 + index * 4;
-  return {
+  return enforceSingleLineZoneHeight({
     id: `zone-${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${index + 1}`,
     kind,
     label: kind,
@@ -258,7 +277,7 @@ function createZone(
         }
         : null,
     variables: [createZoneVariable(`zone-${kind}-${index + 1}`, kind, 0, fonts, template, null)],
-  };
+  });
 }
 
 function updateTemplateDesignZones(
@@ -566,6 +585,11 @@ export default function TemplateToolPage() {
   }, [selectedTemplate, selectedTemplateId]);
 
   useEffect(() => {
+    setTemplateSaveState('idle');
+    setTemplateSaveError(null);
+  }, [selectedTemplateId, selectedVariantId]);
+
+  useEffect(() => {
     if (!selectedTemplate) {
       setZones([]);
       setSelectedZoneId(null);
@@ -575,84 +599,6 @@ export default function TemplateToolPage() {
     setZones(selectedVariantZones);
     setSelectedZoneId(selectedVariantZones[0]?.id ?? null);
   }, [selectedTemplate, selectedVariantZones]);
-
-  useEffect(() => {
-    if (!selectedTemplate || !selectedVariant || !selectedTemplateRegistryPath) {
-      setTemplateSaveState('idle');
-      setTemplateSaveError(null);
-      return;
-    }
-
-    const currentSignature = zonesSignature(zones);
-    const baselineSignature = zonesSignature(selectedVariantZones);
-    if (currentSignature === baselineSignature) {
-      setTemplateSaveState('saved');
-      setTemplateSaveError(null);
-      return;
-    }
-
-    let cancelled = false;
-    const timeout = window.setTimeout(() => {
-      if (cancelled) {
-        return;
-      }
-      setTemplateSaveState('saving');
-      setTemplateSaveError(null);
-
-      const persistedTemplate = updateTemplateDesignZones(selectedTemplate, selectedVariant.id, zones);
-      fetch(registryFileUrl('template', selectedTemplateRegistryPath), {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: `${JSON.stringify(persistedTemplate, null, 2)}\n`,
-        }),
-      })
-        .then(async (response) => {
-          if (cancelled) {
-            return null;
-          }
-          if (!response.ok) {
-            const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
-            throw new Error(payload?.detail ?? `Template konnte nicht gespeichert werden (${response.status})`);
-          }
-          return (await response.json()) as { content: string };
-        })
-        .then(() => {
-          if (cancelled) {
-            return;
-          }
-          setState((current) => {
-            if (!current.bundle) {
-              return current;
-            }
-            return {
-              ...current,
-              bundle: {
-                ...current.bundle,
-                templates: current.bundle.templates.map((template) =>
-                  template.id === persistedTemplate.id && template.version === persistedTemplate.version ? persistedTemplate : template,
-                ),
-              },
-            };
-          });
-          setTemplateSaveState('saved');
-        })
-        .catch((nextError) => {
-          if (cancelled) {
-            return;
-          }
-          setTemplateSaveState('error');
-          setTemplateSaveError(nextError instanceof Error ? nextError.message : 'Das Template konnte nicht gespeichert werden.');
-        });
-    }, 350);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeout);
-    };
-  }, [selectedTemplate, selectedTemplateRegistryPath, selectedVariant, selectedVariantZones, zones]);
 
   useEffect(() => {
     setTestValues((current) => {
@@ -686,6 +632,80 @@ export default function TemplateToolPage() {
 
   const previewAsset = resolvePreviewAsset(selectedTemplate, selectedVariant);
   const sourceAsset = resolveSourceAsset(selectedTemplate, selectedVariant);
+  const hasUnsavedZoneChanges = Boolean(
+    selectedTemplate &&
+      selectedVariant &&
+      selectedTemplateRegistryPath &&
+      zonesSignature(zones) !== zonesSignature(selectedVariantZones),
+  );
+
+  function zonesWithDraftValues(sourceZones: EditableZone[]) {
+    return sourceZones.map((zone) => {
+      if (zone.kind !== 'text' && zone.kind !== 'qr') {
+        return zone;
+      }
+
+      return {
+        ...zone,
+        variables: (zone.variables ?? []).map((variable) => {
+          const valueKey = variable.field_id ?? variable.id;
+          const draftValue = testValues[valueKey];
+          if (draftValue == null) {
+            return variable;
+          }
+          return {
+            ...variable,
+            default_value: normalizeZoneDefaultValue(draftValue),
+          };
+        }),
+      };
+    });
+  }
+
+  async function handleSaveZones() {
+    if (!selectedTemplate || !selectedVariant || !selectedTemplateRegistryPath) {
+      return;
+    }
+
+    setTemplateSaveState('saving');
+    setTemplateSaveError(null);
+
+    const persistedTemplate = updateTemplateDesignZones(selectedTemplate, selectedVariant.id, zonesWithDraftValues(zones));
+    try {
+      const response = await fetch(registryFileUrl('template', selectedTemplateRegistryPath), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: `${JSON.stringify(persistedTemplate, null, 2)}\n`,
+        }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
+        throw new Error(payload?.detail ?? `Template konnte nicht gespeichert werden (${response.status})`);
+      }
+
+      setState((current) => {
+        if (!current.bundle) {
+          return current;
+        }
+        return {
+          ...current,
+          bundle: {
+            ...current.bundle,
+            templates: current.bundle.templates.map((template) =>
+              template.id === persistedTemplate.id && template.version === persistedTemplate.version ? persistedTemplate : template,
+            ),
+          },
+        };
+      });
+      setTemplateSaveState('saved');
+    } catch (nextError) {
+      setTemplateSaveState('error');
+      setTemplateSaveError(nextError instanceof Error ? nextError.message : 'Das Template konnte nicht gespeichert werden.');
+    }
+  }
   const availableFonts = useMemo<FontOption[]>(() => {
     const fonts = fontOptionsFromDefinitions(selectedVariantFonts);
     for (const font of fontCatalog) {
@@ -1021,6 +1041,11 @@ export default function TemplateToolPage() {
                   </label>
                 </div>
               </div>
+              <div className="template-tool-control-group template-tool-control-group--primary">
+                <button type="button" className="template-tool-button" onClick={() => void handleSaveZones()} disabled={!hasUnsavedZoneChanges || templateSaveState === 'saving'}>
+                  Speichern
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1085,24 +1110,29 @@ export default function TemplateToolPage() {
               {uiText.templateTool.controls.selectedPreview}:{' '}
               {previewLabel ?? 'Keine Preview geladen'}
             </p>
-            <p>
-              {uiText.templateTool.controls.selectedSource}:{' '}
-              {sourceLabel ?? 'Keine Source geladen'}
-            </p>
-            <p>
-              Zonenstatus:{' '}
-              {templateSaveState === 'saving'
-                ? 'speichert...'
-                : templateSaveState === 'saved'
-                  ? 'gespeichert'
-                  : templateSaveState === 'error'
-                    ? `Fehler: ${templateSaveError ?? 'unbekannt'}`
-                    : selectedTemplateRegistryPath
-                      ? 'bereit'
-                      : 'kein Pfad'}
-            </p>
+              <p>
+                {uiText.templateTool.controls.selectedSource}:{' '}
+                {sourceLabel ?? 'Keine Source geladen'}
+              </p>
+              <p>
+                Zustand:{' '}
+                {templateSaveState === 'saving'
+                  ? 'speichert...'
+                  : templateSaveState === 'saved'
+                    ? hasUnsavedZoneChanges
+                      ? 'ungespeichert'
+                      : 'gespeichert'
+                    : templateSaveState === 'error'
+                      ? `Fehler: ${templateSaveError ?? 'unbekannt'}`
+                      : hasUnsavedZoneChanges
+                        ? 'ungespeichert'
+                        : 'bereit'}
+              </p>
+              <p>
+                {selectedTemplateRegistryPath ? `Pfad: ${selectedTemplateRegistryPath}` : 'kein Pfad'}
+              </p>
+            </div>
           </div>
-        </div>
       </div>
     </main>
   );

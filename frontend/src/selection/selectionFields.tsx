@@ -13,6 +13,7 @@ import {
   friendlyValidationMessage,
   trimSuggestion,
   validationDisplayPath,
+  zoneTextVariableForField,
 } from './selectionRules';
 import { uiText } from '../ui/text';
 
@@ -102,6 +103,8 @@ function textFor(template: string, field: string) {
 type ContentTextFieldProps = SharedFieldProps & {
   value: string;
   onTextChange: (fieldId: string, value: string) => void;
+  maxLength: number | null;
+  lineLimit: number;
 };
 
 export function ContentTextField({
@@ -113,17 +116,18 @@ export function ContentTextField({
   onTextChange,
   onFieldInteract,
   disabled,
+  maxLength,
+  lineLimit,
 }: ContentTextFieldProps) {
   const fieldName = fieldLabel(field, index);
   const inputId = `${field.id}-input`;
   const hintId = `${field.id}-hint`;
   const errorId = `${field.id}-error`;
   const helpText = field.help_text ?? (showLabel ? null : fieldHelperText(field, index));
-  const isSingleLine = field.type === 'url' || (field.max_lines ?? 1) <= 1;
+  const isSingleLine = field.type === 'url' || lineLimit <= 1;
   const suggestions = fieldSuggestions(field, index)
-    .map((suggestion) => trimSuggestion(suggestion, field.max_length))
+    .map((suggestion) => trimSuggestion(suggestion, maxLength))
     .slice(0, MAX_SUGGESTIONS);
-  const lineLimit = field.max_lines ?? 1;
   const lineLimitReached = lineLimit > 1 && value.split('\n').length >= lineLimit;
 
   // Only static text goes into aria-describedby. Pointing it at the live character
@@ -135,7 +139,7 @@ export function ContentTextField({
     'aria-describedby': describedBy,
     'aria-invalid': Boolean(issue?.blocking),
     value,
-    maxLength: field.max_length ?? undefined,
+    maxLength: maxLength ?? undefined,
     placeholder: fieldPlaceholder(field, index),
     disabled,
     onFocus: () => onFieldInteract(field.id),
@@ -150,7 +154,7 @@ export function ContentTextField({
       id={field.id}
       className={`content-field${issue ? ` content-field--issue content-field--issue--${issue.severity}` : ''}`}
     >
-      {showLabel || field.max_length !== null ? (
+      {showLabel || maxLength !== null ? (
         <div className="content-field__row">
           {showLabel ? (
             <label className="content-field__label" htmlFor={inputId}>
@@ -159,9 +163,9 @@ export function ContentTextField({
           ) : (
             <span />
           )}
-          {field.max_length !== null ? (
+          {maxLength !== null ? (
             <span className="content-field__counter" aria-hidden="true">
-              {value.length} / {field.max_length} {uiText.selection.content.charUnit}
+              {value.length} / {maxLength} {uiText.selection.content.charUnit}
             </span>
           ) : null}
         </div>
@@ -425,6 +429,7 @@ export function ContentFieldSections({
             if (field.type !== 'logo' && field.type !== 'image' && !editableFieldIds.has(field.id)) {
               return null;
             }
+            const zoneVariable = field.type === 'logo' || field.type === 'image' ? null : zoneTextVariableForField(template, selectedVariantId, field.id);
             const shared = {
               field,
               index,
@@ -451,6 +456,8 @@ export function ContentFieldSections({
                 {...shared}
                 value={layoutValues.text_values[field.id] ?? ''}
                 onTextChange={onTextChange}
+                maxLength={zoneVariable?.max_length ?? field.max_length}
+                lineLimit={zoneVariable?.max_lines ?? field.max_lines ?? 1}
               />
             );
           })}
