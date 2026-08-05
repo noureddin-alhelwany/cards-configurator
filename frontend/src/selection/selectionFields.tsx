@@ -3,6 +3,7 @@ import type { TemplateDefinition } from '../registries/types';
 import type { ElementAdjustment, ValidationIssue } from '../design/types';
 import { assetElementForField, type AssetMetadata } from './selectionHelpers';
 import {
+  designHasQrZone,
   editableTextFieldIds,
   fieldGroupLabel,
   fieldHelperText,
@@ -52,12 +53,16 @@ type ContentSection = {
  * its heading — that is what collapses "Bilder → Logo" and "Link und QR → Link zu
  * deinen Google-Bewertungen" into one line instead of a heading plus a label.
  */
-export function useContentSections(template: TemplateDefinition): ContentSection[] {
+export function useContentSections(template: TemplateDefinition, selectedVariantId: string | null): ContentSection[] {
   return useMemo(() => {
     const groups = new Map<string, ContentSection>();
+    const hasQrZone = designHasQrZone(template, selectedVariantId);
 
     template.fields.forEach((field, index) => {
       if (field.type !== 'text' && field.type !== 'url' && field.type !== 'logo' && field.type !== 'image') {
+        return;
+      }
+      if (field.type === 'url' && !hasQrZone) {
         return;
       }
       const groupTitle = fieldGroupLabel(field, index);
@@ -87,7 +92,7 @@ export function useContentSections(template: TemplateDefinition): ContentSection
         optional: !field.required,
       };
     });
-  }, [template.fields]);
+  }, [selectedVariantId, template.fields]);
 }
 
 function textFor(template: string, field: string) {
@@ -373,10 +378,31 @@ export function ContentFieldSections({
   disabled = false,
 }: ContentFieldSectionsProps) {
   const editableFieldIds = useMemo(() => editableTextFieldIds(template, selectedVariantId), [selectedVariantId, template]);
-  const sections = useContentSections(template).filter((section) =>
-    section.fields.some(({ field }) =>
-      field.type === 'logo' || field.type === 'image' ? true : editableFieldIds.has(field.id),
-    ),
+  const baseSections = useContentSections(template, selectedVariantId);
+  const sections = useMemo(
+    () =>
+      baseSections
+        .map((section) => {
+          const fields = section.fields.filter(({ field }) =>
+            field.type === 'logo' || field.type === 'image'
+              ? assetElementForField(template, field.id) !== null
+              : editableFieldIds.has(field.id),
+          );
+          if (fields.length === 0) {
+            return null;
+          }
+
+          const firstField = fields[0];
+          return {
+            ...section,
+            fields,
+            title: fields.length === 1 ? fieldLabel(firstField.field, firstField.index) : section.title,
+            showFieldLabels: fields.length === 1 ? false : section.showFieldLabels,
+          optional: fields.length === 1 ? !firstField.field.required : section.optional,
+          };
+        })
+        .filter((section): section is ContentSection => section !== null),
+    [baseSections, editableFieldIds, template],
   );
 
   function issueFor(fieldId: string) {

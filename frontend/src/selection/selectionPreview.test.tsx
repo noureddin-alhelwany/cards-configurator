@@ -50,6 +50,30 @@ const template: TemplateDefinition = {
       valign: 'top',
       min_font_size_mm: null,
     },
+    {
+      kind: 'image',
+      id: 'logo-image',
+      box_mm: { x_mm: 4, y_mm: 4, width_mm: 10, height_mm: 10 },
+      z_index: 0,
+      asset_key: 'logo',
+      alt: 'Logo',
+      fit: 'contain',
+      movement_mm: null,
+      enhancement: 'none',
+      min_scale: 1,
+      max_scale: 1,
+    },
+    {
+      kind: 'qr',
+      id: 'proof-qr',
+      box_mm: { x_mm: 8, y_mm: 72, width_mm: 20, height_mm: 20 },
+      z_index: 2,
+      value: 'https://example.com/review',
+      color: '#000000',
+      background: '#ffffff',
+      error_correction: 'm',
+      quiet_zone_mm: 4,
+    },
   ],
   designs: [
     {
@@ -152,5 +176,7 @@ describe('TemplateLivePreview', () => {
     expect(text?.style.color).toBe('rgb(18, 52, 86)');
     expect(text?.style.textAlign).toBe('center');
     expect(text).toHaveTextContent('Hello from zone');
+    expect(document.querySelector('.design-element--image')).toBeNull();
+    expect(document.querySelector('.design-element--qr-plate')).toBeNull();
   });
 });

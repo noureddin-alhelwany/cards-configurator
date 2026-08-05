@@ -127,7 +127,7 @@ function resolveSourceAsset(
   selectedTemplate: TemplateDefinition | null,
   selectedVariant: ReturnType<typeof activeRegistryDesign>,
 ) {
-  return assetUrl(selectedVariant?.source_asset ?? selectedVariant?.background_asset ?? null);
+  return selectedVariant?.source_asset ? assetUrl(selectedVariant.source_asset) : null;
 }
 
 function stageStyle(
@@ -313,7 +313,7 @@ function buildPreviewFixture(
   }
   fixture.template = {
     ...fixture.template,
-    elements: fixture.template.elements.filter((element) => element.kind !== 'qr' && element.kind !== 'text'),
+    elements: fixture.template.elements.filter((element) => element.kind !== 'qr' && element.kind !== 'text' && element.kind !== 'image'),
   };
   fixture.assets = Object.fromEntries(Object.entries(fixture.assets).filter(([key]) => key !== 'qr'));
   return fixture;
@@ -374,6 +374,8 @@ function renderTemplateToolStage({
   onDeleteZone: (zoneId: string) => void;
   onUpdateTestValue: (variableId: string, value: string) => void;
 }) {
+  const previewAsset = resolvePreviewAsset(selectedTemplate, selectedVariant);
+  const sourceAsset = resolveSourceAsset(selectedTemplate, selectedVariant);
   return (
     <ZoneEditor
       zones={zones}
@@ -398,21 +400,21 @@ function renderTemplateToolStage({
           <div className="template-tool-stage-shell__layer template-tool-stage-shell__layer--live">
             <DesignPreviewFrame fixture={previewFixture} style={{ width: '100%', height: '100%' }} />
           </div>
-          {previewVisible ? (
+          {previewVisible && previewAsset ? (
             <img
               className="template-tool-stage-shell__layer template-tool-stage-shell__layer--preview"
               data-testid="template-tool-preview-image"
-              src={resolvePreviewAsset(selectedTemplate, selectedVariant) ?? undefined}
+              src={previewAsset}
               alt=""
               aria-hidden="true"
               style={{ opacity: previewOpacity / 100 }}
             />
           ) : null}
-          {sourceVisible ? (
+          {sourceVisible && sourceAsset ? (
             <img
               className="template-tool-stage-shell__layer template-tool-stage-shell__layer--source"
               data-testid="template-tool-overlay"
-              src={resolveSourceAsset(selectedTemplate, selectedVariant) ?? undefined}
+              src={sourceAsset}
               alt=""
               aria-hidden="true"
               style={{ opacity: sourceOpacity / 100 }}

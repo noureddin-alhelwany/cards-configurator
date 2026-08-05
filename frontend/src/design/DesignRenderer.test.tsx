@@ -215,9 +215,9 @@ test('the QR falls back to the template value when the field is empty', () => {
   expect(image?.alt).toBe('QR: https://example.com/review');
 });
 
-function fixtureWithBackground(asset = 'template_google_reviews_warm_preview.png') {
+function fixtureWithBackground(asset = 'template_google_reviews_warm_source.png') {
   const fixture = fixtureWithQr();
-  fixture.template.designs![0].background_asset = asset;
+  fixture.template.designs![0].source_asset = asset;
   return fixture;
 }
 
@@ -235,7 +235,7 @@ function fixtureWithVariantBackground() {
       name: 'Warm',
       active: true,
       preview_asset: null,
-      source_asset: null,
+      source_asset: 'template_google_reviews_warm_source.png',
       background_asset: 'template_google_reviews_warm_preview.png',
       accent_color: '#315a86',
       fonts: fixture.template.designs![0].fonts,
@@ -253,7 +253,7 @@ test('background artwork is the bottom layer and is hidden from assistive tech',
   expect(background).not.toBeNull();
   // Served as a URL, not embedded: `fixture.assets` is keyed by field id and travels
   // through /api/registries, where megabytes of base64 do not belong.
-  expect(background?.getAttribute('src')).toBe('/proof-assets/template_google_reviews_warm_preview.png');
+  expect(background?.getAttribute('src')).toBe('/proof-assets/template_google_reviews_warm_source.png');
   // First child, so every element paints on top of it without relying on z-index.
   expect(stage?.firstElementChild).toBe(background);
   // Presentational: it carries no information, and it must stay out of getByRole('img').
@@ -275,11 +275,11 @@ test('warm background artwork is used for the design', () => {
   const { container } = render(<DesignRenderer fixture={fixtureWithVariantBackground()} variant="production" />);
 
   const background = container.querySelector<HTMLImageElement>('[data-testid="design-background"]');
-  expect(background?.getAttribute('src')).toBe('/proof-assets/template_google_reviews_warm_preview.png');
+  expect(background?.getAttribute('src')).toBe('/proof-assets/template_google_reviews_warm_source.png');
   expect(expectedAssetCount(fixtureWithVariantBackground())).toBe(expectedAssetCount(fixtureWithQr()) + 1);
 });
 
-test('source artwork wins over background artwork for the design', () => {
+test('source artwork wins when both source and background are present', () => {
   const { container } = render(<DesignRenderer fixture={fixtureWithSourceArtwork()} variant="production" />);
 
   const background = container.querySelector<HTMLImageElement>('[data-testid="design-background"]');

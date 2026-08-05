@@ -11,18 +11,24 @@ export function activeTemplateVariant(
   return (template.designs ?? []).find((design) => design.active && design.id === designId) ?? (template.designs ?? []).find((design) => design.active) ?? null;
 }
 
-export function resolveTemplateBackgroundAsset(
+function resolveTemplateArtworkAsset(
   template: TemplateDefinition,
   layoutState: LayoutState,
 ): string | null {
   const variant = activeTemplateVariant(template, layoutState.design_id);
-  return variant?.source_asset ?? variant?.background_asset ?? null;
+  return variant?.source_asset ?? null;
+}
+
+export function resolveTemplateBackgroundAsset(
+  template: TemplateDefinition,
+  layoutState: LayoutState,
+): string | null {
+  return resolveTemplateArtworkAsset(template, layoutState);
 }
 
 export function resolveTemplateSourceAsset(
   template: TemplateDefinition,
   layoutState: LayoutState,
 ): string | null {
-  const variant = activeTemplateVariant(template, layoutState.design_id);
-  return variant?.source_asset ?? variant?.background_asset ?? null;
+  return resolveTemplateArtworkAsset(template, layoutState);
 }

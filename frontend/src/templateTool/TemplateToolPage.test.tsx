@@ -14,9 +14,10 @@ afterEach(() => {
   setPath('/');
 });
 
-test('renders the internal template tool with separate preview and source layers', async () => {
-  const qrDataUrl = 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23ffffff%22/%3E%3C/svg%3E';
-  const bundle = {
+function buildBundle(overrides?: { sourceAsset?: string | null; backgroundAsset?: string | null }) {
+  const sourceAsset = overrides && Object.prototype.hasOwnProperty.call(overrides, 'sourceAsset') ? overrides.sourceAsset : 'source/template_google_reviews_warm.png';
+  const backgroundAsset = overrides && Object.prototype.hasOwnProperty.call(overrides, 'backgroundAsset') ? overrides.backgroundAsset : 'backgrounds/template_google_reviews_warm.svg';
+  return {
     categories: [
       {
         id: 'google_reviews',
@@ -107,16 +108,16 @@ test('renders the internal template tool with separate preview and source layers
           },
         ],
         designs: [
-        {
-          id: 'warm',
-          name: 'Warm',
-          active: true,
-          preview_asset: 'preview/template_google_reviews_warm.png',
-          source_asset: 'source/template_google_reviews_warm.png',
-          background_asset: 'backgrounds/template_google_reviews_warm.svg',
-          accent_color: '#a67b4d',
-          zones: [],
-          fonts: [
+          {
+            id: 'warm',
+            name: 'Warm',
+            active: true,
+            preview_asset: 'preview/template_google_reviews_warm.png',
+            source_asset: sourceAsset,
+            background_asset: backgroundAsset,
+            accent_color: '#a67b4d',
+            zones: [],
+            fonts: [
               {
                 id: 'proof-sans',
                 family: 'Proof Sans',
@@ -138,6 +139,11 @@ test('renders the internal template tool with separate preview and source layers
     ],
     diagnostics: [],
   };
+}
+
+test('renders the internal template tool with separate preview and source layers', async () => {
+  const qrDataUrl = 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22%3E%3Crect width=%2224%22 height=%2224%22 fill=%22%23ffffff%22/%3E%3C/svg%3E';
+  const bundle = buildBundle();
   const adminData = {
     registries: [
       {
@@ -355,4 +361,54 @@ test('renders the internal template tool with separate preview and source layers
   await waitFor(() => {
     expect(screen.queryByTestId('template-tool-overlay')).not.toBeInTheDocument();
   });
+});
+
+test('does not fall back to the SVG background when source artwork is missing', async () => {
+  const bundle = buildBundle({ sourceAsset: null });
+  const adminData = {
+    registries: [
+      {
+        kind: 'template',
+        path: 'proof_a6_card-1.6.0.json',
+        id: 'proof_a6_card',
+        title: 'Google Reviews Host',
+        version: '1.6.0',
+        active: true,
+        order_count: 0,
+        asset_count: 0,
+        error: null,
+      },
+    ],
+  };
+
+  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    const requestUrl = input instanceof Request ? input.url : String(input);
+    if (requestUrl === '/api/admin/data') {
+      return {
+        ok: true,
+        json: async () => adminData,
+      } as Response;
+    }
+    if (requestUrl === '/api/registries') {
+      return {
+        ok: true,
+        json: async () => bundle,
+      } as Response;
+    }
+    if (requestUrl === '/api/font-catalog') {
+      return {
+        ok: true,
+        json: async () => [],
+      } as Response;
+    }
+    throw new Error(`Unexpected fetch: ${String(input)}`);
+  });
+
+  vi.stubGlobal('fetch', fetchMock);
+  setPath('/template-tool');
+
+  render(<App />);
+
+  expect(await screen.findByText('Templates und Design-Overlays')).toBeInTheDocument();
+  expect(screen.queryByTestId('template-tool-overlay')).not.toBeInTheDocument();
 });

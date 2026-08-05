@@ -43,6 +43,45 @@ const template: TemplateDefinition = {
       suggestions: [],
       default_value: 'Dieser Text bleibt fix.',
     },
+    {
+      id: 'website',
+      type: 'url',
+      required: false,
+      max_length: 60,
+      max_lines: 1,
+      label: 'Website',
+      help_text: null,
+      group: 'Link und QR',
+      placeholder: null,
+      suggestions: [],
+      default_value: null,
+    },
+    {
+      id: 'qrTarget',
+      type: 'url',
+      required: false,
+      max_length: 80,
+      max_lines: 1,
+      label: 'QR-Ziel',
+      help_text: null,
+      group: 'Link und QR',
+      placeholder: null,
+      suggestions: [],
+      default_value: null,
+    },
+    {
+      id: 'logo',
+      type: 'logo',
+      required: false,
+      max_length: null,
+      max_lines: null,
+      label: 'Logo',
+      help_text: null,
+      group: 'Bilder',
+      placeholder: null,
+      suggestions: [],
+      default_value: null,
+    },
   ],
   text_rules: [],
   qr_rules: [],
@@ -133,7 +172,10 @@ describe('ContentFieldSections', () => {
       />,
     );
 
-    expect(screen.getByLabelText('Überschrift')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Überschrift' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Beschreibung')).toBeNull();
+    expect(screen.queryByLabelText('Website')).toBeNull();
+    expect(screen.queryByLabelText('QR-Ziel')).toBeNull();
+    expect(screen.queryByLabelText('Logo')).toBeNull();
   });
 });

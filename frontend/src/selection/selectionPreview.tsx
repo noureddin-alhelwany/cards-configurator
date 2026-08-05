@@ -13,7 +13,14 @@ import { defaultTemplateDesignId } from '../design/variantResolution';
 import { defaultAdjustmentsForTemplate } from './selectionHelpers';
 import { emptyPreviewAsset, placeholderQrDataUrl } from './previewAssets';
 import { brandingFallbackDataUrl, businessNameFromLayout } from '../design/branding';
-import { activeDesign, fieldDefaultValue, fieldLabel, staticTextDefaultsForDesign, trimSuggestion } from './selectionRules';
+import {
+  activeDesign,
+  designHasQrZone,
+  fieldDefaultValue,
+  fieldLabel,
+  staticTextDefaultsForDesign,
+  trimSuggestion,
+} from './selectionRules';
 import { uiText } from '../ui/text';
 
 export function buildTemplatePreviewFixture(
@@ -60,7 +67,8 @@ export function buildTemplatePreviewFixture(
     }
   });
 
-  if (template.elements.some((element) => element.kind === 'qr')) {
+  const activeVariant = activeDesign(template, defaultTemplateDesignId(template));
+  if (designHasQrZone(template, activeVariant?.id ?? null) && template.elements.some((element) => element.kind === 'qr')) {
     assets.qr = {
       mime_type: 'image/svg+xml',
       data_url: placeholderQrDataUrl(),
@@ -113,40 +121,52 @@ function applyZoneGeometry(
     }
   }
 
-  return elements.map((element) => {
+  return elements.flatMap((element): TemplateElementDefinition[] => {
     if (element.kind === 'text') {
       const zone = textZonesByFieldId.get(element.id);
       if (!zone) {
-        return element;
+        return [];
       }
       const variable = zoneTextVariable(zone, element.id);
-      return {
-        ...element,
-        box_mm: zone.box_mm,
-        font_family_id: variable?.font_family_id ?? element.font_family_id,
-        font_size_mm: variable?.font_size_mm ?? element.font_size_mm,
-        font_weight: variable?.font_weight ?? element.font_weight,
-        color: variable?.color ?? element.color,
-        line_height: variable?.line_height ?? element.line_height,
-        letter_spacing_em: variable?.letter_spacing_em ?? element.letter_spacing_em,
-        align: variable?.align ?? element.align,
-        min_font_size_mm: variable?.min_font_size_mm ?? element.min_font_size_mm,
-      };
+      return [
+        {
+          ...element,
+          box_mm: zone.box_mm,
+          font_family_id: variable?.font_family_id ?? element.font_family_id,
+          font_size_mm: variable?.font_size_mm ?? element.font_size_mm,
+          font_weight: variable?.font_weight ?? element.font_weight,
+          color: variable?.color ?? element.color,
+          line_height: variable?.line_height ?? element.line_height,
+          letter_spacing_em: variable?.letter_spacing_em ?? element.letter_spacing_em,
+          align: variable?.align ?? element.align,
+          min_font_size_mm: variable?.min_font_size_mm ?? element.min_font_size_mm,
+        },
+      ];
+    }
+
+    if (element.kind === 'image') {
+      return [];
     }
 
     if (element.kind === 'qr' && qrZone) {
       const qr = qrZone.qr ?? null;
-      return {
-        ...element,
-        box_mm: qrZone.box_mm,
-        color: qr?.color ?? element.color,
-        background: qr?.background ?? element.background,
-        quiet_zone_mm: qr?.quiet_zone_mm ?? element.quiet_zone_mm,
-        error_correction: qr?.error_correction ?? element.error_correction,
-      };
+      return [
+        {
+          ...element,
+          box_mm: qrZone.box_mm,
+          color: qr?.color ?? element.color,
+          background: qr?.background ?? element.background,
+          quiet_zone_mm: qr?.quiet_zone_mm ?? element.quiet_zone_mm,
+          error_correction: qr?.error_correction ?? element.error_correction,
+        },
+      ];
     }
 
-    return element;
+    if (element.kind === 'qr') {
+      return [];
+    }
+
+    return [element];
   });
 }
 
@@ -182,7 +202,7 @@ export function TemplateLivePreview({
   const [qrPreview, setQrPreview] = useState<{ value: string; data_url: string } | null>(null);
   const [qrError, setQrError] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
-  const qrField = template.fields.find((field) => field.type === 'url') ?? null;
+  const qrField = designHasQrZone(template, selectedVariantId) ? template.fields.find((field) => field.type === 'url') ?? null : null;
   const qrFieldId = qrField?.id ?? null;
   const qrValue = qrFieldId ? layoutValues.text_values[qrFieldId] ?? '' : '';
   const selectedVariant = activeDesign(template, selectedVariantId);

@@ -126,15 +126,25 @@ export function zoneFieldAccessForDesign(template: TemplateDefinition, variantId
   return access;
 }
 
+export function designHasQrZone(template: TemplateDefinition, variantId: string | null) {
+  const design = activeDesign(template, variantId);
+  return (design?.zones ?? []).some((zone) => zone.kind === 'qr');
+}
+
 export function editableTextFieldIds(template: TemplateDefinition, variantId: string | null) {
   const access = zoneFieldAccessForDesign(template, variantId);
+  const hasQrZone = designHasQrZone(template, variantId);
   if (access.size === 0) {
-    return new Set(template.fields.filter((field) => field.type === 'text' || field.type === 'url').map((field) => field.id));
+    return new Set(
+      template.fields
+        .filter((field) => field.type === 'text' || (field.type === 'url' && hasQrZone))
+        .map((field) => field.id),
+    );
   }
   return new Set(
     template.fields
-      .filter((field) => field.type === 'text' || field.type === 'url')
-      .filter((field) => access.get(field.id)?.personalizable !== false)
+      .filter((field) => field.type === 'text' || (field.type === 'url' && hasQrZone))
+      .filter((field) => access.has(field.id) && access.get(field.id)?.personalizable !== false)
       .map((field) => field.id),
   );
 }
