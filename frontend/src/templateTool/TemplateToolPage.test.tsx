@@ -261,7 +261,7 @@ test('renders the internal template tool with separate preview and source layers
 
   await screen.findByLabelText('Schrift suchen');
   expect(screen.getByText('Zuordnung')).toBeInTheDocument();
-  expect(screen.getByText('Headline')).toBeInTheDocument();
+  expect(screen.getByRole('combobox', { name: 'Feld' })).toHaveValue('');
   expect(screen.getByLabelText('Textinhalt')).toHaveValue('');
   expect(await screen.findByRole('button', { name: /Inter/ })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Libre Baskerville/ })).toBeInTheDocument();

@@ -351,10 +351,10 @@ export default function ZoneEditor({
     [selectedZone?.kind, templateFields],
   );
   const selectedField = useMemo(() => {
-    if (!selectedVariable?.field_id) {
-      return availableFields[0] ?? null;
+    if (selectedVariable?.field_id == null) {
+      return null;
     }
-    return availableFields.find((field) => field.id === selectedVariable.field_id) ?? availableFields[0] ?? null;
+    return availableFields.find((field) => field.id === selectedVariable.field_id) ?? null;
   }, [availableFields, selectedVariable?.field_id]);
   const zoneFontValue = selectedVariable?.font_family_id ?? null;
 
@@ -569,7 +569,7 @@ export default function ZoneEditor({
                   </span>
                 </summary>
                 <div className="template-tool-zone-editor__accordion-body">
-                  {availableFields.length > 1 ? (
+                  {availableFields.length > 0 ? (
                     <label className="template-tool-control">
                       <span>Feld</span>
                       <select
@@ -591,8 +591,8 @@ export default function ZoneEditor({
                           });
                           onUpdateTestValue(nextField?.id ?? selectedVariableValueKey ?? selectedVariable.id, nextValue);
                         }}
-                        disabled={availableFields.length === 0}
                       >
+                        <option value="">Keine Zuordnung</option>
                         {availableFields.length > 0 ? (
                           availableFields.map((field) => (
                             <option key={field.id} value={field.id}>

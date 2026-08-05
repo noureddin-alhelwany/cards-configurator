@@ -102,13 +102,14 @@ function defaultFieldIdForKind(template: TemplateDefinition, kind: 'text' | 'qr'
 }
 
 function fieldForZone(template: TemplateDefinition, kind: 'text' | 'qr', fieldId?: string | null) {
-  if (fieldId) {
-    const matched = template.fields.find((field) => field.id === fieldId);
-    if (matched && fieldKindMatchesZone(matched, kind)) {
-      return matched;
-    }
+  if (!fieldId) {
+    return null;
   }
-  return template.fields.find((field) => fieldKindMatchesZone(field, kind)) ?? null;
+  const matched = template.fields.find((field) => field.id === fieldId);
+  if (matched && fieldKindMatchesZone(matched, kind)) {
+    return matched;
+  }
+  return null;
 }
 
 function normalizeZoneDefaultValue(value: string | null | undefined) {
@@ -151,12 +152,12 @@ function createZoneVariable(
 ): ZoneVariableDefinition {
   const defaultFont = fonts[0] ?? null;
   const field = fieldForZone(template, kind, fieldId);
-  const nextFieldId = field?.id ?? fieldId ?? defaultFieldIdForKind(template, kind);
+  const nextFieldId = field?.id ?? fieldId ?? null;
   return {
     id: `var-${zoneId}-${kind}-${index + 1}`,
     kind,
     field_id: nextFieldId,
-    label: field ? fieldDisplayLabel(field) : nextFieldId,
+    label: field ? fieldDisplayLabel(field) : `${kind === 'text' ? 'Text' : 'QR'} ohne Zuordnung`,
     font_family_id: defaultFont?.id ?? null,
     font_weight: 700,
     font_size_mm: 6.8,
@@ -188,15 +189,15 @@ function normalizeZones(template: TemplateDefinition, designZones: TemplateDesig
       const kind = safeArea.kind ?? 'text';
       const sourceVariable =
         (safeArea.variables ?? []).find((variable) => variable.kind === kind) ?? (safeArea.variables ?? [])[0] ?? null;
-      const fieldId = sourceVariable?.field_id ?? defaultFieldIdForKind(template, kind);
+      const fieldId = sourceVariable?.field_id ?? null;
       const field = fieldForZone(template, kind, fieldId);
       const defaultFont = fonts[0] ?? null;
       const nextVariable = sourceVariable
         ? {
             ...sourceVariable,
             kind,
-            field_id: field?.id ?? fieldId,
-            label: field ? fieldDisplayLabel(field) : fieldId,
+            field_id: field?.id ?? fieldId ?? null,
+            label: field ? fieldDisplayLabel(field) : sourceVariable.label,
             font_family_id: sourceVariable.font_family_id ?? defaultFont?.id ?? null,
             max_length: sourceVariable.max_length ?? field?.max_length ?? null,
             max_lines: sourceVariable.max_lines ?? field?.max_lines ?? null,
@@ -209,7 +210,7 @@ function normalizeZones(template: TemplateDefinition, designZones: TemplateDesig
             0,
             fonts,
             template,
-            fieldId,
+            null,
           );
 
       return [nextVariable];
@@ -256,7 +257,7 @@ function createZone(
             quiet_zone_mm: 2,
         }
         : null,
-    variables: [createZoneVariable(`zone-${kind}-${index + 1}`, kind, 0, fonts, template, defaultFieldIdForKind(template, kind))],
+    variables: [createZoneVariable(`zone-${kind}-${index + 1}`, kind, 0, fonts, template, null)],
   };
 }
 
