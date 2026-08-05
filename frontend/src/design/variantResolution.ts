@@ -16,7 +16,7 @@ export function resolveTemplateBackgroundAsset(
   layoutState: LayoutState,
 ): string | null {
   const variant = activeTemplateVariant(template, layoutState.design_id);
-  return variant?.background_asset ?? null;
+  return variant?.source_asset ?? variant?.background_asset ?? null;
 }
 
 export function resolveTemplateSourceAsset(

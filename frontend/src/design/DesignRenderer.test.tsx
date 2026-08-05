@@ -221,6 +221,12 @@ function fixtureWithBackground(asset = 'template_google_reviews_warm_preview.png
   return fixture;
 }
 
+function fixtureWithSourceArtwork(sourceAsset = 'template_google_reviews_warm_source.png') {
+  const fixture = fixtureWithBackground();
+  fixture.template.designs![0].source_asset = sourceAsset;
+  return fixture;
+}
+
 function fixtureWithVariantBackground() {
   const fixture = fixtureWithQr();
   fixture.template.designs = [
@@ -271,6 +277,13 @@ test('warm background artwork is used for the design', () => {
   const background = container.querySelector<HTMLImageElement>('[data-testid="design-background"]');
   expect(background?.getAttribute('src')).toBe('/proof-assets/template_google_reviews_warm_preview.png');
   expect(expectedAssetCount(fixtureWithVariantBackground())).toBe(expectedAssetCount(fixtureWithQr()) + 1);
+});
+
+test('source artwork wins over background artwork for the design', () => {
+  const { container } = render(<DesignRenderer fixture={fixtureWithSourceArtwork()} variant="production" />);
+
+  const background = container.querySelector<HTMLImageElement>('[data-testid="design-background"]');
+  expect(background?.getAttribute('src')).toBe('/proof-assets/template_google_reviews_warm_source.png');
 });
 
 test('the background reports itself ready under the id the count expects', () => {

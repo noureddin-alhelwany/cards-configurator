@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react';
 import type { ProductDefinition, TemplateDefinition, CategoryDefinition } from '../registries/types';
-import type { ElementAdjustment, ProofFixture, ValidationIssue } from '../design/types';
+import type {
+  ElementAdjustment,
+  ProofFixture,
+  TemplateElementDefinition,
+  ValidationIssue,
+  ZoneDefinition,
+  ZoneVariableDefinition,
+} from '../design/types';
 import DesignPreviewFrame from '../design/DesignPreviewFrame';
 import { defaultTemplateDesignId } from '../design/variantResolution';
 import { defaultAdjustmentsForTemplate } from './selectionHelpers';
 import { emptyPreviewAsset, placeholderQrDataUrl } from './previewAssets';
 import { brandingFallbackDataUrl, businessNameFromLayout } from '../design/branding';
-import { fieldDefaultValue, fieldLabel, staticTextDefaultsForDesign, trimSuggestion } from './selectionRules';
+import { activeDesign, fieldDefaultValue, fieldLabel, staticTextDefaultsForDesign, trimSuggestion } from './selectionRules';
 import { uiText } from '../ui/text';
 
 export function buildTemplatePreviewFixture(
@@ -74,6 +81,75 @@ export function buildTemplatePreviewFixture(
   };
 }
 
+function zoneFieldId(variable: ZoneVariableDefinition) {
+  return variable.field_id ?? variable.id;
+}
+
+function zoneTextVariable(zone: ZoneDefinition, fieldId: string) {
+  return (zone.variables ?? []).find((variable) => variable.kind === 'text' && zoneFieldId(variable) === fieldId) ?? null;
+}
+
+function applyZoneGeometry(
+  elements: TemplateElementDefinition[],
+  selectedZoneDesign: ReturnType<typeof activeDesign>,
+): TemplateElementDefinition[] {
+  if (!selectedZoneDesign?.zones?.length) {
+    return elements;
+  }
+
+  const textZonesByFieldId = new Map<string, ZoneDefinition>();
+  let qrZone: ZoneDefinition | null = null;
+
+  for (const zone of selectedZoneDesign.zones) {
+    if (zone.kind === 'qr') {
+      qrZone = qrZone ?? zone;
+      continue;
+    }
+    for (const variable of zone.variables ?? []) {
+      if (variable.kind !== 'text') {
+        continue;
+      }
+      textZonesByFieldId.set(zoneFieldId(variable), zone);
+    }
+  }
+
+  return elements.map((element) => {
+    if (element.kind === 'text') {
+      const zone = textZonesByFieldId.get(element.id);
+      if (!zone) {
+        return element;
+      }
+      const variable = zoneTextVariable(zone, element.id);
+      return {
+        ...element,
+        box_mm: zone.box_mm,
+        font_family_id: variable?.font_family_id ?? element.font_family_id,
+        font_size_mm: variable?.font_size_mm ?? element.font_size_mm,
+        font_weight: variable?.font_weight ?? element.font_weight,
+        color: variable?.color ?? element.color,
+        line_height: variable?.line_height ?? element.line_height,
+        letter_spacing_em: variable?.letter_spacing_em ?? element.letter_spacing_em,
+        align: variable?.align ?? element.align,
+        min_font_size_mm: variable?.min_font_size_mm ?? element.min_font_size_mm,
+      };
+    }
+
+    if (element.kind === 'qr' && qrZone) {
+      const qr = qrZone.qr ?? null;
+      return {
+        ...element,
+        box_mm: qrZone.box_mm,
+        color: qr?.color ?? element.color,
+        background: qr?.background ?? element.background,
+        quiet_zone_mm: qr?.quiet_zone_mm ?? element.quiet_zone_mm,
+        error_correction: qr?.error_correction ?? element.error_correction,
+      };
+    }
+
+    return element;
+  });
+}
+
 type TemplateLivePreviewProps = {
   template: TemplateDefinition;
   product: ProductDefinition;
@@ -109,6 +185,7 @@ export function TemplateLivePreview({
   const qrField = template.fields.find((field) => field.type === 'url') ?? null;
   const qrFieldId = qrField?.id ?? null;
   const qrValue = qrFieldId ? layoutValues.text_values[qrFieldId] ?? '' : '';
+  const selectedVariant = activeDesign(template, selectedVariantId);
   const qrElement = template.elements.find((element) => element.kind === 'qr');
   const qrColor = qrElement && qrElement.kind === 'qr' ? qrElement.color : null;
   const qrErrorCorrection = qrElement && qrElement.kind === 'qr' ? qrElement.error_correction ?? 'm' : 'm';
@@ -168,7 +245,10 @@ export function TemplateLivePreview({
   const proofFixture =
     template.elements.length > 0
       ? {
-          template,
+          template: {
+            ...template,
+            elements: applyZoneGeometry(template.elements, selectedVariant),
+          },
           product,
           category: category,
           layout_state: {
