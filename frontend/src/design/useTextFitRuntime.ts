@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useState, type RefObject } from 'react';
+import { useLayoutEffect, useMemo, useState, type CSSProperties, type RefObject } from 'react';
 import { estimateTextFit, minFitScale, type TextFitInput, type TextFitResult } from './textFit';
 
 type AppliedTextFit = {
@@ -36,6 +36,17 @@ type RuntimeTextFitInput = TextFitInput & {
 export type TextFitRuntimeResult = {
   appliedFit: AppliedTextFit;
   baseFit: TextFitResult;
+};
+
+export type TextFitTypographyStyleInput = {
+  color?: string;
+  fontFamily?: string | null;
+  fontSizeMm: number;
+  fontWeight: number;
+  lineHeight: number;
+  textAlign: 'left' | 'center' | 'right';
+  letterSpacingEm?: number | null;
+  appliedFit: AppliedTextFit;
 };
 
 function createFitProbe(config: FitProbeConfig, scale: number, spacing: number) {
@@ -187,4 +198,30 @@ export function useTextFitRuntime({
   ]);
 
   return { appliedFit, baseFit };
+}
+
+export function buildTextFitTypographyStyle({
+  color,
+  fontFamily,
+  fontSizeMm,
+  fontWeight,
+  lineHeight,
+  textAlign,
+  letterSpacingEm,
+  appliedFit,
+}: TextFitTypographyStyleInput): CSSProperties {
+  return {
+    color,
+    fontFamily: fontFamily ?? undefined,
+    fontSize: `${fontSizeMm * appliedFit.scale}mm`,
+    fontWeight,
+    lineHeight,
+    letterSpacing:
+      appliedFit.letterSpacingEm != null
+        ? `${appliedFit.letterSpacingEm}em`
+        : letterSpacingEm != null
+          ? `${letterSpacingEm}em`
+          : undefined,
+    textAlign,
+  };
 }

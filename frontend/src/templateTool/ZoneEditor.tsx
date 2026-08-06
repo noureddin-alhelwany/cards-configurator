@@ -14,7 +14,7 @@ import type {
   ZoneDefinition,
   ZoneVariableDefinition,
 } from '../design/types';
-import { useTextFitRuntime } from '../design/useTextFitRuntime';
+import { buildTextFitTypographyStyle, useTextFitRuntime } from '../design/useTextFitRuntime';
 import type { FontCatalogEntry } from '../fontCatalog';
 import './ZoneEditor.css';
 
@@ -282,20 +282,16 @@ function zoneTextStyle(
   fontFamily: string | undefined,
   appliedFit: { scale: number; letterSpacingEm: number | null },
 ): CSSProperties {
-  return {
+  return buildTextFitTypographyStyle({
     color: variable.color,
-    fontFamily: fontFamily ?? undefined,
-    fontSize: `${variable.font_size_mm * appliedFit.scale}mm`,
+    fontFamily,
+    fontSizeMm: variable.font_size_mm,
     fontWeight: variable.font_weight,
     lineHeight: variable.line_height,
-    letterSpacing:
-      appliedFit.letterSpacingEm != null
-        ? `${appliedFit.letterSpacingEm}em`
-        : variable.letter_spacing_em != null
-          ? `${variable.letter_spacing_em}em`
-          : undefined,
     textAlign: variable.align,
-  };
+    letterSpacingEm: variable.letter_spacing_em,
+    appliedFit,
+  });
 }
 
 function ZoneTextPreview({

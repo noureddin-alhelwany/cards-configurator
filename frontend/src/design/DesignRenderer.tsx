@@ -12,7 +12,7 @@ import type {
   ValidationIssue,
 } from './types';
 import { resolveQrValue } from './qr';
-import { useTextFitRuntime } from './useTextFitRuntime';
+import { buildTextFitTypographyStyle, useTextFitRuntime } from './useTextFitRuntime';
 import { BACKGROUND_ASSET_ID, markRenderError } from './renderReadiness';
 import { activeTemplateVariant, resolveTemplateBackgroundAsset } from './variantResolution';
 import { ensureTemplateFontsLoaded, resolveFontFamilyName } from './fonts';
@@ -103,6 +103,17 @@ function TextElementNode({
           justifyContent: element.valign === 'middle' ? 'center' : 'flex-end',
         };
 
+  const typographyStyle = buildTextFitTypographyStyle({
+    color: element.color,
+    fontFamily,
+    fontSizeMm: element.font_size_mm,
+    fontWeight: element.font_weight,
+    lineHeight: element.line_height,
+    textAlign: element.align,
+    letterSpacingEm: element.letter_spacing_em,
+    appliedFit,
+  });
+
   return (
     <div
       ref={nodeRef}
@@ -111,19 +122,8 @@ function TextElementNode({
       style={{
         ...documentBoxStyle(element.box_mm),
         ...verticalStyle,
+        ...typographyStyle,
         zIndex: element.z_index,
-        color: element.color,
-        fontFamily: fontFamily ?? undefined,
-        fontSize: `${element.font_size_mm * appliedFit.scale}mm`,
-        fontWeight: element.font_weight,
-        lineHeight: element.line_height,
-        letterSpacing:
-          appliedFit.letterSpacingEm != null
-            ? `${appliedFit.letterSpacingEm}em`
-            : element.letter_spacing_em != null
-              ? `${element.letter_spacing_em}em`
-              : undefined,
-        textAlign: element.align,
         transform: `translate(${adjustment.offset_x * 4}mm, ${adjustment.offset_y * 4}mm) scale(${adjustment.scale})`,
       }}
     >
