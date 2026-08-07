@@ -465,6 +465,38 @@ function offsetBox(box: BoxMm, deltaX: number, deltaY: number, widthMm: number, 
   };
 }
 
+function readNumericInput(value: string) {
+  if (value.trim() === '') {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function updateZoneBox(
+  zone: EditableZone,
+  patch: Partial<BoxMm>,
+  pageWidthMm: number,
+  pageHeightMm: number,
+  onUpdateZone: (zoneId: string, nextZone: EditableZone) => void,
+) {
+  const nextBox = {
+    ...zone.box_mm,
+    ...patch,
+  };
+  const width = clamp(nextBox.width_mm, 2, pageWidthMm);
+  const height = clamp(nextBox.height_mm, 2, pageHeightMm);
+  onUpdateZone(zone.id, {
+    ...zone,
+    box_mm: {
+      x_mm: clamp(nextBox.x_mm, 0, Math.max(0, pageWidthMm - width)),
+      y_mm: clamp(nextBox.y_mm, 0, Math.max(0, pageHeightMm - height)),
+      width_mm: width,
+      height_mm: height,
+    },
+  });
+}
+
 function resizeBox(box: BoxMm, deltaWidth: number, deltaHeight: number, widthMm: number, heightMm: number): BoxMm {
   const minSize = 2;
   const nextWidth = clamp(box.width_mm + deltaWidth, minSize, widthMm - box.x_mm);
@@ -762,6 +794,73 @@ export default function ZoneEditor({
                 />
               </label>
             ) : null}
+
+            <div className="template-tool-zone-editor__inline-grid">
+              <label className="template-tool-control">
+                <span>X mm</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={selectedZone.box_mm.x_mm}
+                  onChange={(event) => {
+                    const nextValue = readNumericInput(event.target.value);
+                    if (nextValue == null) {
+                      return;
+                    }
+                    updateZoneBox(selectedZone, { x_mm: nextValue }, pageWidthMm, pageHeightMm, onUpdateZone);
+                  }}
+                />
+              </label>
+              <label className="template-tool-control">
+                <span>Y mm</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={selectedZone.box_mm.y_mm}
+                  onChange={(event) => {
+                    const nextValue = readNumericInput(event.target.value);
+                    if (nextValue == null) {
+                      return;
+                    }
+                    updateZoneBox(selectedZone, { y_mm: nextValue }, pageWidthMm, pageHeightMm, onUpdateZone);
+                  }}
+                />
+              </label>
+              <label className="template-tool-control">
+                <span>Breite mm</span>
+                <input
+                  type="number"
+                  min="2"
+                  step="0.1"
+                  value={selectedZone.box_mm.width_mm}
+                  onChange={(event) => {
+                    const nextValue = readNumericInput(event.target.value);
+                    if (nextValue == null) {
+                      return;
+                    }
+                    updateZoneBox(selectedZone, { width_mm: nextValue }, pageWidthMm, pageHeightMm, onUpdateZone);
+                  }}
+                />
+              </label>
+              <label className="template-tool-control">
+                <span>Höhe mm</span>
+                <input
+                  type="number"
+                  min="2"
+                  step="0.1"
+                  value={selectedZone.box_mm.height_mm}
+                  onChange={(event) => {
+                    const nextValue = readNumericInput(event.target.value);
+                    if (nextValue == null) {
+                      return;
+                    }
+                    updateZoneBox(selectedZone, { height_mm: nextValue }, pageWidthMm, pageHeightMm, onUpdateZone);
+                  }}
+                />
+              </label>
+            </div>
 
             {selectedZone.kind === 'text' ? (
               <div className="template-tool-zone-editor__inline-controls">

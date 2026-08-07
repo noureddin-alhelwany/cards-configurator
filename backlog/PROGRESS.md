@@ -2,9 +2,9 @@
 
 ## Summary
 
-- Todo: 6
+- Todo: 5
 - In progress: 1
-- Done: 83
+- Done: 84
 - Blocked: 0
 
 ## Backlog
@@ -23,3 +23,4 @@
 | UI-34 | story | must | done | UI-16, UI-17 | Qualitätsprüfung im Prüfschritt zusammenfassen |
 | UI-35 | story | should | done | UI-08 | Designvorschauen stärker priorisieren |
 | TECH-08 | technical | must | done | UI-27, UI-28 | Feldzuständigkeit und Dopplungen im Datenmodell bereinigen |
+| TPL-11 | story | must | done | TPL-05 | Eigenschaften numerisch bearbeiten |

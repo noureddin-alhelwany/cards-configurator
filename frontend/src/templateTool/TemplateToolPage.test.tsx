@@ -268,6 +268,20 @@ test('renders the internal template tool with separate preview and source layers
   await screen.findByLabelText(/Text in Zone/);
   const zoneTextArea = screen.getByLabelText(/Text in Zone/) as HTMLTextAreaElement;
   expect(zoneTextArea).toHaveValue('');
+  const zoneXInput = screen.getByLabelText('X mm') as HTMLInputElement;
+  const zoneYInput = screen.getByLabelText('Y mm') as HTMLInputElement;
+  const zoneWidthInput = screen.getByLabelText('Breite mm') as HTMLInputElement;
+  const zoneHeightInput = screen.getByLabelText('Höhe mm') as HTMLInputElement;
+  expect(zoneXInput).toHaveValue(12);
+  expect(zoneYInput).toHaveValue(12);
+  expect(zoneWidthInput).toHaveValue(58);
+  expect(zoneHeightInput).toHaveValue(20);
+
+  fireEvent.change(zoneXInput, { target: { value: '28.5' } });
+  fireEvent.change(zoneWidthInput, { target: { value: '64' } });
+  expect(zoneXInput).toHaveValue(28.5);
+  expect(zoneWidthInput).toHaveValue(64);
+
   expect(await screen.findByRole('button', { name: /Inter/ })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Libre Baskerville/ })).toBeInTheDocument();
   expect(screen.getAllByText('AaBb 123').length).toBeGreaterThanOrEqual(2);
