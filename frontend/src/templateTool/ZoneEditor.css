@@ -16,6 +16,84 @@
   gap: 10px;
 }
 
+.template-tool-zone-editor__list {
+  display: grid;
+  gap: 10px;
+}
+
+.template-tool-zone-editor__list-item {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(155, 122, 89, 0.14);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.template-tool-zone-editor__list-item--selected {
+  border-color: rgba(140, 92, 43, 0.62);
+  box-shadow: 0 10px 24px rgba(140, 92, 43, 0.12);
+}
+
+.template-tool-zone-editor__list-item--hidden {
+  opacity: 0.72;
+}
+
+.template-tool-zone-editor__list-button {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.template-tool-zone-editor__list-title {
+  font-weight: 700;
+  color: #3f3127;
+}
+
+.template-tool-zone-editor__list-meta {
+  color: #6f5a48;
+  font-size: 0.9rem;
+}
+
+.template-tool-zone-editor__list-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.template-tool-zone-editor__badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: rgba(143, 90, 42, 0.12);
+  color: #7d4f22;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.template-tool-zone-editor__badge--muted {
+  background: rgba(143, 90, 42, 0.08);
+  color: #8c6b4d;
+}
+
+.template-tool-zone-editor__badge--locked {
+  background: rgba(111, 90, 72, 0.16);
+  color: #5c4b3c;
+}
+
+.template-tool-zone-editor__list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .template-tool-zone-editor__form {
   display: grid;
   gap: 12px;
@@ -74,6 +152,27 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.template-tool-zone-editor__typography-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.template-tool-zone-editor__field-config-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.template-tool-control--static strong {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid rgba(155, 122, 89, 0.14);
+  border-radius: 10px;
+}
+
 .template-tool-zone-editor__variable-list {
   display: grid;
   gap: 12px;
@@ -113,6 +212,15 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.template-tool-font-browser__list--featured {
+  height: 220px;
+  min-height: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .template-tool-zone-editor__canvas-wrap {
@@ -284,5 +392,13 @@
 @media (max-width: 980px) {
   .template-tool-zone-editor__canvas-wrap {
     justify-items: stretch;
+  }
+
+  .template-tool-zone-editor__typography-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .template-tool-zone-editor__field-config-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

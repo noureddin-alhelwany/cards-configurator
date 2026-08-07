@@ -97,11 +97,6 @@ function fieldKindMatchesZone(field: TemplateFieldDefinition, kind: 'text' | 'qr
   return field.type === 'text';
 }
 
-function defaultFieldIdForKind(template: TemplateDefinition, kind: 'text' | 'qr') {
-  const allowedTypes = kind === 'qr' ? ['qr', 'url'] : ['text'];
-  return template.fields.find((field) => allowedTypes.includes(field.type))?.id ?? `${kind}_1`;
-}
-
 function fieldForZone(template: TemplateDefinition, kind: 'text' | 'qr', fieldId?: string | null) {
   if (!fieldId) {
     return null;
@@ -111,6 +106,18 @@ function fieldForZone(template: TemplateDefinition, kind: 'text' | 'qr', fieldId
     return matched;
   }
   return null;
+}
+
+function zoneIsVisible(zone: EditableZone) {
+  return zone.visible ?? true;
+}
+
+function zoneIsLocked(zone: EditableZone) {
+  return zone.locked ?? false;
+}
+
+function zoneKindLabel(zone: EditableZone) {
+  return zone.kind === 'qr' ? 'QR-Code' : 'Text';
 }
 
 function normalizeZoneDefaultValue(value: string | null | undefined) {
@@ -233,6 +240,8 @@ function normalizeZones(template: TemplateDefinition, designZones: TemplateDesig
       ...safeArea,
       id: safeArea.id || `zone-${index + 1}`,
       kind,
+      visible: safeArea.visible ?? true,
+      locked: safeArea.locked ?? false,
       variables: [nextVariable],
       qr:
         safeArea.kind === 'qr'
@@ -268,6 +277,8 @@ function createZone(
       height_mm: defaults.height_mm,
     },
     personalizable: kind !== 'qr',
+    visible: true,
+    locked: false,
     qr:
       kind === 'qr'
         ? {
@@ -358,9 +369,6 @@ function renderTemplateToolStage({
   templateFields,
   fontSearch,
   onFontSearchChange,
-  fontCategory,
-  onFontCategoryChange,
-  fontCategories,
   filteredFontCatalog,
   fontCatalogError,
   previewVisible,
@@ -383,9 +391,6 @@ function renderTemplateToolStage({
   templateFields: TemplateFieldDefinition[];
   fontSearch: string;
   onFontSearchChange: (value: string) => void;
-  fontCategory: string;
-  onFontCategoryChange: (value: string) => void;
-  fontCategories: string[];
   filteredFontCatalog: FontCatalogEntry[];
   fontCatalogError: string | null;
   previewVisible: boolean;
@@ -410,9 +415,6 @@ function renderTemplateToolStage({
       templateFields={templateFields}
       fontSearch={fontSearch}
       onFontSearchChange={onFontSearchChange}
-      fontCategory={fontCategory}
-      onFontCategoryChange={onFontCategoryChange}
-      fontCategories={fontCategories}
       filteredFontCatalog={filteredFontCatalog}
       fontCatalogError={fontCatalogError}
       testValues={testValues}
@@ -470,7 +472,6 @@ export default function TemplateToolPage() {
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [testValues, setTestValues] = useState<Record<string, string>>({});
   const [fontSearch, setFontSearch] = useState('');
-  const [fontCategory, setFontCategory] = useState<string>('');
   const [fontFacesById, setFontFacesById] = useState<Record<string, FontDefinition>>({});
   const [templateSaveState, setTemplateSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [templateSaveError, setTemplateSaveError] = useState<string | null>(null);
@@ -667,6 +668,27 @@ export default function TemplateToolPage() {
     });
   }
 
+  function moveZone(zoneId: string, direction: -1 | 1) {
+    setZones((current) => {
+      const index = current.findIndex((zone) => zone.id === zoneId);
+      if (index < 0) {
+        return current;
+      }
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= current.length) {
+        return current;
+      }
+      const next = [...current];
+      const [zone] = next.splice(index, 1);
+      next.splice(nextIndex, 0, zone);
+      return next;
+    });
+  }
+
+  function updateZoneInState(zoneId: string, patch: Partial<EditableZone>) {
+    setZones((current) => current.map((zone) => (zone.id === zoneId ? { ...zone, ...patch } : zone)));
+  }
+
   async function handleSaveZones() {
     if (!selectedTemplate || !selectedVariant || !selectedTemplateRegistryPath) {
       return;
@@ -724,21 +746,9 @@ export default function TemplateToolPage() {
     return fonts;
   }, [fontCatalog, selectedVariantFonts]);
 
-  const fontCategories = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          fontCatalog
-            .map((font) => font.category)
-            .filter((category): category is string => Boolean(category)),
-        ),
-      ).sort((a, b) => a.localeCompare(b)),
-    [fontCatalog],
-  );
-
   const deferredFontSearch = useDeferredValue(fontSearch);
 
-  const queryActive = deferredFontSearch.trim().length > 0 || fontCategory.length > 0;
+  const queryActive = deferredFontSearch.trim().length > 0;
 
   const fontBrowserCatalog = useMemo(() => {
     if (queryActive) {
@@ -754,15 +764,12 @@ export default function TemplateToolPage() {
   const filteredFontCatalog = useMemo(() => {
     const query = deferredFontSearch.trim().toLowerCase();
     return fontBrowserCatalog.filter((font) => {
-      if (fontCategory && font.category !== fontCategory) {
-        return false;
-      }
       if (!query) {
         return true;
       }
       return font.family.toLowerCase().includes(query) || font.id.toLowerCase().includes(query);
     });
-  }, [deferredFontSearch, fontCategory, fontBrowserCatalog]);
+  }, [deferredFontSearch, fontBrowserCatalog]);
 
   useEffect(() => {
     if (!selectedTemplate) {
@@ -883,7 +890,7 @@ export default function TemplateToolPage() {
 
   if (state.error) {
     return (
-      <main className="template-tool-shell template-tool-shell--error">
+      <main className="template-tool-shell template-tool-shell--dark template-tool-shell--error">
         <section className="template-tool-card">
           <p className="template-tool-kicker">{uiText.templateTool.error.kicker}</p>
           <h1>{uiText.templateTool.error.title}</h1>
@@ -895,7 +902,7 @@ export default function TemplateToolPage() {
 
   if (!state.bundle) {
     return (
-      <main className="template-tool-shell">
+      <main className="template-tool-shell template-tool-shell--dark">
         <section className="template-tool-card">
           <p className="template-tool-kicker">{uiText.templateTool.loading.kicker}</p>
           <h1>{uiText.templateTool.loading.title}</h1>
@@ -907,7 +914,7 @@ export default function TemplateToolPage() {
 
   if (templates.length === 0) {
     return (
-      <main className="template-tool-shell">
+      <main className="template-tool-shell template-tool-shell--dark">
         <section className="template-tool-card">
           <p className="template-tool-kicker">{uiText.templateTool.header.kicker}</p>
           <h1>{uiText.templateTool.empty.title}</h1>
@@ -918,7 +925,7 @@ export default function TemplateToolPage() {
   }
 
   return (
-    <main className="template-tool-shell">
+    <main className="template-tool-shell template-tool-shell--dark">
       <section className="template-tool-card template-tool-card--hero">
         <p className="template-tool-kicker">{uiText.templateTool.header.kicker}</p>
         <h1>{uiText.templateTool.header.title}</h1>
@@ -949,6 +956,103 @@ export default function TemplateToolPage() {
                 </button>
               );
             })}
+          </div>
+
+          <div className="template-tool-zone-list" role="list" aria-label="Zonenliste">
+            <div className="template-tool-card__heading">
+              <h3>Zonen</h3>
+              <p>{zones.length} aktiv</p>
+            </div>
+            {zones.length > 0 ? (
+              zones.map((zone, index) => {
+                const selected = zone.id === selectedZoneId;
+                const visible = zoneIsVisible(zone);
+                const locked = zoneIsLocked(zone);
+                const zoneLabel = zone.label ?? zone.variables?.[0]?.label ?? zoneKindLabel(zone);
+                const variable = zone.variables?.[0] ?? null;
+                const fontFamily = availableFonts.find((font) => font.id === variable?.font_family_id)?.family ?? 'Font';
+                const fontSizeLabel = variable ? `${variable.font_size_mm.toFixed(1)} mm` : 'n/a';
+                const letterSpacingLabel =
+                  variable?.letter_spacing_em != null ? `${variable.letter_spacing_em.toFixed(2)} em` : '0.00 em';
+                const maxLengthLabel = variable?.max_length != null ? `${variable.max_length}` : '∞';
+                return (
+                  <div
+                    key={zone.id}
+                    className={`template-tool-zone-list__item${selected ? ' template-tool-zone-list__item--selected' : ''}${!visible ? ' template-tool-zone-list__item--hidden' : ''}`}
+                    role="listitem"
+                  >
+                    <button
+                      type="button"
+                      className="template-tool-zone-list__button"
+                      onClick={() => setSelectedZoneId(zone.id)}
+                    >
+                      <span className="template-tool-zone-list__title-row">
+                        <span className="template-tool-zone-list__title">{zoneLabel}</span>
+                        <span
+                          className="template-tool-zone-list__color-dot"
+                          aria-hidden="true"
+                          style={{ backgroundColor: variable?.color ?? '#1f1a17' }}
+                        />
+                      </span>
+                      <span className="template-tool-zone-list__meta">
+                        <span>{fontFamily}</span>
+                        <span>{fontSizeLabel}</span>
+                        <span>{letterSpacingLabel}</span>
+                        <span>Max {maxLengthLabel}</span>
+                      </span>
+                    </button>
+                    <div className="template-tool-zone-list__actions">
+                      <button
+                        type="button"
+                        className="template-tool-zone-list__icon-button"
+                        onClick={() => moveZone(zone.id, -1)}
+                        disabled={index === 0}
+                        aria-label={`${zoneLabel} nach oben`}
+                      >
+                        <span aria-hidden="true">↑</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="template-tool-zone-list__icon-button"
+                        onClick={() => moveZone(zone.id, 1)}
+                        disabled={index === zones.length - 1}
+                        aria-label={`${zoneLabel} nach unten`}
+                      >
+                        <span aria-hidden="true">↓</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="template-tool-zone-list__icon-button"
+                        onClick={() => updateZoneInState(zone.id, { visible: !visible })}
+                        aria-label={`${visible ? 'Ausblenden' : 'Einblenden'} ${zoneLabel}`}
+                      >
+                        <span aria-hidden="true">{visible ? '👁' : '🚫'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="template-tool-zone-list__icon-button"
+                        onClick={() => updateZoneInState(zone.id, { locked: !locked })}
+                        aria-label={`${locked ? 'Entsperren' : 'Sperren'} ${zoneLabel}`}
+                      >
+                        <span aria-hidden="true">{locked ? '🔓' : '🔒'}</span>
+                      </button>
+                      {zone.kind === 'text' ? (
+                        <button
+                          type="button"
+                          className={`template-tool-zone-list__icon-button${zone.personalizable ? ' template-tool-zone-list__icon-button--active' : ''}`}
+                          onClick={() => updateZoneInState(zone.id, { personalizable: !(zone.personalizable ?? false) })}
+                          aria-label={`${zone.personalizable ? 'Text sperren' : 'Text anpassbar machen'} ${zoneLabel}`}
+                        >
+                          <span aria-hidden="true">✎</span>
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="template-tool-zone-list__empty">Noch keine Zonen angelegt.</p>
+            )}
           </div>
 
         </aside>
@@ -1067,9 +1171,6 @@ export default function TemplateToolPage() {
                 templateFields: selectedTemplate.fields,
                 fontSearch,
                 onFontSearchChange: setFontSearch,
-                fontCategory,
-                onFontCategoryChange: setFontCategory,
-                fontCategories,
                 filteredFontCatalog,
                 fontCatalogError,
                 previewVisible,

@@ -6,7 +6,6 @@ import type {
   TemplateElementDefinition,
   ValidationIssue,
   ZoneDefinition,
-  ZoneVariableDefinition,
 } from '../design/types';
 import DesignPreviewFrame from '../design/DesignPreviewFrame';
 import { defaultTemplateDesignId } from '../design/variantResolution';

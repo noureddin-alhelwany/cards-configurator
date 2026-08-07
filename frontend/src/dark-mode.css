@@ -1,0 +1,223 @@
+/* Shared dark theme tokens. Apply [data-theme='dark'] project-wide when ready. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --dark-color-text-primary: #f5f7fb;
+  --dark-color-text-secondary: #b8c2d1;
+  --dark-color-text-muted: #8f9bad;
+  --dark-color-accent: #f0a65b;
+  --dark-color-accent-strong: #ffc27d;
+  --dark-color-page: #0d1117;
+  --dark-color-surface: #171d26;
+  --dark-color-surface-raised: #202835;
+  --dark-color-surface-soft: #252e3b;
+  --dark-color-border: rgba(190, 205, 225, 0.18);
+  --dark-color-border-strong: rgba(240, 166, 91, 0.7);
+  --dark-shadow-surface: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+/* Template Tool activation. The artwork canvas stays untouched. */
+.template-tool-shell--dark {
+  --dark-color-text-primary: #f5f7fb;
+  --dark-color-text-secondary: #b8c2d1;
+  --dark-color-text-muted: #8f9bad;
+  --dark-color-accent: #f0a65b;
+  --dark-color-accent-strong: #ffc27d;
+  --dark-color-page: #0d1117;
+  --dark-color-surface: #171d26;
+  --dark-color-surface-raised: #202835;
+  --dark-color-surface-soft: #252e3b;
+  --dark-color-border: rgba(190, 205, 225, 0.18);
+  --dark-color-border-strong: rgba(240, 166, 91, 0.7);
+  --dark-shadow-surface: 0 18px 48px rgba(0, 0, 0, 0.28);
+  color-scheme: dark;
+  color: var(--dark-color-text-primary);
+  background:
+    radial-gradient(circle at top left, rgba(240, 166, 91, 0.11), transparent 30%),
+    radial-gradient(circle at 92% 8%, rgba(85, 132, 190, 0.12), transparent 26%),
+    linear-gradient(145deg, #0d1117 0%, #121923 56%, #0b1016 100%);
+}
+
+.template-tool-shell--dark .template-tool-card {
+  background: rgba(23, 29, 38, 0.94);
+  border-color: var(--dark-color-border);
+  box-shadow: var(--dark-shadow-surface);
+}
+
+.template-tool-shell--dark .template-tool-card h1,
+.template-tool-shell--dark .template-tool-card h2,
+.template-tool-shell--dark .template-tool-card h3,
+.template-tool-shell--dark .template-tool-card p,
+.template-tool-shell--dark .template-tool-list__name,
+.template-tool-shell--dark .template-tool-zone-list__title,
+.template-tool-shell--dark .template-tool-font-browser__name {
+  color: var(--dark-color-text-primary);
+}
+
+.template-tool-shell--dark .template-tool-kicker,
+.template-tool-shell--dark .template-tool-control-cluster__label,
+.template-tool-shell--dark .template-tool-preview__badge,
+.template-tool-shell--dark .template-tool-status--warning {
+  color: var(--dark-color-accent);
+}
+
+.template-tool-shell--dark .template-tool-card__meta,
+.template-tool-shell--dark .template-tool-list__meta,
+.template-tool-shell--dark .template-tool-list__source,
+.template-tool-shell--dark .template-tool-zone-list__meta,
+.template-tool-shell--dark .template-tool-zone-list__empty,
+.template-tool-shell--dark .template-tool-preview__meta,
+.template-tool-shell--dark .template-tool-control__value,
+.template-tool-shell--dark .template-tool-status,
+.template-tool-shell--dark .template-tool-font-browser__meta,
+.template-tool-shell--dark .template-tool-font-browser__empty,
+.template-tool-shell--dark .template-tool-zone-editor__help,
+.template-tool-shell--dark .template-tool-zone-editor__status,
+.template-tool-shell--dark .template-tool-zone-editor__list-meta,
+.template-tool-shell--dark .template-tool-zone-editor__inline-header p {
+  color: var(--dark-color-text-muted);
+}
+
+.template-tool-shell--dark .template-tool-list__item,
+.template-tool-shell--dark .template-tool-zone-list__item,
+.template-tool-shell--dark .template-tool-control-cluster,
+.template-tool-shell--dark .template-tool-font-browser,
+.template-tool-shell--dark .template-tool-zone-editor__list-item,
+.template-tool-shell--dark .template-tool-zone-editor__inline-controls,
+.template-tool-shell--dark .template-tool-zone-editor__variable-card,
+.template-tool-shell--dark .template-tool-zone-editor__status,
+.template-tool-shell--dark .template-tool-zone-editor__advanced {
+  background: rgba(32, 40, 53, 0.82);
+  border-color: var(--dark-color-border);
+}
+
+.template-tool-shell--dark .template-tool-list__item,
+.template-tool-shell--dark .template-tool-font-browser__item {
+  background: linear-gradient(180deg, #252e3b, #1c2430);
+  border-color: var(--dark-color-border);
+  color: var(--dark-color-text-primary);
+}
+
+.template-tool-shell--dark .template-tool-list__item--selected,
+.template-tool-shell--dark .template-tool-zone-list__item--selected,
+.template-tool-shell--dark .template-tool-zone-editor__list-item--selected,
+.template-tool-shell--dark .template-tool-font-browser__item--selected {
+  border-color: var(--dark-color-border-strong);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(240, 166, 91, 0.12);
+}
+
+.template-tool-shell--dark .template-tool-controls,
+.template-tool-shell--dark .template-tool-zone-editor__variables {
+  background: rgba(32, 40, 53, 0.74);
+}
+
+.template-tool-shell--dark .template-tool-control,
+.template-tool-shell--dark .template-tool-zone-editor__inline-header h3,
+.template-tool-shell--dark .template-tool-zone-editor__advanced summary,
+.template-tool-shell--dark .template-tool-control--static strong {
+  color: var(--dark-color-text-secondary);
+}
+
+.template-tool-shell--dark .template-tool-control--static strong {
+  background: #111720;
+  border-color: var(--dark-color-border);
+}
+
+.template-tool-shell--dark input:not([type='checkbox']):not([type='color']):not([type='range']),
+.template-tool-shell--dark select,
+.template-tool-shell--dark textarea {
+  color: var(--dark-color-text-primary);
+  background: #111720;
+  border-color: var(--dark-color-border);
+  accent-color: var(--dark-color-accent);
+}
+
+.template-tool-shell--dark input::placeholder,
+.template-tool-shell--dark textarea::placeholder {
+  color: #718096;
+}
+
+.template-tool-shell--dark input:focus,
+.template-tool-shell--dark select:focus,
+.template-tool-shell--dark textarea:focus,
+.template-tool-shell--dark button:focus-visible {
+  outline: 2px solid rgba(240, 166, 91, 0.8);
+  outline-offset: 2px;
+}
+
+.template-tool-shell--dark .template-tool-reset {
+  color: var(--dark-color-text-primary);
+  background: #252e3b;
+  border-color: var(--dark-color-border);
+}
+
+.template-tool-shell--dark .template-tool-reset:hover,
+.template-tool-shell--dark .template-tool-zone-list__icon-button:hover:not(:disabled) {
+  background: #303b4b;
+  border-color: var(--dark-color-border-strong);
+}
+
+.template-tool-shell--dark .template-tool-zone-list__icon-button {
+  color: var(--dark-color-text-secondary);
+  background: #252e3b;
+  border-color: var(--dark-color-border);
+}
+
+.template-tool-shell--dark .template-tool-zone-list__icon-button--active {
+  color: var(--dark-color-accent-strong);
+  background: rgba(240, 166, 91, 0.16);
+  border-color: var(--dark-color-border-strong);
+}
+
+.template-tool-shell--dark .template-tool-font-browser__preview {
+  color: var(--dark-color-text-secondary);
+}
+
+.template-tool-shell--dark .template-tool-sidebar-section,
+.template-tool-shell--dark .template-tool-zone-list,
+.template-tool-shell--dark .template-tool-status--footer {
+  border-color: var(--dark-color-border);
+}
+
+.template-tool-shell--dark .template-tool-stage-shell {
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.38);
+}
+
+/* Keep editable zones readable without hiding the artwork underneath. */
+.template-tool-shell--dark .zone-editor__zone--text {
+  background: rgba(240, 166, 91, 0.3);
+}
+
+.template-tool-shell--dark .template-tool-zone-editor__zone-text {
+  background: transparent !important;
+}
+
+.template-tool-shell--dark .zone-editor__zone--qr {
+  background: rgba(92, 177, 133, 0.27);
+}
+
+.template-tool-shell--dark .zone-editor__zone--text.zone-editor__zone--selected {
+  background: rgba(240, 166, 91, 0.4);
+}
+
+.template-tool-shell--dark .zone-editor__zone--qr.zone-editor__zone--selected {
+  background: rgba(92, 177, 133, 0.34);
+}
+
+.template-tool-shell--dark ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.template-tool-shell--dark ::-webkit-scrollbar-track {
+  background: #111720;
+}
+
+.template-tool-shell--dark ::-webkit-scrollbar-thumb {
+  border: 2px solid #111720;
+  border-radius: 999px;
+  background: #465365;
+}
+
+.template-tool-shell--dark ::-webkit-scrollbar-thumb:hover {
+  background: #65758a;
+}

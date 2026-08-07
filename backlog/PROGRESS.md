@@ -3,8 +3,8 @@
 ## Summary
 
 - Todo: 5
-- In progress: 1
-- Done: 84
+- In progress: 0
+- Done: 85
 - Blocked: 0
 
 ## Backlog
@@ -24,3 +24,5 @@
 | UI-35 | story | should | done | UI-08 | Designvorschauen stärker priorisieren |
 | TECH-08 | technical | must | done | UI-27, UI-28 | Feldzuständigkeit und Dopplungen im Datenmodell bereinigen |
 | TPL-11 | story | must | done | TPL-05 | Eigenschaften numerisch bearbeiten |
+| TPL-12 | story | should | done | TPL-05 | Zonen verwalten |
+| TECH-09 | technical | should | todo |  | Dark-Mode-CSS-Kaskade ohne !important bereinigen |

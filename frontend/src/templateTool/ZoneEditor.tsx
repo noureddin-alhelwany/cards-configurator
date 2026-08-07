@@ -6,6 +6,7 @@ import {
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
+  type Ref,
 } from 'react';
 import type {
   BoxMm,
@@ -39,9 +40,6 @@ type Props = {
   templateFields: TemplateFieldDefinition[];
   fontSearch: string;
   onFontSearchChange: (value: string) => void;
-  fontCategory: string;
-  onFontCategoryChange: (value: string) => void;
-  fontCategories: string[];
   filteredFontCatalog: FontCatalogEntry[];
   fontCatalogError: string | null;
   testValues: Record<string, string>;
@@ -198,6 +196,14 @@ function computeStageScale(
 
 function zoneLabel(zone: EditableZone) {
   return zoneKindMeta(zone.kind).label;
+}
+
+function zoneIsVisible(zone: EditableZone) {
+  return zone.visible ?? true;
+}
+
+function zoneIsLocked(zone: EditableZone) {
+  return zone.locked ?? false;
 }
 
 function zoneKindClass(kind: ZoneKind) {
@@ -376,7 +382,7 @@ function ZoneEditableTextField({
   if (isSingleLineZone(variable)) {
     return (
       <input
-        ref={fieldRef as any}
+        ref={fieldRef as unknown as Ref<HTMLInputElement>}
         type="text"
         className="template-tool-zone-editor__zone-text template-tool-zone-editor__zone-text--editable template-tool-zone-editor__zone-text--field template-tool-zone-editor__zone-text--single-line"
         aria-label={`Text in Zone ${zone.id}`}
@@ -397,7 +403,7 @@ function ZoneEditableTextField({
 
   return (
     <textarea
-      ref={fieldRef as any}
+      ref={fieldRef as unknown as Ref<HTMLTextAreaElement>}
       className="template-tool-zone-editor__zone-text template-tool-zone-editor__zone-text--editable template-tool-zone-editor__zone-text--field"
       aria-label={`Text in Zone ${zone.id}`}
       autoFocus
@@ -465,38 +471,6 @@ function offsetBox(box: BoxMm, deltaX: number, deltaY: number, widthMm: number, 
   };
 }
 
-function readNumericInput(value: string) {
-  if (value.trim() === '') {
-    return null;
-  }
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function updateZoneBox(
-  zone: EditableZone,
-  patch: Partial<BoxMm>,
-  pageWidthMm: number,
-  pageHeightMm: number,
-  onUpdateZone: (zoneId: string, nextZone: EditableZone) => void,
-) {
-  const nextBox = {
-    ...zone.box_mm,
-    ...patch,
-  };
-  const width = clamp(nextBox.width_mm, 2, pageWidthMm);
-  const height = clamp(nextBox.height_mm, 2, pageHeightMm);
-  onUpdateZone(zone.id, {
-    ...zone,
-    box_mm: {
-      x_mm: clamp(nextBox.x_mm, 0, Math.max(0, pageWidthMm - width)),
-      y_mm: clamp(nextBox.y_mm, 0, Math.max(0, pageHeightMm - height)),
-      width_mm: width,
-      height_mm: height,
-    },
-  });
-}
-
 function resizeBox(box: BoxMm, deltaWidth: number, deltaHeight: number, widthMm: number, heightMm: number): BoxMm {
   const minSize = 2;
   const nextWidth = clamp(box.width_mm + deltaWidth, minSize, widthMm - box.x_mm);
@@ -549,9 +523,6 @@ export default function ZoneEditor({
   templateFields,
   fontSearch,
   onFontSearchChange,
-  fontCategory,
-  onFontCategoryChange,
-  fontCategories,
   filteredFontCatalog,
   fontCatalogError,
   testValues,
@@ -587,11 +558,7 @@ export default function ZoneEditor({
     return availableFields.find((field) => field.id === fieldId) ?? null;
   }, [availableFields, selectedVariable]);
   const zoneFontValue = selectedVariable?.font_family_id ?? null;
-  const selectedTextValue = zoneTextValue(selectedVariable, testValues);
-  const selectedFontFamily = useMemo(
-    () => availableFonts.find((font) => font.id === zoneFontValue)?.family,
-    [availableFonts, zoneFontValue],
-  );
+  const visibleZones = useMemo(() => zones.filter((zone) => zoneIsVisible(zone)), [zones]);
   useEffect(() => {
     if (!selectedZoneId || zones.some((zone) => zone.id === selectedZoneId)) {
       return;
@@ -674,6 +641,9 @@ export default function ZoneEditor({
   }, [dragState, onUpdateZone, pageHeightMm, pageWidthMm, zones]);
 
   function startDrag(zone: EditableZone, mode: 'move' | 'resize', event: ReactMouseEvent<HTMLButtonElement | HTMLDivElement>) {
+    if (zoneIsLocked(zone)) {
+      return;
+    }
     const stage = stageRef.current;
     if (!stage) {
       return;
@@ -704,6 +674,8 @@ export default function ZoneEditor({
       onUpdateZone(zone.id, enforceSingleLineZoneHeight({
         ...zone,
         ...patch,
+        visible: patch.visible ?? zone.visible ?? true,
+        locked: patch.locked ?? zone.locked ?? false,
         variables: [
           existingVariable
               ? {
@@ -726,6 +698,8 @@ export default function ZoneEditor({
     onUpdateZone(zone.id, enforceSingleLineZoneHeight({
       ...zone,
       ...patch,
+      visible: patch.visible ?? zone.visible ?? true,
+      locked: patch.locked ?? zone.locked ?? false,
       box_mm: patch.box_mm ?? zone.box_mm,
     }));
   }
@@ -753,7 +727,7 @@ export default function ZoneEditor({
     onCreateZone(kind);
   }
 
-  const fontQueryActive = fontSearch.trim().length > 0 || fontCategory.length > 0;
+  const fontQueryActive = fontSearch.trim().length > 0;
   const { featured: featuredFonts } = splitFontOptions(availableFonts);
   const selectedVariableMaxLength = selectedVariable?.max_length ?? null;
 
@@ -780,120 +754,8 @@ export default function ZoneEditor({
               </button>
             </div>
 
-            {isTextZone(selectedZone.kind) ? (
-              <label className="template-tool-control template-tool-control--toggle">
-                <span>Nutzer kann Text anpassen</span>
-                <input
-                  type="checkbox"
-                  checked={selectedZone.personalizable ?? false}
-                  onChange={(event) =>
-                    updateZone(selectedZone, {
-                      personalizable: event.target.checked,
-                    })
-                  }
-                />
-              </label>
-            ) : null}
-
-            <div className="template-tool-zone-editor__inline-grid">
-              <label className="template-tool-control">
-                <span>X mm</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  value={selectedZone.box_mm.x_mm}
-                  onChange={(event) => {
-                    const nextValue = readNumericInput(event.target.value);
-                    if (nextValue == null) {
-                      return;
-                    }
-                    updateZoneBox(selectedZone, { x_mm: nextValue }, pageWidthMm, pageHeightMm, onUpdateZone);
-                  }}
-                />
-              </label>
-              <label className="template-tool-control">
-                <span>Y mm</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  value={selectedZone.box_mm.y_mm}
-                  onChange={(event) => {
-                    const nextValue = readNumericInput(event.target.value);
-                    if (nextValue == null) {
-                      return;
-                    }
-                    updateZoneBox(selectedZone, { y_mm: nextValue }, pageWidthMm, pageHeightMm, onUpdateZone);
-                  }}
-                />
-              </label>
-              <label className="template-tool-control">
-                <span>Breite mm</span>
-                <input
-                  type="number"
-                  min="2"
-                  step="0.1"
-                  value={selectedZone.box_mm.width_mm}
-                  onChange={(event) => {
-                    const nextValue = readNumericInput(event.target.value);
-                    if (nextValue == null) {
-                      return;
-                    }
-                    updateZoneBox(selectedZone, { width_mm: nextValue }, pageWidthMm, pageHeightMm, onUpdateZone);
-                  }}
-                />
-              </label>
-              <label className="template-tool-control">
-                <span>Höhe mm</span>
-                <input
-                  type="number"
-                  min="2"
-                  step="0.1"
-                  value={selectedZone.box_mm.height_mm}
-                  onChange={(event) => {
-                    const nextValue = readNumericInput(event.target.value);
-                    if (nextValue == null) {
-                      return;
-                    }
-                    updateZoneBox(selectedZone, { height_mm: nextValue }, pageWidthMm, pageHeightMm, onUpdateZone);
-                  }}
-                />
-              </label>
-            </div>
-
             {selectedZone.kind === 'text' ? (
               <div className="template-tool-zone-editor__inline-controls">
-                <div className="template-tool-zone-editor__inline-header">
-                  <h3>Direkt im Text arbeiten</h3>
-                  <p>{selectedField ? fieldLabel(selectedField) : 'Kein Feld gewählt'}</p>
-                </div>
-                <div className="template-tool-controls template-tool-controls--stack">
-                  <label className="template-tool-control template-tool-control--wide">
-                    <span>Schrift suchen</span>
-                    <input
-                      type="search"
-                      value={fontSearch}
-                      onChange={(event) => onFontSearchChange(event.target.value)}
-                      placeholder="Fontsource durchsuchen"
-                    />
-                  </label>
-                  <label className="template-tool-control template-tool-control--wide">
-                    <span>Kategorie</span>
-                    <select
-                      value={fontCategory}
-                      onChange={(event) => onFontCategoryChange(event.target.value)}
-                      disabled={fontCategories.length === 0}
-                    >
-                      <option value="">Alle Kategorien</option>
-                      {fontCategories.map((category) => (
-                        <option key={category} value={category}>
-                          {fontCategoryLabel(category)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
                 {availableFields.length > 0 ? (
                   <label className="template-tool-control">
                     <span>Zuordnung</span>
@@ -926,7 +788,48 @@ export default function ZoneEditor({
                     </select>
                   </label>
                 ) : null}
-                <div className="template-tool-zone-editor__inline-grid">
+                <div className="template-tool-zone-editor__field-config-grid">
+                  <div className="template-tool-control template-tool-control--static">
+                    <span>Typ</span>
+                    <strong>{zoneKindMeta(selectedZone.kind).label}</strong>
+                  </div>
+                  <label className="template-tool-control">
+                    <span>Ausrichtung</span>
+                    <select
+                      value={selectedVariable?.align ?? 'left'}
+                      onChange={(event) =>
+                        selectedVariable
+                          ? updateVariable(selectedZone, selectedVariable.id, {
+                              align: event.target.value as 'left' | 'center' | 'right',
+                            })
+                          : undefined
+                      }
+                    >
+                      {TEXT_ALIGN_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="template-tool-control">
+                    <span>Max. Zeichen</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={selectedVariable?.max_length ?? ''}
+                      onChange={(event) =>
+                        selectedVariable
+                          ? updateVariable(selectedZone, selectedVariable.id, {
+                              max_length: event.target.value === '' ? null : Number(event.target.value),
+                            })
+                          : undefined
+                      }
+                    />
+                  </label>
+                </div>
+                <div className="template-tool-zone-editor__typography-grid">
                   <label className="template-tool-control">
                     <span>Schriftgröße mm</span>
                     <input
@@ -1005,29 +908,19 @@ export default function ZoneEditor({
                           ? updateVariable(selectedZone, selectedVariable.id, { color: event.target.value })
                           : undefined
                       }
-                    />
-                  </label>
-                  <label className="template-tool-control">
-                    <span>Ausrichtung</span>
-                    <select
-                      value={selectedVariable?.align ?? 'left'}
-                      onChange={(event) =>
-                        selectedVariable
-                          ? updateVariable(selectedZone, selectedVariable.id, {
-                              align: event.target.value as 'left' | 'center' | 'right',
-                            })
-                          : undefined
-                      }
-                    >
-                      {TEXT_ALIGN_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                      />
                   </label>
                 </div>
                 <div className="template-tool-font-browser">
+                  <label className="template-tool-control template-tool-control--wide">
+                    <span>Schrift suchen</span>
+                    <input
+                      type="search"
+                      value={fontSearch}
+                      onChange={(event) => onFontSearchChange(event.target.value)}
+                      placeholder="Fontsource durchsuchen"
+                    />
+                  </label>
                   {fontQueryActive ? (
                     <div className="template-tool-font-browser__list" role="listbox" aria-label="Schrift für Zone">
                       {filteredFontCatalog.length > 0 ? (
@@ -1063,7 +956,11 @@ export default function ZoneEditor({
                       )}
                     </div>
                   ) : (
-                    <div className="template-tool-font-browser__list" role="listbox" aria-label="Favoriten">
+                    <div
+                      className="template-tool-font-browser__list template-tool-font-browser__list--featured"
+                      role="listbox"
+                      aria-label="Favoriten"
+                    >
                       {featuredFonts.length > 0 ? (
                         featuredFonts.map((font) => {
                           const selected = font.id === zoneFontValue;
@@ -1095,7 +992,7 @@ export default function ZoneEditor({
                   )}
                 </div>
                 {fontCatalogError ? <p className="template-tool-status template-tool-status--warning">{fontCatalogError}</p> : null}
-                <div className="template-tool-zone-editor__inline-grid">
+                <div className="template-tool-zone-editor__field-config-grid">
                   <label className="template-tool-control">
                     <span>Erforderlich</span>
                     <input
@@ -1104,22 +1001,6 @@ export default function ZoneEditor({
                       onChange={(event) =>
                         selectedVariable
                           ? updateVariable(selectedZone, selectedVariable.id, { required: event.target.checked })
-                          : undefined
-                      }
-                    />
-                  </label>
-                  <label className="template-tool-control">
-                    <span>Zeichenlimit</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={selectedVariable?.max_length ?? ''}
-                      onChange={(event) =>
-                        selectedVariable
-                          ? updateVariable(selectedZone, selectedVariable.id, {
-                              max_length: event.target.value === '' ? null : Number(event.target.value),
-                            })
                           : undefined
                       }
                     />
@@ -1246,7 +1127,7 @@ export default function ZoneEditor({
           >
             {frame}
             <div className="template-tool-zone-editor__overlay">
-              {zones.map((zone) => {
+              {visibleZones.map((zone) => {
                 const selected = zone.id === selectedZoneId;
                 const zoneVariable = zone.variables?.[0] ?? null;
                 const fontFamily = availableFonts.find((font) => font.id === zoneVariable?.font_family_id)?.family;
@@ -1286,6 +1167,7 @@ export default function ZoneEditor({
                       className="template-tool-zone-editor__resize"
                       aria-label={`${zoneLabel(zone)} skalieren`}
                       onMouseDown={(event) => startDrag(zone, 'resize', event)}
+                      disabled={zoneIsLocked(zone)}
                     />
                   </div>
                 );

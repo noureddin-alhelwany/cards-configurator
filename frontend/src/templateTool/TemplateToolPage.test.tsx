@@ -268,19 +268,6 @@ test('renders the internal template tool with separate preview and source layers
   await screen.findByLabelText(/Text in Zone/);
   const zoneTextArea = screen.getByLabelText(/Text in Zone/) as HTMLTextAreaElement;
   expect(zoneTextArea).toHaveValue('');
-  const zoneXInput = screen.getByLabelText('X mm') as HTMLInputElement;
-  const zoneYInput = screen.getByLabelText('Y mm') as HTMLInputElement;
-  const zoneWidthInput = screen.getByLabelText('Breite mm') as HTMLInputElement;
-  const zoneHeightInput = screen.getByLabelText('Höhe mm') as HTMLInputElement;
-  expect(zoneXInput).toHaveValue(12);
-  expect(zoneYInput).toHaveValue(12);
-  expect(zoneWidthInput).toHaveValue(58);
-  expect(zoneHeightInput).toHaveValue(20);
-
-  fireEvent.change(zoneXInput, { target: { value: '28.5' } });
-  fireEvent.change(zoneWidthInput, { target: { value: '64' } });
-  expect(zoneXInput).toHaveValue(28.5);
-  expect(zoneWidthInput).toHaveValue(64);
 
   expect(await screen.findByRole('button', { name: /Inter/ })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Libre Baskerville/ })).toBeInTheDocument();
@@ -339,6 +326,11 @@ test('renders the internal template tool with separate preview and source layers
     ),
   ).toHaveLength(0);
 
+  fireEvent.click(screen.getByRole('button', { name: /Ausblenden text/i }));
+  expect(document.querySelector('[data-testid^="template-tool-zone-zone-text"]')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: /Einblenden text/i }));
+  expect(document.querySelector('[data-testid^="template-tool-zone-zone-text"]')).not.toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: /^Sperren text$/i }));
   fireEvent.click(screen.getByRole('button', { name: 'Speichern' }));
   await waitFor(() => {
     expect(
@@ -349,7 +341,6 @@ test('renders the internal template tool with separate preview and source layers
   });
 
   fireEvent.change(screen.getByLabelText('Schrift suchen'), { target: { value: 'Inter' } });
-  fireEvent.change(screen.getByLabelText('Kategorie'), { target: { value: 'sans-serif' } });
   expect(await screen.findByRole('button', { name: /Inter/ })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: /Inter/ }));
   expect(fetchMock).toHaveBeenCalledWith('/api/font-catalog/inter');

@@ -125,6 +125,115 @@
   border-top: 1px solid rgba(155, 122, 89, 0.12);
 }
 
+.template-tool-zone-list {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(155, 122, 89, 0.12);
+}
+
+.template-tool-zone-list > .template-tool-card__heading {
+  align-items: center;
+}
+
+.template-tool-zone-list__item {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(155, 122, 89, 0.14);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.template-tool-zone-list__item--selected {
+  border-color: rgba(140, 92, 43, 0.62);
+  box-shadow: 0 10px 24px rgba(140, 92, 43, 0.12);
+}
+
+.template-tool-zone-list__item--hidden {
+  opacity: 0.72;
+}
+
+.template-tool-zone-list__button {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.template-tool-zone-list__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.template-tool-zone-list__title {
+  font-weight: 700;
+  color: #3f3127;
+}
+
+.template-tool-zone-list__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  color: #6f5a48;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.template-tool-zone-list__color-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(111, 90, 72, 0.24);
+  flex: 0 0 auto;
+}
+
+.template-tool-zone-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.template-tool-zone-list__icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba(155, 122, 89, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.84);
+  color: #4d3d30;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.template-tool-zone-list__icon-button:hover:not(:disabled) {
+  border-color: rgba(140, 92, 43, 0.45);
+  background: rgba(255, 255, 255, 1);
+}
+
+.template-tool-zone-list__icon-button--active {
+  border-color: rgba(140, 92, 43, 0.65);
+  background: rgba(143, 90, 42, 0.12);
+  color: #7d4f22;
+}
+
+.template-tool-zone-list__icon-button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.template-tool-zone-list__empty {
+  margin: 0;
+  color: #6f5a48;
+  font-size: 0.92rem;
+}
+
 .template-tool-controls {
   display: flex;
   flex-wrap: wrap;

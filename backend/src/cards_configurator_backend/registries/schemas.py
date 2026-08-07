@@ -160,6 +160,8 @@ class ZoneDefinition(BaseModel):
     label: str | None = None
     kind: Literal["text", "qr"] = "text"
     personalizable: bool = False
+    visible: bool = True
+    locked: bool = False
     qr: QrZoneDefinition | None = None
     variables: list[ZoneVariableDefinition] = Field(default_factory=list)
 

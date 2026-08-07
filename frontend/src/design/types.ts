@@ -91,6 +91,8 @@ export type ZoneDefinition = {
   label: string | null;
   kind?: 'text' | 'qr';
   personalizable?: boolean;
+  visible?: boolean;
+  locked?: boolean;
   qr?: QrZoneDefinition | null;
   variables?: ZoneVariableDefinition[];
 };
