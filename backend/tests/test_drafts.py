@@ -247,6 +247,93 @@ def test_static_zones_override_customer_input_before_validation() -> None:
     assert normalized['qrTarget'] == 'https://example.com/review'
 
 
+def test_unassigned_zone_variables_do_not_override_fields() -> None:
+    template = TemplateDefinition(
+        schema_version=1,
+        id='proof_a6_card',
+        version='1.6.0',
+        name='Google Reviews',
+        description=None,
+        product_id='a6_card',
+        active=True,
+        page_width_mm=111,
+        page_height_mm=154,
+        bleed_mm=3,
+        fields=[
+            TemplateFieldDefinition(
+                id='headline',
+                type='text',
+                required=True,
+                max_length=60,
+                max_lines=3,
+                label='Überschrift',
+                help_text=None,
+                group='Texte',
+                placeholder=None,
+                suggestions=[],
+                default_value='Scanne den QR-Code',
+            ),
+        ],
+        text_rules=[],
+        qr_rules=[],
+        elements=[],
+        designs=[
+            TemplateDesignDefinition(
+                id='warm',
+                name='Warm',
+                active=True,
+                preview_asset=None,
+                source_asset=None,
+                background_asset=None,
+                accent_color=None,
+                fonts=[
+                    {
+                        'id': 'proof-sans',
+                        'family': 'Proof Sans',
+                        'file': '/fonts/ProofSans.ttf',
+                        'weight': 400,
+                        'style': 'normal',
+                    }
+                ],
+                zones=[
+                    ZoneDefinition(
+                        id='headline',
+                        box_mm=BoxMm(x_mm=0, y_mm=0, width_mm=10, height_mm=10),
+                        label='Headline',
+                        kind='text',
+                        personalizable=False,
+                        qr=None,
+                        variables=[
+                            ZoneVariableDefinition(
+                                id='headline',
+                                kind='text',
+                                field_id=None,
+                                label='Headline',
+                                font_family_id='proof-sans',
+                                font_weight=700,
+                                font_size_mm=4.0,
+                                min_font_size_mm=None,
+                                line_height=1.0,
+                                letter_spacing_em=0.08,
+                                color='#000000',
+                                align='left',
+                                max_length=60,
+                                max_lines=3,
+                                required=True,
+                                default_value='Zone default',
+                            )
+                        ],
+                    ),
+                ],
+            )
+        ],
+    )
+
+    normalized = _normalize_layout_text_values(template, 'warm', {'headline': 'Customer input'})
+
+    assert normalized['headline'] == 'Customer input'
+
+
 def test_design_approval_locks_the_draft(tmp_path: Path, monkeypatch) -> None:
     db_path = tmp_path / 'drafts.sqlite3'
     monkeypatch.setenv('DATABASE_URL', f'sqlite:///{db_path}')

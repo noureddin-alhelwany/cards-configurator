@@ -1,6 +1,7 @@
 import type { TemplateDefinition, ZoneDefinition, CategoryDefinition } from '../registries/types';
 import type { ValidationIssue } from '../design/types';
 import { fieldRole } from '../design/fieldRoles';
+import { zoneVariableFieldId } from '../design/zoneVariables';
 import type { TemplateFieldRole } from '../design/fieldRoles';
 import { uiText } from '../ui/text';
 
@@ -99,7 +100,7 @@ export function activeDesign(template: TemplateDefinition, variantId: string | n
 }
 
 function fieldIdForZoneVariable(variable: NonNullable<ZoneDefinition['variables']>[number]) {
-  return variable.field_id ?? variable.id;
+  return zoneVariableFieldId(variable);
 }
 
 function normalizeZoneDefaultValue(value: string | null | undefined) {
@@ -117,7 +118,11 @@ export function zoneFieldAccessForDesign(template: TemplateDefinition, variantId
       if (variable.kind !== 'text') {
         continue;
       }
-      access.set(fieldIdForZoneVariable(variable), {
+      const fieldId = fieldIdForZoneVariable(variable);
+      if (!fieldId) {
+        continue;
+      }
+      access.set(fieldId, {
         personalizable: zone.personalizable ?? false,
         defaultValue: normalizeZoneDefaultValue(variable.default_value),
       });

@@ -2,9 +2,9 @@
 
 ## Summary
 
-- Todo: 7
+- Todo: 6
 - In progress: 1
-- Done: 82
+- Done: 83
 - Blocked: 0
 
 ## Backlog
@@ -22,4 +22,4 @@
 | UI-33 | story | should | done | UI-15, UI-16 | Leere Rückmeldungsbereiche ausblenden |
 | UI-34 | story | must | done | UI-16, UI-17 | Qualitätsprüfung im Prüfschritt zusammenfassen |
 | UI-35 | story | should | done | UI-08 | Designvorschauen stärker priorisieren |
-| TECH-08 | technical | must | todo | UI-27, UI-28 | Feldzuständigkeit und Dopplungen im Datenmodell bereinigen |
+| TECH-08 | technical | must | done | UI-27, UI-28 | Feldzuständigkeit und Dopplungen im Datenmodell bereinigen |

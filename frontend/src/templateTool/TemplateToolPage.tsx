@@ -14,6 +14,7 @@ import {
   activeRegistryDesigns,
 } from '../registries/registrySelection';
 import ZoneEditor, { type EditableZone, type ZoneKind } from './ZoneEditor';
+import { zoneVariableFieldId, zoneVariableStateKey } from '../design/zoneVariables';
 import { loadFontCatalog, loadFontFace, type FontCatalogEntry } from '../fontCatalog';
 import './TemplateToolPage.css';
 
@@ -312,7 +313,11 @@ function buildPreviewFixture(
   const previewTextValues = { ...fixture.layout_state.text_values };
   for (const zone of zones) {
     for (const variable of zone.variables ?? []) {
-      previewTextValues[variable.field_id ?? variable.id] = normalizeZoneDefaultValue(variable.default_value);
+      const fieldId = zoneVariableFieldId(variable);
+      if (!fieldId) {
+        continue;
+      }
+      previewTextValues[fieldId] = normalizeZoneDefaultValue(variable.default_value);
     }
   }
 
@@ -605,7 +610,7 @@ export default function TemplateToolPage() {
       const nextValues: Record<string, string> = {};
       for (const zone of zones) {
         for (const variable of zone.variables ?? []) {
-          const valueKey = variable.field_id ?? variable.id;
+          const valueKey = zoneVariableStateKey(variable);
           nextValues[valueKey] = current[valueKey] ?? normalizeZoneDefaultValue(variable.default_value);
         }
       }
@@ -648,7 +653,7 @@ export default function TemplateToolPage() {
       return {
         ...zone,
         variables: (zone.variables ?? []).map((variable) => {
-          const valueKey = variable.field_id ?? variable.id;
+          const valueKey = zoneVariableStateKey(variable);
           const draftValue = testValues[valueKey];
           if (draftValue == null) {
             return variable;

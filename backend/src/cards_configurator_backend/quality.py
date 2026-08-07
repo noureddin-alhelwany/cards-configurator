@@ -81,7 +81,9 @@ def _field_personalizable(template: TemplateDefinition, field_id: str, design_id
         return True
     for zone in design.zones:
         for variable in zone.variables or []:
-            variable_field_id = variable.field_id or variable.id
+            variable_field_id = variable.field_id
+            if variable_field_id is None:
+                continue
             if variable_field_id == field_id:
                 return zone.personalizable
     return True

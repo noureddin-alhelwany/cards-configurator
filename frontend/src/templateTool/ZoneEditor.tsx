@@ -15,6 +15,7 @@ import type {
   ZoneVariableDefinition,
 } from '../design/types';
 import { buildTextFitTypographyStyle, useTextFitRuntime } from '../design/useTextFitRuntime';
+import { zoneVariableFieldId, zoneVariableStateKey } from '../design/zoneVariables';
 import type { FontCatalogEntry } from '../fontCatalog';
 import './ZoneEditor.css';
 
@@ -211,7 +212,7 @@ function zoneTextValue(variable: ZoneVariableDefinition | null, values: Record<s
   if (!variable) {
     return '';
   }
-  const key = variable.field_id ?? variable.id;
+  const key = zoneVariableStateKey(variable);
   const defaultValue = variable.default_value === UNASSIGNED_ZONE_VALUE ? '' : variable.default_value ?? '';
   return values[key] ?? defaultValue;
 }
@@ -541,17 +542,18 @@ export default function ZoneEditor({
     [selectedZoneId, zones],
   );
   const selectedVariable = selectedZone?.variables?.[0] ?? null;
-  const selectedVariableValueKey = selectedVariable?.field_id ?? selectedVariable?.id ?? null;
+  const selectedVariableValueKey = selectedVariable ? zoneVariableStateKey(selectedVariable) : null;
   const availableFields = useMemo(
     () => templateFields.filter((field) => fieldKindMatchesZone(field, selectedZone?.kind ?? 'text')),
     [selectedZone?.kind, templateFields],
   );
   const selectedField = useMemo(() => {
-    if (selectedVariable?.field_id == null) {
+    const fieldId = selectedVariable ? zoneVariableFieldId(selectedVariable) : null;
+    if (fieldId == null) {
       return null;
     }
-    return availableFields.find((field) => field.id === selectedVariable.field_id) ?? null;
-  }, [availableFields, selectedVariable?.field_id]);
+    return availableFields.find((field) => field.id === fieldId) ?? null;
+  }, [availableFields, selectedVariable]);
   const zoneFontValue = selectedVariable?.font_family_id ?? null;
   const selectedTextValue = zoneTextValue(selectedVariable, testValues);
   const selectedFontFamily = useMemo(
@@ -813,7 +815,7 @@ export default function ZoneEditor({
                           required: nextField?.required ?? false,
                           default_value: normalizeZoneDefaultValue(nextField?.default_value ?? nextValue),
                         });
-                        onUpdateTestValue(nextField?.id ?? selectedVariableValueKey ?? selectedVariable.id, nextValue);
+                        onUpdateTestValue(valueKey, nextValue);
                       }}
                     >
                       <option value="">Keine Zuordnung</option>
@@ -1055,9 +1057,7 @@ export default function ZoneEditor({
                     type="text"
                     value={selectedVariableValueKey ? testValues[selectedVariableValueKey] ?? normalizeZoneDefaultValue(selectedVariable?.default_value) : ''}
                     onChange={(event) =>
-                      selectedVariable
-                        ? onUpdateTestValue(selectedVariableValueKey ?? selectedVariable.id, event.target.value)
-                        : undefined
+                      selectedVariable ? onUpdateTestValue(selectedVariableValueKey ?? selectedVariable.id, event.target.value) : undefined
                     }
                     placeholder="https://example.com/review"
                   />
@@ -1175,7 +1175,7 @@ export default function ZoneEditor({
                           selectedVariableMaxLength={selectedVariableMaxLength}
                           onFocus={() => onSelectZone(zone.id)}
                           onChangeValue={(nextValue) =>
-                            onUpdateTestValue(selectedVariableValueKey ?? zoneVariable.id, nextValue)
+                            onUpdateTestValue(zoneVariableStateKey(zoneVariable), nextValue)
                           }
                         />
                       ) : (

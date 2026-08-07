@@ -160,7 +160,7 @@ def _static_zone_defaults(template: TemplateDefinition, design_id: str | None) -
         if zone.personalizable:
             continue
         for variable in zone.variables or []:
-            field_id = variable.field_id or variable.id
+            field_id = variable.field_id
             if not field_id:
                 continue
             fallback = field_defaults.get(field_id)

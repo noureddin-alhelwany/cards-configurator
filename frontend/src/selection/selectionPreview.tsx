@@ -13,6 +13,7 @@ import { defaultTemplateDesignId } from '../design/variantResolution';
 import { defaultAdjustmentsForTemplate } from './selectionHelpers';
 import { emptyPreviewAsset, placeholderQrDataUrl } from './previewAssets';
 import { brandingFallbackDataUrl, businessNameFromLayout } from '../design/branding';
+import { zoneVariableFieldId } from '../design/zoneVariables';
 import {
   activeDesign,
   designHasQrZone,
@@ -89,12 +90,8 @@ export function buildTemplatePreviewFixture(
   };
 }
 
-function zoneFieldId(variable: ZoneVariableDefinition) {
-  return variable.field_id ?? variable.id;
-}
-
 function zoneTextVariable(zone: ZoneDefinition, fieldId: string) {
-  return (zone.variables ?? []).find((variable) => variable.kind === 'text' && zoneFieldId(variable) === fieldId) ?? null;
+  return (zone.variables ?? []).find((variable) => variable.kind === 'text' && zoneVariableFieldId(variable) === fieldId) ?? null;
 }
 
 function applyZoneGeometry(
@@ -114,10 +111,14 @@ function applyZoneGeometry(
       continue;
     }
     for (const variable of zone.variables ?? []) {
-      if (variable.kind !== 'text') {
+    if (variable.kind !== 'text') {
+      continue;
+    }
+      const fieldId = zoneVariableFieldId(variable);
+      if (!fieldId) {
         continue;
       }
-      textZonesByFieldId.set(zoneFieldId(variable), zone);
+      textZonesByFieldId.set(fieldId, zone);
     }
   }
 
